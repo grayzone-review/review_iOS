@@ -66,9 +66,10 @@ enum Typography: String {
 }
 
 extension View {
-    func pretendard(_ typography: Typography) -> some View {
+    func pretendard(_ typography: Typography, color: AppColor = .black) -> some View {
         self
             .font(typography.font)
+            .foregroundStyle(color.color)
             .padding(.vertical, typography.lineSpacing / 2)
             .lineSpacing(typography.lineSpacing)
     }
