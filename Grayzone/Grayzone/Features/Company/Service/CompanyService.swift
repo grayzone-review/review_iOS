@@ -132,7 +132,7 @@ struct MockCompanyService: CompanyService {
                     content: "리뷰3 - 두 번째 댓글입니다.",
                     commenter: "bob",
                     createdAt: "2025-05-23T17:43:51",
-                    replyCount: 0,
+                    replyCount: 2,
                     isSecret: false,
                     isVisible: true
                 ),

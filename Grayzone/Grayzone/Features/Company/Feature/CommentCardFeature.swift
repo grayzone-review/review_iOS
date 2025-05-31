@@ -13,7 +13,7 @@ struct CommentCardFeature {
     @ObservableState
     struct State: Equatable {
         let comment: Comment
-        var replies: [Reply] = []
+        var replies: IdentifiedArrayOf<Reply> = []
         
         var remainingReplyCount: Int {
             comment.replyCount - replies.count
@@ -25,14 +25,8 @@ struct CommentCardFeature {
     }
     
     enum Action {
-        case delegate(Delegate)
-        case makeReplyButtonTapped
         case showMoreRepliesButtonTapped
         case addMoreReplies([Reply])
-        
-        enum Delegate {
-            case makeReply(Comment)
-        }
     }
     
     @Dependency(\.companyService) var service
@@ -40,14 +34,6 @@ struct CommentCardFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .delegate:
-                return .none
-                
-            case .makeReplyButtonTapped:
-                return .run { [comment = state.comment] send in
-                    await send(.delegate(.makeReply(comment)))
-                }
-                
             case .showMoreRepliesButtonTapped:
                 return .run { [id = state.comment.id] send in
                     let data = await service.fetchReplies(of: id)
@@ -66,6 +52,7 @@ struct CommentCardFeature {
 
 struct CommentCardView: View {
     @Bindable var store: StoreOf<CommentCardFeature>
+    let onMakeReplyButtonTapped: (Comment) -> Void
     
     var body: some View {
         if store.comment.isVisible {
@@ -97,7 +84,7 @@ struct CommentCardView: View {
     
     private var makeReplyButton: some View {
         Button {
-            store.send(.makeReplyButtonTapped)
+            onMakeReplyButtonTapped(store.comment)
         } label: {
             Text("답글달기")
                 .pretendard(.captionBold, color: .gray50)
@@ -174,6 +161,6 @@ struct CommentCardView: View {
             )
         ) {
             CommentCardFeature()
-        }
+        } , onMakeReplyButtonTapped: { _ in }
     )
 }
