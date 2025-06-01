@@ -12,14 +12,11 @@ import SwiftUI
 struct CommentsWindowFeature {
     @ObservableState
     struct State: Equatable {
-        static func == (lhs: CommentsWindowFeature.State, rhs: CommentsWindowFeature.State) -> Bool {
-            lhs.review.id == rhs.review.id
-        }
-        
         @Shared var review: Review
         var comments: IdentifiedArrayOf<Comment> = []
         var replies: [Int: IdentifiedArrayOf<Reply>] = [:]
         var targetComment: Comment?
+        var isFocused: Bool = false
         var content: String = ""
         var isSecret: Bool = false
         
@@ -30,9 +27,50 @@ struct CommentsWindowFeature {
                 ""
             }
         }
+        
+        var text: String {
+            get { prefix + content }
+            set {
+                guard newValue.count >= prefix.count else {
+                    self.text = prefix
+                    return
+                }
+                
+                content = String(newValue.split(separator: prefix).last ?? "")
+            }
+        }
+        
+        var isValidInput: Bool {
+            guard 1...200 ~= content.count else {
+                return false
+            }
+            
+            if let first = content.first,
+               first.isWhitespace || first.isNewline {
+                return false
+            }
+            
+            if content.contains("\n\n\n") {
+                return false
+            }
+            
+            if content.contains("     ") {
+                return false
+            }
+            
+            let range = NSRange(location: 0, length: content.utf16.count)
+            
+            if let controlCharacterRegex = try? NSRegularExpression(pattern: "[\\u0000-\\u001F]"),
+               controlCharacterRegex.firstMatch(in: content, options: [], range: range) != nil {
+                return false
+            }
+            
+            return true
+        }
     }
     
-    enum Action {
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case makeReplyButtonTapped(Int)
         case showMoreRepliesButtonTapped(Int)
         case addMoreReplies(Int, [Reply])
@@ -47,10 +85,16 @@ struct CommentsWindowFeature {
     @Dependency(\.companyService) var service
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
+            case .binding:
+                return.none
+                
             case let .makeReplyButtonTapped(commentID):
                 state.targetComment = state.comments[id: commentID]
+                state.isFocused = true
                 return .none
                 
             case let .showMoreRepliesButtonTapped(commentID):
@@ -91,7 +135,7 @@ struct CommentsWindowFeature {
                     if let targetComment = state.targetComment {
                         let data = await service.createReply(
                             of: targetComment.id,
-                            content: state.content,
+                            content: state.text,
                             isSecret: targetComment.isSecret ? true : state.isSecret
                         )
                         let reply = data.toDomain()
@@ -120,6 +164,8 @@ struct CommentsWindowFeature {
 
 struct CommentsWindowView: View {
     @Bindable var store: StoreOf<CommentsWindowFeature>
+    @FocusState var isFocused: Bool
+    @State private var selectedDetent: PresentationDetent = .medium
     
     init(store: StoreOf<CommentsWindowFeature>) {
         self.store = store
@@ -148,6 +194,15 @@ struct CommentsWindowView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
+        .presentationCornerRadius(24)
+        .presentationDetents(
+            [
+                .medium,
+                .large
+            ],
+            selection: $selectedDetent
+        )
+        .presentationContentInteraction(.scrolls)
     }
     
     @ViewBuilder
@@ -179,10 +234,60 @@ struct CommentsWindowView: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.immediately)
     }
     
     private var enterCommentArea: some View {
-        EmptyView()
+        HStack(alignment: .bottom, spacing: 0) {
+            textField
+            Spacer()
+            secretButton
+            enterCommentButton
+        }
+        .padding([.leading, .trailing], 16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.gray20.color)
+        )
+        .padding(20)
+    }
+    
+    private var textField: some View {
+        TextField(
+            "\(store.review.nickname)님에게 댓글 추가...",
+            text: $store.text,
+            axis: .vertical,
+        )
+        .focused($isFocused)
+        .bind($store.isFocused, to: $isFocused)
+        .lineLimit(6)
+        .padding([.top, .bottom], 12)
+        .pretendard(.body1Regular, color: .gray90)
+        .onChange(of: isFocused) { _, isFocused in
+            if isFocused {
+                selectedDetent = .large
+            }
+        }
+    }
+    
+    private var secretButton: some View {
+        Button {
+            store.send(.secretButtonTapped)
+        } label: {
+            Image(systemName: store.isSecret ? "lock.fill" : "lock.open") // 추후 아이콘 변경 필요
+                .foregroundStyle(AppColor.gray50.color)
+                .frame(width: 48, height: 48)
+        }
+    }
+    
+    private var enterCommentButton: some View {
+        Button {
+            store.send(.enterCommentButtonTapped)
+        } label: {
+            Image(systemName: "arrow.up.circle.fill") // 추후 아이콘 변경 필요
+                .foregroundStyle(store.isValidInput ? AppColor.orange40.color : AppColor.gray50.color)
+                .frame(width: 48, height: 48)
+        }
     }
 }
 
@@ -203,7 +308,7 @@ struct CommentCardView: View {
         if comment.isVisible {
             commentCard
         } else {
-            secretComment
+            CommentView.secret
         }
     }
     
@@ -252,10 +357,12 @@ struct CommentCardView: View {
             CommentView(
                 nickname: reply.replier,
                 content: reply.content,
-                isVisible: true
+                isVisible: true,
+                originComment: comment
             )
         } else {
-            secretComment
+            CommentView.secret
+                .padding(20)
         }
     }
     
@@ -272,15 +379,6 @@ struct CommentCardView: View {
                 }
             }
         }
-    }
-    
-    private var secretComment: some View {
-        CommentView(
-            nickname: "",
-            content: "",
-            isVisible: false
-        )
-        .padding(20)
     }
     
     var hyphen: some View {

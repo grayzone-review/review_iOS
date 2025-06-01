@@ -83,16 +83,7 @@ struct ReivewCardView: View {
             store.send(.reviewCardTapped)
         }
         .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
-            NavigationStack {
-                CommentsWindowView(store: commentsWindowStore)
-            }
-            .presentationCornerRadius(24)
-            .presentationDetents(
-                [
-                    .medium,
-                    .large
-                ]
-            )
+            CommentsWindowView(store: commentsWindowStore)
         }
     }
     
@@ -249,7 +240,6 @@ struct ReivewCardView: View {
                 Text(String(store.review.likeCount))
                     .pretendard(.body1Bold)
             }
-            .contentShape(Rectangle())
         }
     }
     
@@ -264,7 +254,6 @@ struct ReivewCardView: View {
                 Text(String(store.review.commentCount))
                     .pretendard(.body1Bold)
             }
-            .contentShape(Rectangle())
         }
     }
 }

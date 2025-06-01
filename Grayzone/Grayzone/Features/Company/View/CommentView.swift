@@ -8,9 +8,23 @@
 import SwiftUI
 
 struct CommentView: View {
+    static let secret = Self(nickname: "", content: "", isVisible: false)
+    
     let nickname: String
     let content: String
     let isVisible: Bool
+    let originComment: Comment?
+    
+    init(nickname: String, content: String, isVisible: Bool, originComment: Comment? = nil) {
+        self.nickname = nickname
+        self.content = content
+        self.isVisible = isVisible
+        self.originComment = originComment
+    }
+    
+    var isReply: Bool {
+        originComment != nil
+    }
     
     var body: some View {
         if isVisible {
@@ -43,11 +57,7 @@ struct CommentView: View {
 
 #Preview {
     VStack(alignment: .leading, spacing: 12) {
-        CommentView(
-            nickname: "건디",
-            content: "갈비찜 레시피",
-            isVisible: false
-        )
+        CommentView.secret
         Divider()
         CommentView(
             nickname: "원비",
