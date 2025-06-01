@@ -175,14 +175,20 @@ struct CompanyDetailView: View {
     }
     
     var map: some View {
-        RoundedRectangle(cornerRadius: 8) // 추후 지도로 변경 필요
-            .foregroundStyle(.white)
-            .frame(height: 188)
-            .frame(maxWidth: .infinity)
-            .overlay(
+        Group {
+            if let company = store.company {
+                KakaoMapCardView(coordinate: company.coordinate)
+            } else {
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColor.gray20.color)
-            )
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .frame(height: 188)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.gray20.color)
+        )
     }
     
     private var separator: some View {
