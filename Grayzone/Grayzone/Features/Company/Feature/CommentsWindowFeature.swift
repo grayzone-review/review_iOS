@@ -238,18 +238,43 @@ struct CommentsWindowView: View {
     }
     
     private var enterCommentArea: some View {
-        HStack(alignment: .bottom, spacing: 0) {
-            textField
-            Spacer()
-            secretButton
-            enterCommentButton
+        VStack(spacing: 0) {
+            replyNotification
+            HStack(alignment: .bottom, spacing: 0) {
+                textField
+                Spacer()
+                secretButton
+                enterCommentButton
+            }
+            .padding([.leading, .trailing], 16)
         }
-        .padding([.leading, .trailing], 16)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(AppColor.gray20.color)
         )
         .padding(20)
+    }
+    
+    @ViewBuilder
+    private var replyNotification: some View {
+        if let comment = store.targetComment {
+            HStack {
+                Text("@\(comment.commenter)님에게 답글 남기는 중")
+                    .pretendard(.captionRegular, color: .gray50)
+                Spacer()
+                Button {
+                    store.send(.cancelReplyButton)
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(AppColor.gray50.color)
+                        .frame(width: 9, height: 9)
+                }
+            }
+            .padding([.leading, .trailing], 16)
+            .frame(height: 44)
+            .background(AppColor.gray10.color)
+        }
     }
     
     private var textField: some View {
