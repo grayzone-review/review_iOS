@@ -17,7 +17,8 @@ struct CommentsWindowFeature {
         }
         
         @Shared var review: Review
-        var comments: [Comment] = []
+        var comments: IdentifiedArrayOf<Comment> = []
+        var replies: [Int: IdentifiedArrayOf<Reply>] = [:]
         var targetComment: Comment?
         var content: String = ""
         var isSecret: Bool = false
@@ -32,7 +33,9 @@ struct CommentsWindowFeature {
     }
     
     enum Action {
-        case makeReply(Comment)
+        case makeReplyButtonTapped(Int)
+        case showMoreRepliesButtonTapped(Int)
+        case addMoreReplies(Int, [Reply])
         case commentsNeedLoad
         case setComments([Comment])
         case cancelReplyButton
@@ -46,8 +49,19 @@ struct CommentsWindowFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case let .makeReply(comment):
-                state.targetComment = comment
+            case let .makeReplyButtonTapped(commentID):
+                state.targetComment = state.comments[id: commentID]
+                return .none
+                
+            case let .showMoreRepliesButtonTapped(commentID):
+                return .run { send in
+                    let data = await service.fetchReplies(of: commentID)
+                    let replies = data.replies.map { $0.toDomain() }
+                    await send(.addMoreReplies(commentID, replies))
+                }
+                
+            case let .addMoreReplies(commentID, replies):
+                state.replies[commentID, default: []] += IdentifiedArray(uniqueElements: replies)
                 return .none
                 
             case .commentsNeedLoad:
@@ -58,7 +72,7 @@ struct CommentsWindowFeature {
                 }
                 
             case let .setComments(comments):
-                state.comments = comments
+                state.comments = IdentifiedArray(uniqueElements: comments)
                 return .none
                 
             case .cancelReplyButton:
@@ -81,6 +95,7 @@ struct CommentsWindowFeature {
                             isSecret: targetComment.isSecret ? true : state.isSecret
                         )
                         let reply = data.toDomain()
+                        await send(.addMoreReplies(targetComment.id, [reply]))
                     } else {
                         let data = await service.createComment(
                             of: state.review.id,
@@ -157,16 +172,10 @@ struct CommentsWindowView: View {
             LazyVStack(alignment: .leading, spacing: 0) {
                 ForEach(store.comments) { comment in
                     CommentCardView(
-                        store: Store(
-                            initialState: CommentCardFeature.State(
-                                comment: comment
-                            )
-                        ) {
-                            CommentCardFeature()
-                        }
-                    ) { comment in
-                        store.send(.makeReply(comment))
-                    }
+                        store: store,
+                        comment: comment,
+                        replies: store.replies[comment.id, default: []]
+                    )
                 }
             }
         }
@@ -174,6 +183,110 @@ struct CommentsWindowView: View {
     
     private var enterCommentArea: some View {
         EmptyView()
+    }
+}
+
+struct CommentCardView: View {
+    @Bindable var store: StoreOf<CommentsWindowFeature>
+    let comment: Comment
+    let replies: IdentifiedArrayOf<Reply>
+    
+    private var remainingReplyCount: Int {
+        comment.replyCount - replies.count
+    }
+    
+    private var isRepliesLoadable: Bool {
+        remainingReplyCount > 0
+    }
+    
+    var body: some View {
+        if comment.isVisible {
+            commentCard
+        } else {
+            secretComment
+        }
+    }
+    
+    private var commentCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            content
+            makeReplyButton
+            replyList
+            showMoreReplyButton
+        }
+        .padding(20)
+    }
+    
+    private var content: some View {
+        CommentView(
+            nickname: comment.commenter,
+            content: comment.content,
+            isVisible: true
+        )
+    }
+    
+    private var makeReplyButton: some View {
+        Button {
+            store.send(.makeReplyButtonTapped(comment.id))
+        } label: {
+            Text("답글달기")
+                .pretendard(.captionBold, color: .gray50)
+        }
+    }
+    
+    private var replyList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(replies) { reply in
+                HStack(spacing: 8) {
+                    hyphen
+                    replyContent(reply)
+                }
+                .padding([.top], 40)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func replyContent(_ reply: Reply) -> some View {
+        if reply.isVisible {
+            CommentView(
+                nickname: reply.replier,
+                content: reply.content,
+                isVisible: true
+            )
+        } else {
+            secretComment
+        }
+    }
+    
+    @ViewBuilder
+    private var showMoreReplyButton: some View {
+        if isRepliesLoadable {
+            HStack(spacing: 8) {
+                hyphen
+                Button {
+                    store.send(.showMoreRepliesButtonTapped(comment.id))
+                } label: {
+                    Text("답글 \(remainingReplyCount)개 더보기")
+                        .pretendard(.captionSemiBold, color: .gray50)
+                }
+            }
+        }
+    }
+    
+    private var secretComment: some View {
+        CommentView(
+            nickname: "",
+            content: "",
+            isVisible: false
+        )
+        .padding(20)
+    }
+    
+    var hyphen: some View {
+        Rectangle()
+            .frame(width: 12, height: 1)
+            .foregroundStyle(AppColor.gray20.color)
     }
 }
 
