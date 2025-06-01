@@ -182,6 +182,7 @@ struct ReivewCardView: View {
             reviewPoint(.advantage)
             reviewPoint(.disadvantage)
             reviewPoint(.managementFeedback)
+            seeMoreButton
         }
     }
     
@@ -212,6 +213,15 @@ struct ReivewCardView: View {
         }
     }
     
+    @ViewBuilder
+    private var seeMoreButton: some View {
+        if store.isExpanded == false {
+            Text("더 보기")
+                .pretendard(.body1Regular, color: .gray50)
+                .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+        }
+    }
+    
     private var interaction: some View {
         HStack(spacing: 8) {
             likeButton
@@ -232,6 +242,7 @@ struct ReivewCardView: View {
                 Text(String(store.review.likeCount))
                     .pretendard(.body1Bold)
             }
+            .contentShape(Rectangle())
         }
     }
     
@@ -246,6 +257,7 @@ struct ReivewCardView: View {
                 Text(String(store.review.commentCount))
                     .pretendard(.body1Bold)
             }
+            .contentShape(Rectangle())
         }
     }
 }
