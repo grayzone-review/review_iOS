@@ -15,23 +15,24 @@
 
 /* Begin PBXFileReference section */
 		93146C4A2DE1E67C00DC8106 /* Grayzone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grayzone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E32495F42DEC182900873473 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E32492EF2DE2034E00873473 /* Exceptions for "Grayzone" folder in "Grayzone" target */ = {
+		E32496A62DEC190D00873473 /* Exceptions for "Grayzone" folder in "Grayzone" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				Resources/Info.plist,
 			);
 			target = 93146C492DE1E67C00DC8106 /* Grayzone */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		93146C4C2DE1E67C00DC8106 /* Grayzone */ = {
+		E32496812DEC190D00873473 /* Grayzone */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E32492EF2DE2034E00873473 /* Exceptions for "Grayzone" folder in "Grayzone" target */,
+				E32496A62DEC190D00873473 /* Exceptions for "Grayzone" folder in "Grayzone" target */,
 			);
 			path = Grayzone;
 			sourceTree = "<group>";
@@ -56,7 +57,7 @@
 		93146C412DE1E67C00DC8106 = {
 			isa = PBXGroup;
 			children = (
-				93146C4C2DE1E67C00DC8106 /* Grayzone */,
+				E32496812DEC190D00873473 /* Grayzone */,
 				93146C4B2DE1E67C00DC8106 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -85,7 +86,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				93146C4C2DE1E67C00DC8106 /* Grayzone */,
+				E32496812DEC190D00873473 /* Grayzone */,
 			);
 			name = Grayzone;
 			packageProductDependencies = (
@@ -161,6 +162,7 @@
 /* Begin XCBuildConfiguration section */
 		93146C532DE1E67D00DC8106 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E32495F42DEC182900873473 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -211,6 +213,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Grayzone/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -224,6 +227,7 @@
 		};
 		93146C542DE1E67D00DC8106 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E32495F42DEC182900873473 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -268,6 +272,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Grayzone/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -280,15 +285,16 @@
 		};
 		93146C562DE1E67D00DC8106 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E32495F42DEC182900873473 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = RKG4N9K9YM;
+				DEVELOPMENT_TEAM = M4257J4S26;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Grayzone/Info.plist;
+				INFOPLIST_FILE = Grayzone/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -313,15 +319,16 @@
 		};
 		93146C572DE1E67D00DC8106 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E32495F42DEC182900873473 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = RKG4N9K9YM;
+				DEVELOPMENT_TEAM = M4257J4S26;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Grayzone/Info.plist;
+				INFOPLIST_FILE = Grayzone/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
