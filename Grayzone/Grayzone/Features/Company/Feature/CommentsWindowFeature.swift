@@ -20,26 +20,6 @@ struct CommentsWindowFeature {
         var content: String = ""
         var isSecret: Bool = false
         
-        var prefix: String {
-            if let targetComment {
-                "@\(targetComment.commenter) "
-            } else {
-                ""
-            }
-        }
-        
-        var text: String {
-            get { prefix + content }
-            set {
-                guard newValue.count >= prefix.count else {
-                    self.text = prefix
-                    return
-                }
-                
-                content = String(newValue.split(separator: prefix).last ?? "")
-            }
-        }
-        
         var isValidInput: Bool {
             guard 1...200 ~= content.count else {
                 return false
@@ -93,7 +73,10 @@ struct CommentsWindowFeature {
                 return.none
                 
             case let .makeReplyButtonTapped(commentID):
-                state.targetComment = state.comments[id: commentID]
+                guard let targetComment = state.comments[id: commentID] else {
+                    return .none
+                }
+                state.targetComment = targetComment
                 state.isFocused = true
                 return .none
                 
@@ -131,11 +114,16 @@ struct CommentsWindowFeature {
                 return .none
                 
             case .enterCommentButtonTapped:
+                let targetComment = state.targetComment
+                let content = state.content
+                state.targetComment = nil
+                state.content = ""
+                state.isFocused = false
                 return .run { [state] send in
-                    if let targetComment = state.targetComment {
+                    if let targetComment {
                         let data = await service.createReply(
                             of: targetComment.id,
-                            content: state.text,
+                            content: content,
                             isSecret: targetComment.isSecret ? true : state.isSecret
                         )
                         let reply = data.toDomain()
@@ -143,7 +131,7 @@ struct CommentsWindowFeature {
                     } else {
                         let data = await service.createComment(
                             of: state.review.id,
-                            content: state.content,
+                            content: content,
                             isSecret: state.isSecret
                         )
                         let comment = data.toDomain()
@@ -280,7 +268,7 @@ struct CommentsWindowView: View {
     private var textField: some View {
         TextField(
             "\(store.review.nickname)님에게 댓글 추가...",
-            text: $store.text,
+            text: $store.content,
             axis: .vertical,
         )
         .focused($isFocused)
