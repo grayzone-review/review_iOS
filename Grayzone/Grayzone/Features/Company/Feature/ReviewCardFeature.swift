@@ -79,6 +79,18 @@ struct ReivewCardView: View {
         .onTapGesture {
             store.send(.reviewCardTapped)
         }
+        .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
+            NavigationStack {
+                CommentsWindowView(store: commentsWindowStore)
+            }
+            .presentationCornerRadius(24)
+            .presentationDetents(
+                [
+                    .medium,
+                    .large
+                ]
+            )
+        }
     }
     
     private var header: some View {
