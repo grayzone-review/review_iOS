@@ -11,6 +11,7 @@ import KakaoMapsSDK
 
 struct KakaoMapRepresentable: UIViewRepresentable {
     @Binding var draw: Bool
+    @Binding var isActive: Bool
     let x: Double
     let y: Double
     
@@ -38,25 +39,28 @@ struct KakaoMapRepresentable: UIViewRepresentable {
             if controller.isEngineActive {
                 controller.pauseEngine()
                 controller.resetEngine()
+                isActive = false
             }
         }
     }
     
     /// Coordinator 생성
     func makeCoordinator() -> KakaoMapCoordinator {
-        return KakaoMapCoordinator(x: x, y: y)
+        return KakaoMapCoordinator(isActive: $isActive, x: x, y: y)
     }
     
     class KakaoMapCoordinator: NSObject, MapControllerDelegate {
+        var isActive: Binding<Bool>
         let longitude: Double
         let latitude: Double
         
         var controller: KMController?
         var first: Bool
         
-        init(x: Double, y: Double) {
+        init(isActive: Binding<Bool>, x: Double, y: Double) {
             first = true
             let coordinate = EPSGConverter.convert(x: x, y: y)
+            self.isActive = isActive
             self.longitude = coordinate.longitude
             self.latitude = coordinate.latitude
             super.init()
@@ -81,20 +85,17 @@ struct KakaoMapRepresentable: UIViewRepresentable {
 
         //addView 성공 이벤트 delegate. 추가적으로 수행할 작업을 진행한다.
         func addViewSucceeded(_ viewName: String, viewInfoName: String) {
-            print("👀 \(#function)")
+            isActive.wrappedValue = true
             print("OK") //추가 성공. 성공시 추가적으로 수행할 작업을 진행한다.
         }
     
         //addView 실패 이벤트 delegate. 실패에 대한 오류 처리를 진행한다.
         func addViewFailed(_ viewName: String, viewInfoName: String) {
-            let message = controller?.getStateDescMessage() ?? ""
-            print("👀 \(#function):: \(message) ")
             print("Failed")
         }
         
         /// KMViewContainer 리사이징 될 때 호출.
         func containerDidResized(_ size: CGSize) {
-            print("👀 \(#function)")
             let mapView: KakaoMap? = controller?.getView("mapview") as? KakaoMap
             mapView?.viewRect = CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: size)
             if first {
@@ -109,12 +110,27 @@ struct KakaoMapRepresentable: UIViewRepresentable {
 
 struct KakaoMapCardView: View {
     @State var draw: Bool = false
+    @State var isActive: Bool = false
     let coordinate: Coordinate
     
     var body: some View {
-        KakaoMapRepresentable(draw: $draw, x: coordinate.x, y: coordinate.y)
+        KakaoMapRepresentable(draw: $draw, isActive: $isActive , x: coordinate.x, y: coordinate.y)
             .onAppear { draw = true }
             .onDisappear { draw = false }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .center) {
+                pointIcon
+                    .alignmentGuide(VerticalAlignment.center) { $0[.bottom] }
+            }
+    }
+    
+    @ViewBuilder
+    private var pointIcon: some View {
+        if isActive {
+            Image("ic_map_pin_fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 48, height: 48)
+        }
     }
 }
