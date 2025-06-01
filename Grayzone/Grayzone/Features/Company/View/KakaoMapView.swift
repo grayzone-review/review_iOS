@@ -127,8 +127,8 @@ struct KakaoMapCardView: View {
     @ViewBuilder
     private var pointIcon: some View {
         if isActive {
-            Image("ic_map_pin_fill")
-                .resizable()
+            AppIcon.mapPinFill.image
+                .foregroundStyle(AppColor.orange40.color)
                 .scaledToFit()
                 .frame(width: 48, height: 48)
         }

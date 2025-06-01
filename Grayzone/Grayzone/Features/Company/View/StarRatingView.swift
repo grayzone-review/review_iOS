@@ -32,8 +32,7 @@ struct StarRatingView: View {
     @ViewBuilder
     private func starView(at index: Int) -> some View {
         let filled = rating - Double(index)
-        let star = Image(systemName: "star.fill") // 이후 Figma에 있는 아이콘으로 변경 필요
-            .resizable()
+        let star = AppIcon.starFill.image
         ZStack {
             star
                 .foregroundStyle(AppColor.gray20.color)

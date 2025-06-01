@@ -59,6 +59,7 @@
 			children = (
 				E32496812DEC190D00873473 /* Grayzone */,
 				93146C4B2DE1E67C00DC8106 /* Products */,
+				93BBB5BE2DED151400A3391E /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -68,6 +69,14 @@
 				93146C4A2DE1E67C00DC8106 /* Grayzone.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		93BBB5BE2DED151400A3391E /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				E32495F42DEC182900873473 /* Config.xcconfig */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

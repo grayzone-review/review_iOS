@@ -254,9 +254,9 @@ struct CommentsWindowView: View {
                 Button {
                     store.send(.cancelReplyButton)
                 } label: {
-                    Image(systemName: "xmark")
+                    AppIcon.closeLine.image
                         .foregroundStyle(AppColor.gray50.color)
-                        .frame(width: 9, height: 9)
+                        .frame(width: 18, height: 18)
                 }
             }
             .padding([.leading, .trailing], 16)
@@ -287,9 +287,10 @@ struct CommentsWindowView: View {
         Button {
             store.send(.secretButtonTapped)
         } label: {
-            Image(systemName: store.isSecret ? "lock.fill" : "lock.open") // 추후 아이콘 변경 필요
+            (store.isSecret ? AppIcon.lockFill : .unlockLine).image
                 .foregroundStyle(AppColor.gray50.color)
-                .frame(width: 48, height: 48)
+                .frame(width: 28, height: 28)
+                .padding(10)
         }
     }
     
@@ -297,9 +298,10 @@ struct CommentsWindowView: View {
         Button {
             store.send(.enterCommentButtonTapped)
         } label: {
-            Image(systemName: "arrow.up.circle.fill") // 추후 아이콘 변경 필요
+            AppIcon.sendFill.image
                 .foregroundStyle(store.isValidInput ? AppColor.orange40.color : AppColor.gray50.color)
-                .frame(width: 48, height: 48)
+                .frame(width: 28, height: 28)
+                .padding(10)
         }
     }
 }

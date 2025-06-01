@@ -92,9 +92,10 @@ struct CompanyDetailView: View {
                 Button {
                     store.send(.backButtonTapped)
                 } label: {
-                    Image(systemName: "chevron.left") // 추후 아이콘 변경 필요
+                    AppIcon.arrowLeft.image
                         .foregroundStyle(AppColor.gray90.color)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 24, height: 24)
+                        .padding(10)
                 }
             }
             ToolbarItem(placement: .principal) {
@@ -114,7 +115,7 @@ struct CompanyDetailView: View {
                     .pretendard(.captionRegular, color: .gray50)
             }
             HStack(spacing: 4) {
-                Image(systemName: "star.fill") // 추후 아이콘 변경 필요
+                AppIcon.starFill.image
                     .foregroundStyle(AppColor.seYellow40.color)
                     .frame(width: 24, height: 24)
                 Text(String(store.company?.totalRating.rounded(to: 1) ?? 0))
@@ -139,7 +140,7 @@ struct CompanyDetailView: View {
             store.send(.followButtonTapped)
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: isFollowed ? "person.2" :  "plus") // 추후 아이콘 변경 필요
+                (isFollowed ? AppIcon.followingFill : .followLine).image
                     .frame(width: 16, height: 16)
                     .foregroundStyle(isFollowed ? AppColor.white.color : AppColor.orange40.color)
                 Text("팔로우")
@@ -161,7 +162,7 @@ struct CompanyDetailView: View {
             store.send(.makeReviewButtonTapped)
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: "pencil") // 추후 아이콘 변경 필요
+                AppIcon.penFill.image
                     .frame(width: 16, height: 16)
                     .foregroundStyle(AppColor.white.color)
                 Text("리뷰 작성")
@@ -184,6 +185,7 @@ struct CompanyDetailView: View {
                     .frame(maxWidth: .infinity)
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .frame(height: 188)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -208,7 +210,7 @@ struct CompanyDetailView: View {
     
     private var empty: some View {
         VStack(alignment: .center, spacing: 12) {
-            Image(systemName: "bubble.fill") // 추후 아이콘 변경 필요
+            AppIcon.reviewFill.image
                 .resizable()
                 .frame(width: 48, height: 48)
                 .foregroundStyle(AppColor.gray30.color)

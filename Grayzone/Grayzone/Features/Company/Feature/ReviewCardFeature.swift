@@ -234,9 +234,10 @@ struct ReivewCardView: View {
             let isLiked = store.review.isLiked
             
             HStack(alignment: .center, spacing: 0) {
-                Image(systemName: isLiked ? "heart.fill" : "heart") // 추후 아이콘 변경 필요
+                (isLiked ? AppIcon.heartFill : .heartLine).image
                     .foregroundStyle(isLiked ? AppColor.seRed50.color : AppColor.black.color)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 24, height: 24)
+                    .padding(10)
                 Text(String(store.review.likeCount))
                     .pretendard(.body1Bold)
             }
@@ -248,9 +249,10 @@ struct ReivewCardView: View {
             store.send(.commentButtonTapped)
         } label: {
             HStack(alignment: .center, spacing: 0) {
-                Image(systemName: "bubble") // 추후 아이콘 변경 필요
+                AppIcon.chatLine.image
                     .foregroundStyle(AppColor.black.color)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 24, height: 24)
+                    .padding(10)
                 Text(String(store.review.commentCount))
                     .pretendard(.body1Bold)
             }
