@@ -14,7 +14,6 @@ struct ReviewCardFeature {
     struct State: Equatable {
         @Presents var comments: CommentsWindowFeature.State?
         @Shared var review: Review
-        var isExpanded: Bool = false
     }
     
     enum Action {
@@ -32,11 +31,15 @@ struct ReviewCardFeature {
                 return .none
                 
             case .reviewCardTapped:
-                state.isExpanded.toggle()
+                state.$review.withLock {
+                    $0.isExpanded.toggle()
+                }
                 return .none
                 
             case .seeMoreButtonTapped:
-                state.isExpanded = true
+                state.$review.withLock {
+                    $0.isExpanded = true
+                }
                 return .none
                 
             case .likeButtonTapped:
@@ -121,7 +124,7 @@ struct ReivewCardView: View {
                 StarRatingView(rating: store.review.rating.totalRating)
             }
             
-            if store.isExpanded {
+            if store.review.isExpanded {
                 ratings
             }
         }
@@ -137,7 +140,7 @@ struct ReivewCardView: View {
     
     @ViewBuilder
     private var ratings: some View {
-        if store.isExpanded {
+        if store.review.isExpanded {
             HStack(alignment: .top) {
                 VStack(spacing: 20) {
                     rating("급여", store.review.rating.salary)
@@ -188,7 +191,7 @@ struct ReivewCardView: View {
     
     @ViewBuilder
     private func reviewPoint(_ point: Review.Point) -> some View {
-        if store.isExpanded || point == .advantage {
+        if store.review.isExpanded || point == .advantage {
             let text = switch point {
             case .advantage:
                 store.review.advantagePoint
@@ -215,10 +218,14 @@ struct ReivewCardView: View {
     
     @ViewBuilder
     private var seeMoreButton: some View {
-        if store.isExpanded == false {
-            Text("더 보기")
-                .pretendard(.body1Regular, color: .gray50)
-                .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+        if store.review.isExpanded == false {
+            Button {
+                store.send(.seeMoreButtonTapped)
+            } label: {
+                Text("더 보기")
+                    .pretendard(.body1Regular, color: .gray50)
+                    .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+            }
         }
     }
     
