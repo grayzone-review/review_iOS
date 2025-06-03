@@ -282,7 +282,7 @@ struct CommentsWindowView: View {
     
     private var textField: some View {
         TextField(
-            "\(store.review.nickname)님에게 댓글 추가...",
+            "\(store.review.reviewer)님에게 댓글 추가...",
             text: $store.text,
             axis: .vertical,
         )
@@ -435,11 +435,11 @@ struct CommentCardView: View {
                             companyCulture: 4.0,
                             management: 3.0
                         ),
+                        reviewer: "bob",
                         title: "별로였어요.",
                         advantagePoint: "연봉이 높아요.",
                         disadvantagePoint: "상사가 별로예요.",
                         managementFeedback: "리더십이 부족해요.",
-                        nickname: "bob",
                         job: "프론트엔드 개발자",
                         employmentPeriod: "1년 미만",
                         creationDate: .now,

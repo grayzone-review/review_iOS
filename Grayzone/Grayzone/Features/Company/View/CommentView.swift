@@ -29,7 +29,12 @@ struct CommentView: View {
         return attributedString
     }
     
-    init(nickname: String, content: String, isVisible: Bool, originComment: Comment? = nil) {
+    init(
+        nickname: String,
+        content: String,
+        isVisible: Bool,
+        originComment: Comment? = nil
+    ) {
         self.nickname = nickname
         self.content = content
         self.isVisible = isVisible

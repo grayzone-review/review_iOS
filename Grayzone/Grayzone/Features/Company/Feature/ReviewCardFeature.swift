@@ -24,6 +24,8 @@ struct ReviewCardFeature {
         case commentButtonTapped
     }
     
+    @Dependency(\.companyService) var service
+    
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
@@ -47,7 +49,13 @@ struct ReviewCardFeature {
                     $0.likeCount += $0.isLiked ? -1 : 1
                     $0.isLiked.toggle()
                 }
-                return .none
+                return .run { [review = state.review] send in
+                    if review.isLiked {
+                        await service.createReviewLinking(of: review.id)
+                    } else {
+                        await service.deleteReviewLinking(of: review.id)
+                    }
+                }
                 
             case .commentButtonTapped:
                 state.comments = CommentsWindowFeature.State(
@@ -89,7 +97,7 @@ struct ReivewCardView: View {
     
     private var header: some View {
         HStack(spacing: 8) {
-            Text(store.review.nickname)
+            Text(store.review.reviewer)
             divider
             Text(store.review.job)
             divider
@@ -274,11 +282,11 @@ struct ReivewCardView: View {
                             companyCulture: 4.0,
                             management: 3.0
                         ),
+                        reviewer: "bob",
                         title: "별로였어요.",
                         advantagePoint: "연봉이 높아요.",
                         disadvantagePoint: "상사가 별로예요.",
                         managementFeedback: "리더십이 부족해요.",
-                        nickname: "bob",
                         job: "프론트엔드 개발자",
                         employmentPeriod: "1년 미만",
                         creationDate: .now,

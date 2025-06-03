@@ -56,7 +56,17 @@ struct CompanyDetailFeature {
                 
             case .followButtonTapped:
                 state.company?.isFollowed.toggle()
-                return .none
+                return .run { [company = state.company] _ in
+                    guard let company else {
+                        return
+                    }
+                    
+                    if company.isFollowed {
+                        await service.createCompanyFollowing(of: company.id)
+                    } else {
+                        await service.deleteCompanyFollowing(of: company.id)
+                    }
+                }
                 
             case .makeReviewButtonTapped:
                 return .none

@@ -10,11 +10,11 @@ import Foundation
 struct Review: Equatable, Identifiable {
     let id: Int
     var rating: Rating
+    var reviewer: String
     var title: String
     var advantagePoint: String
     var disadvantagePoint: String
     var managementFeedback: String
-    var nickname: String
     var job: String
     var employmentPeriod: String
     let creationDate: Date
@@ -68,11 +68,11 @@ extension Review {
 struct ReviewDTO: Codable {
     let id: Int
     let rating: RatingDTO
+    var reviewer: String
     let title: String
     let advantagePoint: String
     let disadvantagePoint: String
     let managementFeedback: String
-    var nickname: String
     let job: String
     let employmentPeriod: String
     let createdAt: String
@@ -83,11 +83,11 @@ struct ReviewDTO: Codable {
     enum CodingKeys: String, CodingKey {
         case id
         case rating = "ratings"
+        case reviewer = "author"
         case title
         case advantagePoint
         case disadvantagePoint
         case managementFeedback
-        case nickname
         case job = "jobRole"
         case employmentPeriod
         case createdAt
@@ -104,11 +104,11 @@ extension ReviewDTO {
         return Review(
             id: id,
             rating: rating.toDomain(),
+            reviewer: reviewer,
             title: title,
             advantagePoint: advantagePoint,
             disadvantagePoint: disadvantagePoint,
             managementFeedback: managementFeedback,
-            nickname: nickname,
             job: job,
             employmentPeriod: employmentPeriod,
             creationDate: creationDate,

@@ -14,6 +14,10 @@ protocol CompanyService {
     func fetchReplies(of commentID: Int) async -> RepliesBody
     func createComment(of reviewID: Int, content: String, isSecret: Bool) async -> CommentDTO
     func createReply(of commentID: Int, content: String, isSecret: Bool) async -> ReplyDTO
+    func createCompanyFollowing(of companyID: Int) async
+    func deleteCompanyFollowing(of companyID: Int) async
+    func createReviewLinking(of reviewID: Int) async
+    func deleteReviewLinking(of reviewID: Int) async
 }
 
 private enum CompanyServiceKey: DependencyKey {
@@ -55,11 +59,11 @@ struct MockCompanyService: CompanyService {
                         companyCulture: 2.5,
                         management: 2.0
                     ),
+                    reviewer: "alice",
                     title: "좋은 회사입니다.",
                     advantagePoint: "복지가 좋아요.",
                     disadvantagePoint: "야근이 많아요.",
                     managementFeedback: "소통이 필요합니다.",
-                    nickname: "alice",
                     job: "백엔드 개발자",
                     employmentPeriod: "1년 이상",
                     createdAt: "2025-05-23T17:40:33",
@@ -76,11 +80,11 @@ struct MockCompanyService: CompanyService {
                         companyCulture: 4.0,
                         management: 3.0
                     ),
+                    reviewer: "bob",
                     title: "별로였어요.",
                     advantagePoint: "연봉이 높아요.",
                     disadvantagePoint: "상사가 별로예요.",
                     managementFeedback: "리더십이 부족해요.",
-                    nickname: "bob",
                     job: "프론트엔드 개발자",
                     employmentPeriod: "1년 미만",
                     createdAt: "2025-05-23T17:40:33",
@@ -97,11 +101,11 @@ struct MockCompanyService: CompanyService {
                         companyCulture: 4.0,
                         management: 3.0
                     ),
+                    reviewer: "charlie",
                     title: "그럭저럭 괜찮아요.",
                     advantagePoint: "동료들",
                     disadvantagePoint: "동료들...",
                     managementFeedback: "교육 기회가 부족해요.",
-                    nickname: "charlie",
                     job: "디자이너",
                     employmentPeriod: "2년 이상",
                     createdAt: "2025-05-23T17:40:33",
@@ -198,4 +202,12 @@ struct MockCompanyService: CompanyService {
             isVisible: true
         )
     }
+    
+    func createCompanyFollowing(of companyID: Int) async {}
+    
+    func deleteCompanyFollowing(of companyID: Int) async {}
+    
+    func createReviewLinking(of reviewID: Int) async {}
+    
+    func deleteReviewLinking(of reviewID: Int) async {}
 }
