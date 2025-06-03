@@ -19,7 +19,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E32496A62DEC190D00873473 /* Exceptions for "Grayzone" folder in "Grayzone" target */ = {
+		93BBB7202DEEDB1F00A3391E /* Exceptions for "Grayzone" folder in "Grayzone" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/Info.plist,
@@ -32,7 +32,7 @@
 		E32496812DEC190D00873473 /* Grayzone */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E32496A62DEC190D00873473 /* Exceptions for "Grayzone" folder in "Grayzone" target */,
+				93BBB7202DEEDB1F00A3391E /* Exceptions for "Grayzone" folder in "Grayzone" target */,
 			);
 			path = Grayzone;
 			sourceTree = "<group>";

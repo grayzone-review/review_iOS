@@ -17,7 +17,9 @@ struct CommentsWindowFeature {
         var replies: [Int: IdentifiedArrayOf<Reply>] = [:]
         var targetComment: Comment?
         var isFocused: Bool = false
+        var prefix: String = ""
         var content: String = ""
+        var text: String = ""
         var isSecret: Bool = false
         
         var isValidInput: Bool {
@@ -56,7 +58,8 @@ struct CommentsWindowFeature {
         case addMoreReplies(Int, [Reply])
         case commentsNeedLoad
         case setComments([Comment])
-        case cancelReplyButton
+        case cancelReplyButtonTapped
+        case textChanged(oldValue: String, newValue: String)
         case secretButtonTapped
         case enterCommentButtonTapped
         case commentAdded(Comment)
@@ -78,6 +81,8 @@ struct CommentsWindowFeature {
                 }
                 state.targetComment = targetComment
                 state.isFocused = true
+                state.prefix = "@\(targetComment.commenter) "
+                state.text = state.prefix + state.content
                 return .none
                 
             case let .showMoreRepliesButtonTapped(commentID):
@@ -102,8 +107,18 @@ struct CommentsWindowFeature {
                 state.comments = IdentifiedArray(uniqueElements: comments)
                 return .none
                 
-            case .cancelReplyButton:
+            case .cancelReplyButtonTapped:
                 state.targetComment = nil
+                state.prefix = ""
+                state.text = state.content
+                return .none
+                
+            case let .textChanged(oldValue, newValue):
+                if newValue.hasPrefix(state.prefix) == false {
+                    state.text = oldValue
+                } else {
+                    state.content = String(newValue.dropFirst(state.prefix.count))
+                }
                 return .none
                 
             case .secretButtonTapped:
@@ -252,7 +267,7 @@ struct CommentsWindowView: View {
                     .pretendard(.captionRegular, color: .gray50)
                 Spacer()
                 Button {
-                    store.send(.cancelReplyButton)
+                    store.send(.cancelReplyButtonTapped)
                 } label: {
                     AppIcon.closeLine.image
                         .foregroundStyle(AppColor.gray50.color)
@@ -268,7 +283,7 @@ struct CommentsWindowView: View {
     private var textField: some View {
         TextField(
             "\(store.review.nickname)님에게 댓글 추가...",
-            text: $store.content,
+            text: $store.text,
             axis: .vertical,
         )
         .focused($isFocused)
@@ -280,6 +295,9 @@ struct CommentsWindowView: View {
             if isFocused {
                 selectedDetent = .large
             }
+        }
+        .onChange(of: store.text) { oldValue, newValue in
+            store.send(.textChanged(oldValue: oldValue, newValue: newValue))
         }
     }
     
