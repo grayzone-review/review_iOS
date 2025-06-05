@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "93146C492DE1E67C00DC8106"
-               BuildableName = "Grayzone.app"
-               BlueprintName = "Grayzone"
-               ReferencedContainer = "container:Grayzone.xcodeproj">
+               BuildableName = "Up.app"
+               BlueprintName = "Up"
+               ReferencedContainer = "container:Up.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "93146C492DE1E67C00DC8106"
-            BuildableName = "Grayzone.app"
-            BlueprintName = "Grayzone"
-            ReferencedContainer = "container:Grayzone.xcodeproj">
+            BuildableName = "Up.app"
+            BlueprintName = "Up"
+            ReferencedContainer = "container:Up.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "93146C492DE1E67C00DC8106"
-            BuildableName = "Grayzone.app"
-            BlueprintName = "Grayzone"
-            ReferencedContainer = "container:Grayzone.xcodeproj">
+            BuildableName = "Up.app"
+            BlueprintName = "Up"
+            ReferencedContainer = "container:Up.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

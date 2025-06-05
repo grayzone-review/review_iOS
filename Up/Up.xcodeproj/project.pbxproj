@@ -14,27 +14,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		93146C4A2DE1E67C00DC8106 /* Grayzone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grayzone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		93146C4A2DE1E67C00DC8106 /* Up.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Up.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E32495F42DEC182900873473 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		93BBB7202DEEDB1F00A3391E /* Exceptions for "Grayzone" folder in "Grayzone" target */ = {
+		93BBB7202DEEDB1F00A3391E /* Exceptions for "Up" folder in "Up" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/Info.plist,
 			);
-			target = 93146C492DE1E67C00DC8106 /* Grayzone */;
+			target = 93146C492DE1E67C00DC8106 /* Up */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E32496812DEC190D00873473 /* Grayzone */ = {
+		E32496812DEC190D00873473 /* Up */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				93BBB7202DEEDB1F00A3391E /* Exceptions for "Grayzone" folder in "Grayzone" target */,
+				93BBB7202DEEDB1F00A3391E /* Exceptions for "Up" folder in "Up" target */,
 			);
-			path = Grayzone;
+			path = Up;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -57,7 +57,7 @@
 		93146C412DE1E67C00DC8106 = {
 			isa = PBXGroup;
 			children = (
-				E32496812DEC190D00873473 /* Grayzone */,
+				E32496812DEC190D00873473 /* Up */,
 				93146C4B2DE1E67C00DC8106 /* Products */,
 				93BBB5BE2DED151400A3391E /* Recovered References */,
 			);
@@ -66,7 +66,7 @@
 		93146C4B2DE1E67C00DC8106 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				93146C4A2DE1E67C00DC8106 /* Grayzone.app */,
+				93146C4A2DE1E67C00DC8106 /* Up.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,9 +82,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		93146C492DE1E67C00DC8106 /* Grayzone */ = {
+		93146C492DE1E67C00DC8106 /* Up */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 93146C552DE1E67D00DC8106 /* Build configuration list for PBXNativeTarget "Grayzone" */;
+			buildConfigurationList = 93146C552DE1E67D00DC8106 /* Build configuration list for PBXNativeTarget "Up" */;
 			buildPhases = (
 				93146C462DE1E67C00DC8106 /* Sources */,
 				93146C472DE1E67C00DC8106 /* Frameworks */,
@@ -95,9 +95,9 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				E32496812DEC190D00873473 /* Grayzone */,
+				E32496812DEC190D00873473 /* Up */,
 			);
-			name = Grayzone;
+			name = Up;
 			packageProductDependencies = (
 				93146C5D2DE1E89F00DC8106 /* ComposableArchitecture */,
 				93146C602DE1E95C00DC8106 /* Alamofire */,
@@ -105,7 +105,7 @@
 				93146C6D2DE1F09E00DC8106 /* KakaoMapsSDK-SPM */,
 			);
 			productName = Grayzone;
-			productReference = 93146C4A2DE1E67C00DC8106 /* Grayzone.app */;
+			productReference = 93146C4A2DE1E67C00DC8106 /* Up.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -123,7 +123,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 93146C452DE1E67C00DC8106 /* Build configuration list for PBXProject "Grayzone" */;
+			buildConfigurationList = 93146C452DE1E67C00DC8106 /* Build configuration list for PBXProject "Up" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -143,7 +143,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				93146C492DE1E67C00DC8106 /* Grayzone */,
+				93146C492DE1E67C00DC8106 /* Up */,
 			);
 		};
 /* End PBXProject section */
@@ -300,10 +300,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = M4257J4S26;
+				DEVELOPMENT_TEAM = RKG4N9K9YM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Grayzone/Resources/Info.plist;
+				INFOPLIST_FILE = Up/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -314,7 +314,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.grayzone.review.Grayzone;
+				PRODUCT_BUNDLE_IDENTIFIER = com.up.review;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -334,10 +334,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = M4257J4S26;
+				DEVELOPMENT_TEAM = RKG4N9K9YM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Grayzone/Resources/Info.plist;
+				INFOPLIST_FILE = Up/Resources/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -348,7 +348,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.grayzone.review.Grayzone;
+				PRODUCT_BUNDLE_IDENTIFIER = com.up.review;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -363,7 +363,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		93146C452DE1E67C00DC8106 /* Build configuration list for PBXProject "Grayzone" */ = {
+		93146C452DE1E67C00DC8106 /* Build configuration list for PBXProject "Up" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				93146C532DE1E67D00DC8106 /* Debug */,
@@ -372,7 +372,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		93146C552DE1E67D00DC8106 /* Build configuration list for PBXNativeTarget "Grayzone" */ = {
+		93146C552DE1E67D00DC8106 /* Build configuration list for PBXNativeTarget "Up" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				93146C562DE1E67D00DC8106 /* Debug */,
