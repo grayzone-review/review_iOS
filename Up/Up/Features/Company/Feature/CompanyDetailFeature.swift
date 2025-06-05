@@ -23,10 +23,16 @@ struct CompanyDetailFeature {
         case companyReviewsFetched([Review])
         case backButtonTapped
         case followButtonTapped
+        case follow
         case makeReviewButtonTapped
     }
     
+    enum CancelID {
+        case follow
+    }
+    
     @Dependency(\.dismiss) var dismiss
+    @Dependency(\.mainQueue) var mainQueue
     @Dependency(\.companyService) var service
     
     var body: some ReducerOf<Self> {
@@ -56,6 +62,14 @@ struct CompanyDetailFeature {
                 
             case .followButtonTapped:
                 state.company?.isFollowed.toggle()
+                return .send(.follow)
+                    .debounce(
+                        id: CancelID.follow,
+                        for: 1,
+                        scheduler: mainQueue
+                    )
+                
+            case .follow:
                 return .run { [company = state.company] _ in
                     guard let company else {
                         return

@@ -21,9 +21,15 @@ struct ReviewCardFeature {
         case reviewCardTapped
         case seeMoreButtonTapped
         case likeButtonTapped
+        case like
         case commentButtonTapped
     }
     
+    enum CancelID {
+        case like
+    }
+    
+    @Dependency(\.mainQueue) var mainQueue
     @Dependency(\.companyService) var service
     
     var body: some ReducerOf<Self> {
@@ -49,6 +55,14 @@ struct ReviewCardFeature {
                     $0.likeCount += $0.isLiked ? -1 : 1
                     $0.isLiked.toggle()
                 }
+                return .send(.like)
+                    .debounce(
+                        id: CancelID.like,
+                        for: 1,
+                        scheduler: mainQueue
+                    )
+                
+            case .like:
                 return .run { [review = state.review] send in
                     if review.isLiked {
                         await service.createReviewLinking(of: review.id)
