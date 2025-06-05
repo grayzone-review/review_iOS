@@ -245,7 +245,6 @@ struct CommentsWindowView: View {
             replyNotification
             HStack(alignment: .bottom, spacing: 0) {
                 textField
-                Spacer()
                 secretButton
                 enterCommentButton
             }
