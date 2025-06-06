@@ -11,7 +11,6 @@ import Alamofire
 
 /// CompanyAPI 엔드포인트 정의
 enum ReviewAPI: Sendable, URLRequestConvertible {
-    case getReviewCompany(id: String)
     case getReviewComments(id: String)
     case getReviewCommentReplies(id: String)
     case postReviewComment(id: String, requestBody: ReviewCommentRequest)
@@ -27,8 +26,6 @@ enum ReviewAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 HTTP method
     private var method: HTTPMethod {
         switch self {
-        case .getReviewCompany:
-            return .get
         case .getReviewComments:
             return .get
         case .getReviewCommentReplies:
@@ -47,8 +44,6 @@ enum ReviewAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 경로(Path)
     private var path: String {
         switch self {
-        case let .getReviewCompany(id):
-            return "/api/companies/\(id)/reviews"
         case let .getReviewComments(id), let .postReviewComment(id, _):
             return "/api/reviews/\(id)/comments"
         case let .getReviewCommentReplies(id), let .postReviewCommentReply(id, _):

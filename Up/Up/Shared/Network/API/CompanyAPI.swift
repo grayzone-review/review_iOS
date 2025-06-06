@@ -13,6 +13,7 @@ import Alamofire
 enum CompanyAPI: Sendable, URLRequestConvertible {
 
     case companyDetail(id: String)
+    case companyReview(id: String)
     case companyFollow(id: String)
     case companyUnfollow(id: String)
 
@@ -26,6 +27,8 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         switch self {
         case .companyDetail:
             return .get
+        case .companyReview:
+            return .get
         case .companyFollow:
             return .post
         case .companyUnfollow:
@@ -38,20 +41,10 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         switch self {
         case let .companyDetail(id):
             return "/api/companies/\(id)"
+        case let .companyReview(id):
+            return "/api/companies/\(id)/reviews"
         case let .companyFollow(id), let .companyUnfollow(id):
             return "/api/companies/\(id)/follows"
-        }
-    }
-
-    // 각 케이스별 파라미터(JSON body 등)
-    private var parameters: Parameters? {
-        switch self {
-        case .companyDetail:
-            return nil
-        case .companyFollow:
-            return nil
-        case .companyUnfollow:
-            return nil
         }
     }
 
@@ -62,6 +55,8 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
 
         switch self {
         case .companyDetail:
+            return request
+        case .companyReview:
             return request
         case .companyFollow:
             return request
