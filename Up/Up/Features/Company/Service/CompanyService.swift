@@ -8,16 +8,10 @@
 import Dependencies
 
 protocol CompanyService {
-    func fetchCompany(of id: Int) async -> CompanyDTO
-    func fetchReviews(of companyID: Int) async -> ReviewsBody
-    func fetchComments(of reviewID: Int) async -> CommentsBody
-    func fetchReplies(of commentID: Int) async -> RepliesBody
-    func createComment(of reviewID: Int, content: String, isSecret: Bool) async -> CommentDTO
-    func createReply(of commentID: Int, content: String, isSecret: Bool) async -> ReplyDTO
-    func createCompanyFollowing(of companyID: Int) async
-    func deleteCompanyFollowing(of companyID: Int) async
-    func createReviewLinking(of reviewID: Int) async
-    func deleteReviewLinking(of reviewID: Int) async
+    func fetchCompany(of id: Int) async throws -> CompanyDTO
+    func fetchReviews(of companyID: Int) async throws -> ReviewsBody
+    func createCompanyFollowing(of companyID: Int) async throws
+    func deleteCompanyFollowing(of companyID: Int) async throws
 }
 
 private enum CompanyServiceKey: DependencyKey {
@@ -26,14 +20,14 @@ private enum CompanyServiceKey: DependencyKey {
 }
 
 extension DependencyValues {
-  var companyService: any CompanyService {
-    get { self[CompanyServiceKey.self] }
-    set { self[CompanyServiceKey.self] = newValue }
-  }
+    var companyService: any CompanyService {
+        get { self[CompanyServiceKey.self] }
+        set { self[CompanyServiceKey.self] = newValue }
+    }
 }
 
 struct MockCompanyService: CompanyService {
-    func fetchCompany(of id: Int) async -> CompanyDTO {
+    func fetchCompany(of id: Int) async throws -> CompanyDTO {
         CompanyDTO(
             id: 1,
             name: "포레스트병원",
@@ -47,7 +41,7 @@ struct MockCompanyService: CompanyService {
         )
     }
     
-    func fetchReviews(of companyID: Int) async -> ReviewsBody {
+    func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
         ReviewsBody(
             reivews: [
                 ReviewDTO(
@@ -119,95 +113,43 @@ struct MockCompanyService: CompanyService {
         )
     }
     
-    func fetchComments(of reviewID: Int) async -> CommentsBody {
-        CommentsBody(
-            comments: [
-                CommentDTO(
-                    id: 4,
-                    content: "리뷰3 - 첫 번째 댓글입니다.",
-                    commenter: "alice",
-                    createdAt: "2025-05-23T17:43:51",
-                    replyCount: 0,
-                    isSecret: true,
-                    isVisible: true
-                ),
-                CommentDTO(
-                    id: 5,
-                    content: "리뷰3 - 두 번째 댓글입니다.",
-                    commenter: "bob",
-                    createdAt: "2025-05-23T17:43:51",
-                    replyCount: 2,
-                    isSecret: false,
-                    isVisible: true
-                ),
-                CommentDTO(
-                    id: 6,
-                    content: "리뷰3 - 세 번째 댓글입니다.",
-                    commenter: "charlie",
-                    createdAt: "2025-05-23T17:43:51",
-                    replyCount: 0,
-                    isSecret: true,
-                    isVisible: true
-                )
-            ],
-            hasNext: false,
-            currentPage: 0
-        )
+    func createCompanyFollowing(of companyID: Int) async throws {}
+    
+    func deleteCompanyFollowing(of companyID: Int) async throws {}
+}
+
+struct DefaultCompanyService: CompanyService {
+    private let session: NetworkSession
+    
+    init(session: NetworkSession) {
+        self.session = session
     }
     
-    func fetchReplies(of commentID: Int) async -> RepliesBody {
-        RepliesBody(
-            replies: [
-                ReplyDTO(
-                    id: 29,
-                    content: "답글입니다 하이요~",
-                    replier: "alice",
-                    createdAt: "2025-05-29T15:10:28",
-                    isSecret: false,
-                    isVisible: true
-                ),
-                ReplyDTO(
-                    id: 30,
-                    content: "답글입니다 하이요~",
-                    replier: "alice",
-                    createdAt: "2025-05-29T15:12:22",
-                    isSecret: false,
-                    isVisible: true
-                ),
-            ],
-            hasNext: false,
-            currentPage: 0
-        )
+    func fetchCompany(of id: Int) async throws -> CompanyDTO {
+        let request = CompanyAPI.companyDetail(id: id)
+        
+        let response = try await session.request(request, as: CompanyDTO.self)
+        
+        return response.data
     }
     
-    func createComment(of reviewID: Int, content: String, isSecret: Bool) async -> CommentDTO {
-        CommentDTO(
-            id: 35,
-            content: content,
-            commenter: "alice",
-            createdAt: "2025-05-29T15:19:25.036526",
-            replyCount: 0,
-            isSecret: isSecret,
-            isVisible: true
-        )
+    func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
+        let request = CompanyAPI.companyReview(id: companyID)
+        
+        let response = try await session.request(request, as: ReviewsBody.self)
+        
+        return response.data
     }
     
-    func createReply(of commentID: Int, content: String, isSecret: Bool) async -> ReplyDTO {
-        ReplyDTO(
-            id: 36,
-            content: content,
-            replier: "bob",
-            createdAt: "2025-05-29T16:23:30.353742",
-            isSecret: isSecret,
-            isVisible: true
-        )
+    func createCompanyFollowing(of companyID: Int) async throws {
+        let request = CompanyAPI.companyFollow(id: companyID)
+        
+        try await session.execute(request)
     }
     
-    func createCompanyFollowing(of companyID: Int) async {}
-    
-    func deleteCompanyFollowing(of companyID: Int) async {}
-    
-    func createReviewLinking(of reviewID: Int) async {}
-    
-    func deleteReviewLinking(of reviewID: Int) async {}
+    func deleteCompanyFollowing(of companyID: Int) async throws {
+        let request = CompanyAPI.companyUnfollow(id: companyID)
+        
+        try await session.execute(request)
+    }
 }

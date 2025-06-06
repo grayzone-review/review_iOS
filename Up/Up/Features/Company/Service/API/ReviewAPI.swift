@@ -11,12 +11,12 @@ import Alamofire
 
 /// CompanyAPI 엔드포인트 정의
 enum ReviewAPI: Sendable, URLRequestConvertible {
-    case getReviewComments(id: String)
-    case getReviewCommentReplies(id: String)
-    case postReviewComment(id: String, requestBody: ReviewCommentRequest)
-    case postReviewCommentReply(id: String, requestBody: ReviewCommentRequest)
-    case reviewLike(id: String)
-    case reviewUnlike(id: String)
+    case getReviewComments(id: Int)
+    case getReviewCommentReplies(id: Int)
+    case postReviewComment(id: Int, requestBody: ReviewCommentRequest)
+    case postReviewCommentReply(id: Int, requestBody: ReviewCommentRequest)
+    case reviewLike(id: Int)
+    case reviewUnlike(id: Int)
 
     // 기본 서버 URL
     private var baseURL: URL {

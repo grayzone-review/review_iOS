@@ -11,11 +11,10 @@ import Alamofire
 
 /// CompanyAPI 엔드포인트 정의
 enum CompanyAPI: Sendable, URLRequestConvertible {
-
-    case companyDetail(id: String)
-    case companyReview(id: String)
-    case companyFollow(id: String)
-    case companyUnfollow(id: String)
+    case companyDetail(id: Int)
+    case companyReview(id: Int)
+    case companyFollow(id: Int)
+    case companyUnfollow(id: Int)
 
     // 기본 서버 URL
     private var baseURL: URL {
