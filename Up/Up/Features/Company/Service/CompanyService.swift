@@ -15,7 +15,7 @@ protocol CompanyService {
 }
 
 private enum CompanyServiceKey: DependencyKey {
-    static let liveValue: any CompanyService = MockCompanyService() // 실제로 사용할 구조체를 작성한 이후 변경 필요
+    static let liveValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession()) // 실제로 사용할 구조체를 작성한 이후 변경 필요
     static let previewValue: any CompanyService = MockCompanyService()
 }
 

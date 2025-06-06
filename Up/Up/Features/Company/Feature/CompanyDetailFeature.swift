@@ -40,7 +40,7 @@ struct CompanyDetailFeature {
             switch action {
             case .appear :
                 return .run { [companyID = state.companyID] send in
-                    let data = await service.fetchCompany(of: companyID)
+                    let data = try await service.fetchCompany(of: companyID)
                     let company = data.toDomain()
                     await send(.companyInformationFetched(company))
                 }
@@ -48,7 +48,7 @@ struct CompanyDetailFeature {
             case let .companyInformationFetched(company):
                 state.company = company
                 return .run { [companyID = state.companyID] send in
-                    let data = await service.fetchReviews(of: companyID)
+                    let data = try await service.fetchReviews(of: companyID)
                     let reviews = data.reivews.map { $0.toDomain() }
                     await send(.companyReviewsFetched(reviews))
                 }
@@ -76,9 +76,9 @@ struct CompanyDetailFeature {
                     }
                     
                     if company.isFollowed {
-                        await service.createCompanyFollowing(of: company.id)
+                        try await service.createCompanyFollowing(of: company.id)
                     } else {
-                        await service.deleteCompanyFollowing(of: company.id)
+                        try await service.deleteCompanyFollowing(of: company.id)
                     }
                 }
                 

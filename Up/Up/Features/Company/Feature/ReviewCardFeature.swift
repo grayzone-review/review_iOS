@@ -30,7 +30,8 @@ struct ReviewCardFeature {
     }
     
     @Dependency(\.mainQueue) var mainQueue
-    @Dependency(\.companyService) var service
+    @Dependency(\.companyService) var companyService
+    @Dependency(\.reviewService) var reviewService
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -65,9 +66,9 @@ struct ReviewCardFeature {
             case .like:
                 return .run { [review = state.review] send in
                     if review.isLiked {
-                        await service.createReviewLinking(of: review.id)
+                        try await reviewService.createReviewLike(of: review.id)
                     } else {
-                        await service.deleteReviewLinking(of: review.id)
+                        try await reviewService.deleteReviewLike(of: review.id)
                     }
                 }
                 

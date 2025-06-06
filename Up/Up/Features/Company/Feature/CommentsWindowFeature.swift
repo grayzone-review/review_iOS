@@ -65,7 +65,7 @@ struct CommentsWindowFeature {
         case commentAdded(Comment)
     }
     
-    @Dependency(\.companyService) var service
+    @Dependency(\.reviewService) var service
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -87,7 +87,7 @@ struct CommentsWindowFeature {
                 
             case let .showMoreRepliesButtonTapped(commentID):
                 return .run { send in
-                    let data = await service.fetchReplies(of: commentID)
+                    let data = try await service.fetchReplies(of: commentID)
                     let replies = data.replies.map { $0.toDomain() }
                     await send(.addMoreReplies(commentID, replies))
                 }
@@ -98,7 +98,7 @@ struct CommentsWindowFeature {
                 
             case .commentsNeedLoad:
                 return .run { [state] send in
-                    let data = await service.fetchComments(of: state.review.id)
+                    let data = try await service.fetchComments(of: state.review.id)
                     let comments = data.comments.map { $0.toDomain() }
                     await send(.setComments(comments))
                 }
@@ -136,7 +136,7 @@ struct CommentsWindowFeature {
                 state.isFocused = false
                 return .run { [state] send in
                     if let targetComment {
-                        let data = await service.createReply(
+                        let data = try await service.createReply(
                             of: targetComment.id,
                             content: content,
                             isSecret: targetComment.isSecret ? true : state.isSecret
@@ -144,7 +144,7 @@ struct CommentsWindowFeature {
                         let reply = data.toDomain()
                         await send(.addMoreReplies(targetComment.id, [reply]))
                     } else {
-                        let data = await service.createComment(
+                        let data = try await service.createComment(
                             of: state.review.id,
                             content: content,
                             isSecret: state.isSecret
