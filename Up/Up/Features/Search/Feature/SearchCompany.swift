@@ -32,6 +32,7 @@ struct SearchCompanyFeature {
         case search(Search.Action)
         case termChanged
         case fetchRelatedCompanies
+        case setSearchState(SearchState)
     }
     
     @Reducer
@@ -54,7 +55,7 @@ struct SearchCompanyFeature {
             case let .appear(modelContext):
                 do {
                     state.recentSearchTerms = try modelContext.fetch(FetchDescriptor<RecentSearchTerm>())
-                    return .none
+                    return .send(.setSearchState(.idle))
                 } catch {
                     fatalError("RecentSearchTerm 조회 실패: \(error)")
                 }
@@ -66,8 +67,7 @@ struct SearchCompanyFeature {
                 return .run { _ in await dismiss() }
                 
             case .textFieldFocused:
-                state.searchState = .focused
-                return .none
+                return .send(.setSearchState(.focused))
                 
             case .clearButtonTapped:
                 state.searchTerm = ""
@@ -75,9 +75,8 @@ struct SearchCompanyFeature {
                 
             case .cancelButtonTapped:
                 state.searchTerm = ""
-                state.searchState = .idle
                 state.isFocused = false
-                return .none
+                return .send(.setSearchState(.idle))
                 
             case let .enterButtonTapped(modelContext):
                 if let existing = state.recentSearchTerms.first(where:{ $0.searchTerm == state.searchTerm }) {
@@ -97,13 +96,15 @@ struct SearchCompanyFeature {
                 
                 try? modelContext.save()
                 state.searchTheme = .keyword
-                state.searchState = .submitted
-                return .none
+                return .send(.setSearchState(.submitted))
                 
             case let .search(.idle(.delegate(.search(searchTerm, searchTheme)))):
                 state.searchTheme = searchTheme
                 state.searchTerm = searchTerm
-                state.searchState = .submitted
+                return .send(.setSearchState(.submitted))
+                
+            case let .search(.idle(.delegate(.updateRecentSearchTerms(searchTerms)))):
+                state.recentSearchTerms = searchTerms
                 return .none
                 
             case .search:
@@ -119,6 +120,18 @@ struct SearchCompanyFeature {
                 
             case .fetchRelatedCompanies:
                 return .none // service 구현 이후 연관 검색어 API 호출로 변경 필요
+                
+            case let .setSearchState(searchState):
+                state.searchState = searchState
+                switch searchState {
+                case .idle:
+                    state.search = .idle(SearchIdleFeature.State(recentSearchTerms: state.recentSearchTerms))
+                case .focused:
+                    state.search = nil // focused 관련 작업 후 수정 예정
+                case .submitted:
+                    state.search = nil // submitted 관련 작업 후 수정 예정
+                }
+                return .none
             }
         }
         .ifLet(\.search, action: \.search) {
@@ -140,8 +153,11 @@ struct SearchCompanyView: View {
     }
     
     var body: some View {
-        ScrollView {
+        VStack(spacing: 0) {
             enterSearchTermArea
+            ScrollView {
+                bodyArea
+            }
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -237,6 +253,18 @@ struct SearchCompanyView: View {
             } label: {
                 Text("취소") // 디자인 수정되면 변경 필요
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var bodyArea: some View {
+        switch store.searchState {
+        case .idle:
+            if let idleStore = store.scope(state: \.search?.idle, action: \.search.idle) {
+                SearchIdleView(store: idleStore)
+            }
+        default:
+            EmptyView()
         }
     }
 }

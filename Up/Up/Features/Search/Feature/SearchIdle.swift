@@ -6,24 +6,24 @@
 //
 
 import ComposableArchitecture
+import SwiftUI
+import SwiftData
 
 @Reducer
 struct SearchIdleFeature {
     @ObservableState
     struct State: Equatable {
-        let recentSearchTerms: [RecentSearchTerm]
+        var recentSearchTerms: [RecentSearchTerm]
     }
     
     enum Action {
         case delegate(Delegate)
-        case recentSearchTermTapped(RecentSearchTerm)
-        case deleteButtonTapped(RecentSearchTerm)
-        case nearThemeButtonTapped
-        case neighborhoodThemeButtonTapped
-        case interestThemeButtonTapped
+        case recentSearchTermButtonTapped(RecentSearchTerm)
+        case deleteButtonTapped(RecentSearchTerm, ModelContext)
+        case themeButtonTapped(SearchTheme)
         
         enum Delegate: Equatable {
-            case deleteSearchTerm(RecentSearchTerm)
+            case updateRecentSearchTerms([RecentSearchTerm])
             case search(String, SearchTheme)
         }
     }
@@ -34,21 +34,137 @@ struct SearchIdleFeature {
             case .delegate:
                 return .none
                 
-            case let .recentSearchTermTapped(recentSearchTerm):
+            case let .recentSearchTermButtonTapped(recentSearchTerm):
                 return .send(.delegate(.search(recentSearchTerm.searchTerm, .keyword)))
                 
-            case let .deleteButtonTapped(recentSearchTerm):
-                return .send(.delegate(.deleteSearchTerm(recentSearchTerm)))
+            case let .deleteButtonTapped(recentSearchTerm, modelContext):
+                if let index = state.recentSearchTerms.firstIndex(of: recentSearchTerm) {
+                    state.recentSearchTerms.remove(at: index)
+                }
+                modelContext.delete(recentSearchTerm)
+                try? modelContext.save()
+                return .send(.delegate(.updateRecentSearchTerms(state.recentSearchTerms)))
                 
-            case .nearThemeButtonTapped:
-                return .send(.delegate(.search("#내 근처 업체", .near)))
-                
-            case .neighborhoodThemeButtonTapped:
-                return .send(.delegate(.search("#우리 동네 업체", .neighborhood)))
-                
-            case .interestThemeButtonTapped:
-                return .send(.delegate(.search("#관심 동네 업체", .interest)))
+            case let .themeButtonTapped(searchTheme):
+                return .send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
             }
         }
     }
+}
+
+struct SearchIdleView: View {
+    @Bindable var store: StoreOf<SearchIdleFeature>
+    @Environment(\.modelContext) var modelContext
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            recentSearchTerm
+            searchTheme
+            Spacer()
+        }
+    }
+    
+    private var recentSearchTerm: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("최근 검색어")
+                    .pretendard(.body1Bold, color: .gray90)
+                    .padding(.horizontal, 20)
+                Spacer()
+            }
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) {
+                    ForEach(store.recentSearchTerms) {
+                        recentSearchTermButton($0)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .padding(.vertical, 20)
+    }
+    
+    @ViewBuilder
+    private func recentSearchTermButton(_ recentSearchTerm: RecentSearchTerm) -> some View {
+        HStack(spacing: 12) {
+            Text(recentSearchTerm.searchTerm)
+                .pretendard(.captionSemiBold, color: .gray70)
+            Button {
+                store.send(.deleteButtonTapped(recentSearchTerm, modelContext))
+            } label: {
+                AppIcon.closeFill.image
+                    .foregroundStyle(AppColor.gray10.color)
+                    .frame(width: 18, height: 18)
+                    .overlay {
+                        AppIcon.closeLine.image
+                            .foregroundStyle(AppColor.gray50.color)
+                            .frame(width: 12, height: 12)
+                    }
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 40)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.gray20.color)
+        )
+        .onTapGesture {
+            store.send(.recentSearchTermButtonTapped(recentSearchTerm))
+        }
+    }
+    
+    private var searchTheme: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("모아보기")
+                    .pretendard(.body1Bold, color: .gray90)
+                    .padding(.horizontal, 20)
+                Spacer()
+            }
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) {
+                    themeButton(.near)
+                    themeButton(.neighborhood)
+                    themeButton(.interest)
+                }
+                .padding(.horizontal, 20)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .padding(.vertical, 20)
+    }
+    
+    private func themeButton(_ searchTheme: SearchTheme) -> some View {
+        Button {
+            store.send(.themeButtonTapped(searchTheme))
+        } label: {
+            HStack(spacing: 12) {
+                AppImage.myplaceLine.image
+                    .frame(width: 18, height: 18)
+                Text(searchTheme.text)
+                    .pretendard(.captionSemiBold, color: .gray70)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 48)
+            .background(AppColor.gray10.color)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
+}
+
+#Preview {
+    SearchIdleView(
+        store: Store(
+            initialState: SearchIdleFeature.State(
+                recentSearchTerms: [
+                    RecentSearchTerm(searchTerm: "스타벅스 석촌점"),
+                    RecentSearchTerm(searchTerm: "브로우레시피 잠실새내점"),
+                    RecentSearchTerm(searchTerm: "스타벅스 석촌역점"),
+                ]
+            )
+        ) {
+            SearchIdleFeature()
+        }
+    )
 }
