@@ -1,6 +1,6 @@
 //
 //  CommentView.swift
-//  Grayzone
+//  Up
 //
 //  Created by Jun Young Lee on 6/1/25.
 //

@@ -1,6 +1,6 @@
 //
 //  AppIcon.swift
-//  Grayzone
+//  Up
 //
 //  Created by Jun Young Lee on 6/2/25.
 //

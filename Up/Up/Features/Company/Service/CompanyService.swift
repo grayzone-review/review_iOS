@@ -1,6 +1,6 @@
 //
 //  CompanyService.swift
-//  Grayzone
+//  Up
 //
 //  Created by Jun Young Lee on 5/31/25.
 //

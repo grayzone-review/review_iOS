@@ -1,16 +1,27 @@
 //
-//  GrayzoneApp.swift
-//  Grayzone
+//  UpApp.swift
+//  UpApp
 //
 //  Created by Jun Young Lee on 5/24/25.
 //
 
 import SwiftUI
+import SwiftData
 import ComposableArchitecture
 import KakaoMapsSDK
 
 @main
-struct GrayzoneApp: App {
+struct UpApp: App {
+    var modelContainer: ModelContainer = {
+        let schema = Schema([RecentSearchTerm.self])
+        let configuration = ModelConfiguration(schema: schema)
+
+        do {
+            return try ModelContainer(for: schema, configurations: [configuration])
+        } catch {
+            fatalError("ModelContainer 생성 실패: \(error)")
+        }
+    }()
     
     init() {
         guard
@@ -37,5 +48,6 @@ struct GrayzoneApp: App {
                 )
             }
         }
+        .modelContainer(modelContainer)
     }
 }

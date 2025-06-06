@@ -7,28 +7,41 @@
 
 import ComposableArchitecture
 import SwiftUI
+import SwiftData
 
 @Reducer
 struct SearchCompanyFeature {
     @ObservableState
     struct State: Equatable {
+        var search: Search.State?
         var searchState: SearchState = .idle
         var searchTerm: String = ""
+        var searchTheme: SearchTheme = .keyword
         var isFocused: Bool = false
+        var recentSearchTerms: [RecentSearchTerm] = []
     }
     
     enum Action: BindableAction {
+        case appear(ModelContext)
         case binding(BindingAction<State>)
         case backButtonTapped
         case textFieldFocused
         case clearButtonTapped
         case cancelButtonTapped
-        case enterButtonTapped
+        case enterButtonTapped(ModelContext)
+        case search(Search.Action)
         case termChanged
         case fetchRelatedCompanies
     }
     
-    enum CancelID { case debounce }
+    @Reducer
+    enum Search {
+        case idle(SearchIdleFeature)
+    }
+    
+    enum CancelID {
+        case debounce
+    }
     
     @Dependency(\.dismiss) var dismiss
     @Dependency(\.mainQueue) var mainQueue
@@ -38,6 +51,14 @@ struct SearchCompanyFeature {
         
         Reduce { state, action in
             switch action {
+            case let .appear(modelContext):
+                do {
+                    state.recentSearchTerms = try modelContext.fetch(FetchDescriptor<RecentSearchTerm>())
+                    return .none
+                } catch {
+                    fatalError("RecentSearchTerm 조회 실패: \(error)")
+                }
+                
             case .binding:
                 return.none
                 
@@ -50,9 +71,7 @@ struct SearchCompanyFeature {
                 
             case .clearButtonTapped:
                 state.searchTerm = ""
-                return .run { send in
-                    await send(.textFieldFocused)
-                }
+                return .send(.textFieldFocused)
                 
             case .cancelButtonTapped:
                 state.searchTerm = ""
@@ -60,8 +79,34 @@ struct SearchCompanyFeature {
                 state.isFocused = false
                 return .none
                 
-            case .enterButtonTapped:
+            case let .enterButtonTapped(modelContext):
+                if let existing = state.recentSearchTerms.first(where:{ $0.searchTerm == state.searchTerm }) {
+                    existing.creationDate = .now
+                } else {
+                    if state.recentSearchTerms.count == 10 {
+                        let last = state.recentSearchTerms.removeLast()
+                        modelContext.delete(last)
+                    }
+                    let newSearchTerm = RecentSearchTerm(searchTerm: state.searchTerm)
+                    state.recentSearchTerms.insert(
+                        newSearchTerm,
+                        at: 0
+                    )
+                    modelContext.insert(newSearchTerm)
+                }
+                
+                try? modelContext.save()
+                state.searchTheme = .keyword
                 state.searchState = .submitted
+                return .none
+                
+            case let .search(.idle(.delegate(.search(searchTerm, searchTheme)))):
+                state.searchTheme = searchTheme
+                state.searchTerm = searchTerm
+                state.searchState = .submitted
+                return .none
+                
+            case .search:
                 return .none
                 
             case .termChanged:
@@ -76,12 +121,23 @@ struct SearchCompanyFeature {
                 return .none // service 구현 이후 연관 검색어 API 호출로 변경 필요
             }
         }
+        .ifLet(\.search, action: \.search) {
+            Search.body
+        }
     }
 }
+
+extension SearchCompanyFeature.Search.State: Equatable {}
 
 struct SearchCompanyView: View {
     @Bindable var store: StoreOf<SearchCompanyFeature>
     @FocusState var isFocused: Bool
+    @Environment(\.modelContext) var modelContext
+    
+    init(store: StoreOf<SearchCompanyFeature>) {
+        self.store = store
+        store.send(.appear(modelContext))
+    }
     
     var body: some View {
         ScrollView {
@@ -151,7 +207,7 @@ struct SearchCompanyView: View {
             store.send(.termChanged)
         }
         .onSubmit {
-            store.send(.enterButtonTapped)
+            store.send(.enterButtonTapped(modelContext))
         }
     }
     
