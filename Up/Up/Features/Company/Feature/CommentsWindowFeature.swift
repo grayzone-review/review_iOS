@@ -336,6 +336,18 @@ struct CommentCardView: View {
         remainingReplyCount > 0
     }
     
+    private var isTargetComment: Bool {
+        store.targetComment == comment
+    }
+    
+    private var hasInterButtonsSpacing: Bool {
+        replies.isEmpty && isRepliesLoadable
+    }
+    
+    private var hasReplies: Bool {
+        replies.isEmpty == false || isRepliesLoadable
+    }
+    
     var body: some View {
         if comment.isVisible {
             commentCard
@@ -345,13 +357,24 @@ struct CommentCardView: View {
     }
     
     private var commentCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            content
-            makeReplyButton
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                content
+                makeReplyButton
+            }
+            .padding(
+                EdgeInsets(
+                    top: 20,
+                    leading: 20,
+                    bottom: hasInterButtonsSpacing ? 6 : 20,
+                    trailing: 20
+                )
+            )
+            .background(isTargetComment ? AppColor.gray10.color : nil)
+            
             replyList
             showMoreReplyButton
         }
-        .padding(20)
     }
     
     private var content: some View {
@@ -378,7 +401,7 @@ struct CommentCardView: View {
                     hyphen
                     replyContent(reply)
                 }
-                .padding([.top], 40)
+                .padding(20)
             }
         }
     }
@@ -410,6 +433,14 @@ struct CommentCardView: View {
                         .pretendard(.captionSemiBold, color: .gray50)
                 }
             }
+            .padding(
+                EdgeInsets(
+                    top: 6,
+                    leading: 20,
+                    bottom: 20,
+                    trailing: 20
+                )
+            )
         }
     }
     
