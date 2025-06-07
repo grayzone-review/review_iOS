@@ -10,8 +10,69 @@ import SwiftData
 import ComposableArchitecture
 import KakaoMapsSDK
 
+@Reducer
+struct UpFeature {
+    @Reducer
+    enum Path {
+        case detail(CompanyDetailFeature)
+    }
+    
+    @ObservableState
+    struct State: Equatable {
+        var path = StackState<Path.State>()
+        var search = SearchCompanyFeature.State()
+    }
+    
+    enum Action {
+        case path(StackActionOf<Path>)
+        case search(SearchCompanyFeature.Action)
+    }
+    
+    var body: some ReducerOf<Self> {
+        Scope(state: \.search, action: \.search) {
+            SearchCompanyFeature()
+        }
+        Reduce { state, action in
+            switch action {
+            case .path:
+                return .none
+                
+            case .search:
+                return .none
+            }
+        }
+        .forEach(\.path, action: \.path)
+    }
+}
+
+extension UpFeature.Path.State: Equatable {}
+
+struct UpView: View {
+    @Bindable var store: StoreOf<UpFeature>
+    
+    var body: some View {
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+            SearchCompanyView(
+                store: store.scope(state: \.search, action: \.search)
+            )
+        } destination: { store in
+            switch store.case {
+            case let .detail(detailStore):
+                CompanyDetailView(store: detailStore)
+            }
+        }
+    }
+}
+
 @main
 struct UpApp: App {
+    @MainActor
+    static let store = Store(
+        initialState: UpFeature.State()
+    ) {
+        UpFeature()
+    }
+    
     var modelContainer: ModelContainer = {
         let schema = Schema([RecentSearchTerm.self])
         let configuration = ModelConfiguration(schema: schema)
@@ -35,19 +96,18 @@ struct UpApp: App {
     
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                CompanyDetailView(
-                    store: Store(
-                        initialState: CompanyDetailFeature.State(
-                            companyID: 1,
-                            reviews: Shared(value: [])
-                        )
-                    ) {
-                        CompanyDetailFeature()
-                    }
-                )
-            }
+            UpView(store: Self.store)
+                .modelContainer(modelContainer)
         }
-        .modelContainer(modelContainer)
     }
+}
+
+#Preview {
+    UpView(
+        store: Store(
+            initialState: UpFeature.State()
+        ) {
+            UpFeature()
+        }
+    )
 }

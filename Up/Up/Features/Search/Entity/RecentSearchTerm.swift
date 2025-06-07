@@ -1,5 +1,5 @@
 //
-//  SearchTerm.swift
+//  RecentSearchTerm.swift
 //  Up
 //
 //  Created by Jun Young Lee on 6/6/25.
