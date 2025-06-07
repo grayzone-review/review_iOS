@@ -13,10 +13,11 @@ struct ReviewCardFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var comments: CommentsWindowFeature.State?
-        @Shared var review: Review
+        var review: Review
     }
     
-    enum Action {
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case comments(PresentationAction<CommentsWindowFeature.Action>)
         case reviewCardTapped
         case seeMoreButtonTapped
@@ -34,28 +35,27 @@ struct ReviewCardFeature {
     @Dependency(\.reviewService) var reviewService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
+            case .binding:
+                return .none
+                
             case .comments:
                 return .none
                 
             case .reviewCardTapped:
-                state.$review.withLock {
-                    $0.isExpanded.toggle()
-                }
+                state.review.isExpanded.toggle()
                 return .none
                 
             case .seeMoreButtonTapped:
-                state.$review.withLock {
-                    $0.isExpanded = true
-                }
+                state.review.isExpanded = true
                 return .none
                 
             case .likeButtonTapped:
-                state.$review.withLock {
-                    $0.likeCount += $0.isLiked ? -1 : 1
-                    $0.isLiked.toggle()
-                }
+                state.review.likeCount += state.review.isLiked ? -1 : 1
+                state.review.isLiked.toggle()
                 return .send(.like)
                     .debounce(
                         id: CancelID.like,
@@ -74,7 +74,7 @@ struct ReviewCardFeature {
                 
             case .commentButtonTapped:
                 state.comments = CommentsWindowFeature.State(
-                    review: state.$review
+                    review: state.review
                 )
                 return .none
             }
@@ -87,6 +87,7 @@ struct ReviewCardFeature {
 
 struct ReivewCardView: View {
     @Bindable var store: StoreOf<ReviewCardFeature>
+    @Binding var review: Review
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -106,8 +107,12 @@ struct ReivewCardView: View {
             store.send(.reviewCardTapped)
         }
         .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
-            CommentsWindowView(store: commentsWindowStore)
+            CommentsWindowView(
+                store: commentsWindowStore,
+                review: $review
+            )
         }
+        .bind($review, to: $store.review)
     }
     
     private var header: some View {
@@ -287,32 +292,53 @@ struct ReivewCardView: View {
     ReivewCardView(
         store: Store(
             initialState: ReviewCardFeature.State(
-                review: Shared(
-                    value: Review(
-                        id: 3,
-                        rating: Rating(
-                            workLifeBalance: 3.5,
-                            welfare: 3.5,
-                            salary: 3.0,
-                            companyCulture: 4.0,
-                            management: 3.0
-                        ),
-                        reviewer: "bob",
-                        title: "별로였어요.",
-                        advantagePoint: "연봉이 높아요.",
-                        disadvantagePoint: "상사가 별로예요.",
-                        managementFeedback: "리더십이 부족해요.",
-                        job: "프론트엔드 개발자",
-                        employmentPeriod: "1년 미만",
-                        creationDate: .now,
-                        likeCount: 3,
-                        commentCount: 3,
-                        isLiked: true
-                    )
+                review: Review(
+                    id: 3,
+                    rating: Rating(
+                        workLifeBalance: 3.5,
+                        welfare: 3.5,
+                        salary: 3.0,
+                        companyCulture: 4.0,
+                        management: 3.0
+                    ),
+                    reviewer: "bob",
+                    title: "별로였어요.",
+                    advantagePoint: "연봉이 높아요.",
+                    disadvantagePoint: "상사가 별로예요.",
+                    managementFeedback: "리더십이 부족해요.",
+                    job: "프론트엔드 개발자",
+                    employmentPeriod: "1년 미만",
+                    creationDate: .now,
+                    likeCount: 3,
+                    commentCount: 3,
+                    isLiked: true
                 )
             )
         ) {
             ReviewCardFeature()
-        }
+        },
+        review: .constant(
+            Review(
+                id: 3,
+                rating: Rating(
+                    workLifeBalance: 3.5,
+                    welfare: 3.5,
+                    salary: 3.0,
+                    companyCulture: 4.0,
+                    management: 3.0
+                ),
+                reviewer: "bob",
+                title: "별로였어요.",
+                advantagePoint: "연봉이 높아요.",
+                disadvantagePoint: "상사가 별로예요.",
+                managementFeedback: "리더십이 부족해요.",
+                job: "프론트엔드 개발자",
+                employmentPeriod: "1년 미만",
+                creationDate: .now,
+                likeCount: 3,
+                commentCount: 3,
+                isLiked: true
+            )
+        )
     )
 }
