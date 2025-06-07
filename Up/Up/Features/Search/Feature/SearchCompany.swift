@@ -191,7 +191,7 @@ struct SearchCompanyView: View {
             .frame(height: 52)
             .overlay {
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColor.gray20.color)
+                    .stroke(store.searchState == .focused ? AppColor.gray90.color : AppColor.gray20.color)
             }
             
             cancelButton

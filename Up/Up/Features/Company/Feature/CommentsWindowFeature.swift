@@ -374,7 +374,7 @@ struct CommentCardView: View {
     private var replyList: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(replies) { reply in
-                HStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
                     hyphen
                     replyContent(reply)
                 }
@@ -417,6 +417,7 @@ struct CommentCardView: View {
         Rectangle()
             .frame(width: 12, height: 1)
             .foregroundStyle(AppColor.gray20.color)
+            .frame(height: 18)
     }
 }
 
