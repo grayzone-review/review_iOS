@@ -272,7 +272,7 @@ struct CompanyDetailView: View {
         CompanyDetailView(
             store: Store(
                 initialState: CompanyDetailFeature.State(
-                    companyID: 1,
+                    companyID: Int.random(in: 1..<300),
                     reviews: Shared(value: [])
                 )
             ) {

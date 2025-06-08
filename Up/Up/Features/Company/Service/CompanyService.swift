@@ -16,7 +16,7 @@ protocol CompanyService {
 
 private enum CompanyServiceKey: DependencyKey {
     static let liveValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession()) // 실제로 사용할 구조체를 작성한 이후 변경 필요
-    static let previewValue: any CompanyService = MockCompanyService()
+    static let previewValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
 }
 
 extension DependencyValues {
@@ -36,8 +36,8 @@ struct MockCompanyService: CompanyService {
             roadNameAddress: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
             totalRating: 3.3,
             isFollowed: false,
-            xCoordinate: 199642.716240024,
-            yCoordinate: 452606.614384676
+            longitude: 199642.716240024,
+            latitude: 452606.614384676
         )
     }
     

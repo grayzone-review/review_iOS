@@ -12,8 +12,8 @@ import KakaoMapsSDK
 struct KakaoMapRepresentable: UIViewRepresentable {
     @Binding var draw: Bool
     @Binding var isActive: Bool
-    let x: Double
-    let y: Double
+    let latitude: Double
+    let longitude: Double
     
     func makeUIView(context: Context) -> KMViewContainer {
         let view: KMViewContainer = KMViewContainer()
@@ -46,7 +46,7 @@ struct KakaoMapRepresentable: UIViewRepresentable {
     
     /// Coordinator 생성
     func makeCoordinator() -> KakaoMapCoordinator {
-        return KakaoMapCoordinator(isActive: $isActive, x: x, y: y)
+        return KakaoMapCoordinator(isActive: $isActive, latitude: latitude, longitude: longitude)
     }
     
     class KakaoMapCoordinator: NSObject, MapControllerDelegate {
@@ -57,12 +57,11 @@ struct KakaoMapRepresentable: UIViewRepresentable {
         var controller: KMController?
         var first: Bool
         
-        init(isActive: Binding<Bool>, x: Double, y: Double) {
+        init(isActive: Binding<Bool>, latitude: Double, longitude: Double) {
             first = true
-            let coordinate = EPSGConverter.convert(x: x, y: y)
             self.isActive = isActive
-            self.longitude = coordinate.longitude
-            self.latitude = coordinate.latitude
+            self.longitude = longitude
+            self.latitude = latitude
             super.init()
         }
         
@@ -114,7 +113,7 @@ struct KakaoMapCardView: View {
     let coordinate: Coordinate
     
     var body: some View {
-        KakaoMapRepresentable(draw: $draw, isActive: $isActive , x: coordinate.x, y: coordinate.y)
+        KakaoMapRepresentable(draw: $draw, isActive: $isActive , latitude: coordinate.latitude, longitude: coordinate.longitude)
             .onAppear { draw = true }
             .onDisappear { draw = false }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

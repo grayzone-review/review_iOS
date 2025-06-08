@@ -29,8 +29,8 @@ extension Address {
 }
 
 struct Coordinate: Equatable {
-    let x: Double
-    let y: Double
+    let latitude: Double
+    let longitude: Double
 }
 
 struct CompanyDTO: Codable {
@@ -41,8 +41,8 @@ struct CompanyDTO: Codable {
     let roadNameAddress: String
     let totalRating: Double
     let isFollowed: Bool
-    let xCoordinate: Double
-    let yCoordinate: Double
+    let longitude: Double
+    let latitude: Double
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -52,8 +52,8 @@ struct CompanyDTO: Codable {
         case roadNameAddress
         case totalRating
         case isFollowed = "following"
-        case xCoordinate = "xcoordinate"
-        case yCoordinate = "ycoordinate"
+        case latitude
+        case longitude
     }
 }
 
@@ -72,8 +72,8 @@ extension CompanyDTO {
             totalRating: totalRating,
             isFollowed: isFollowed,
             coordinate: Coordinate(
-                x: xCoordinate,
-                y: yCoordinate
+                latitude: latitude,
+                longitude: longitude
             )
         )
     }
