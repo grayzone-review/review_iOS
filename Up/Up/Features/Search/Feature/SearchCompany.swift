@@ -197,7 +197,7 @@ struct SearchCompanyView: View {
     }
     
     private var enterSearchTermArea: some View {
-        HStack(spacing: 8) { // 추후 디자인 확정되면 버튼과 함께 간격 수정
+        HStack(spacing: 16) {
             HStack(spacing: 8) {
                 searchIcon
                 textField
@@ -267,7 +267,8 @@ struct SearchCompanyView: View {
             Button {
                 store.send(.cancelButtonTapped)
             } label: {
-                Text("취소") // 디자인 수정되면 변경 필요
+                Text("취소")
+                    .pretendard(.body1Regular, color: .gray90)
             }
         }
     }
