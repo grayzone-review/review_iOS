@@ -6,18 +6,12 @@
 //
 
 import Foundation
-import SwiftData
 
-@Model
-final class RecentSearchTerm {
-    @Attribute(.unique) var searchTerm: String
-    var creationDate: Date
+struct RecentSearchTerm: Codable, Equatable, Identifiable {
+    let searchTerm: String
+    var searchedDate: Date = .now
     
-    init(
-        searchTerm: String,
-        creationDate: Date = .now
-    ) {
-        self.searchTerm = searchTerm
-        self.creationDate = creationDate
+    var id: String {
+        searchTerm
     }
 }

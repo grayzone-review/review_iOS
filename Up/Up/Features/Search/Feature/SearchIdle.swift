@@ -7,23 +7,22 @@
 
 import ComposableArchitecture
 import SwiftUI
-import SwiftData
 
 @Reducer
 struct SearchIdleFeature {
     @ObservableState
     struct State: Equatable {
-        var recentSearchTerms: [RecentSearchTerm]
+        var recentSearchTerms: [RecentSearchTerm] = []
     }
     
     enum Action {
+        case appear
         case delegate(Delegate)
         case recentSearchTermButtonTapped(RecentSearchTerm)
-        case deleteButtonTapped(RecentSearchTerm, ModelContext)
+        case deleteButtonTapped(RecentSearchTerm)
         case themeButtonTapped(SearchTheme)
         
         enum Delegate: Equatable {
-            case updateRecentSearchTerms([RecentSearchTerm])
             case search(String, SearchTheme)
         }
     }
@@ -31,19 +30,29 @@ struct SearchIdleFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
+            case .appear:
+                if let data = UserDefaults.standard.data(forKey: "recentSearchTerms"),
+                   let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
+                    state.recentSearchTerms = recentSearchTerms
+                }
+                return .none
+                
             case .delegate:
                 return .none
                 
             case let .recentSearchTermButtonTapped(recentSearchTerm):
                 return .send(.delegate(.search(recentSearchTerm.searchTerm, .keyword)))
                 
-            case let .deleteButtonTapped(recentSearchTerm, modelContext):
+            case let .deleteButtonTapped(recentSearchTerm):
                 if let index = state.recentSearchTerms.firstIndex(of: recentSearchTerm) {
                     state.recentSearchTerms.remove(at: index)
                 }
-                modelContext.delete(recentSearchTerm)
-                try? modelContext.save()
-                return .send(.delegate(.updateRecentSearchTerms(state.recentSearchTerms)))
+                
+                if let data = try? JSONEncoder().encode(state.recentSearchTerms) {
+                    UserDefaults.standard.set(data, forKey: "recentSearchTerms")
+                }
+                
+                return .none
                 
             case let .themeButtonTapped(searchTheme):
                 return .send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
@@ -54,7 +63,11 @@ struct SearchIdleFeature {
 
 struct SearchIdleView: View {
     @Bindable var store: StoreOf<SearchIdleFeature>
-    @Environment(\.modelContext) var modelContext
+    
+    init(store: StoreOf<SearchIdleFeature>) {
+        self.store = store
+        store.send(.appear)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -91,7 +104,7 @@ struct SearchIdleView: View {
             Text(recentSearchTerm.searchTerm)
                 .pretendard(.captionSemiBold, color: .gray70)
             Button {
-                store.send(.deleteButtonTapped(recentSearchTerm, modelContext))
+                store.send(.deleteButtonTapped(recentSearchTerm))
             } label: {
                 AppIcon.closeFill.image
                     .foregroundStyle(AppColor.gray10.color)

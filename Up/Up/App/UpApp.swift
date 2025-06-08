@@ -73,17 +73,6 @@ struct UpApp: App {
         UpFeature()
     }
     
-    var modelContainer: ModelContainer = {
-        let schema = Schema([RecentSearchTerm.self])
-        let configuration = ModelConfiguration(schema: schema)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [configuration])
-        } catch {
-            fatalError("ModelContainer 생성 실패: \(error)")
-        }
-    }()
-    
     init() {
         guard
             let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String
@@ -97,7 +86,6 @@ struct UpApp: App {
     var body: some Scene {
         WindowGroup {
             UpView(store: Self.store)
-                .modelContainer(modelContainer)
         }
     }
 }

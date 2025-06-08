@@ -5,24 +5,12 @@
 //  Created by Jun Young Lee on 6/7/25.
 //
 
-import SwiftData
+import Foundation
 
-@Model
-final class SearchedCompany {
-    @Attribute(.unique) var id: Int
-    var name: String
-    var address: String
-    var totalRating: Double
-    
-    init(
-        id: Int,
-        name: String,
-        address: String,
-        totalRating: Double
-    ) {
-        self.id = id
-        self.name = name
-        self.address = address
-        self.totalRating = totalRating
-    }
+struct SearchedCompany: Codable, Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let address: String
+    let totalRating: Double
+    var searchedDate: Date = .now
 }

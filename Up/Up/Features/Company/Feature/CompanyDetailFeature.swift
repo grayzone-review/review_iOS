@@ -13,6 +13,7 @@ struct CompanyDetailFeature {
     @ObservableState
     struct State: Equatable {
         let companyID: Int
+        var searchedCompany: SearchedCompany?
         var company: Company?
         var reviews: [Review] = []
     }
@@ -20,6 +21,7 @@ struct CompanyDetailFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case appear
+        case saveSearchedCompany(SearchedCompany)
         case companyInformationFetched(Company)
         case companyReviewsFetched([Review])
         case backButtonTapped
@@ -47,11 +49,35 @@ struct CompanyDetailFeature {
                 return.none
                 
             case .appear :
-                return .run { [companyID = state.companyID] send in
+                return .run { [companyID = state.companyID, searchedCompany = state.searchedCompany] send in
+                    if let searchedCompany {
+                        await send(.saveSearchedCompany(searchedCompany))
+                    }
+                    
                     let data = try await companyService.fetchCompany(of: companyID)
                     let company = data.toDomain()
+                    
                     await send(.companyInformationFetched(company))
                 }
+                
+            case let .saveSearchedCompany(company):
+                var searchedCompanies = [SearchedCompany]()
+                
+                if let data = UserDefaults.standard.data(forKey: "recentSearchedCompanies"),
+                   let recentSearchedCompanies = try? JSONDecoder().decode([SearchedCompany].self, from: data) {
+                    searchedCompanies = recentSearchedCompanies
+                }
+                if let index = searchedCompanies.firstIndex(where: { $0.id == company.id }) {
+                    searchedCompanies.remove(at: index)
+                }
+                
+                searchedCompanies.append(company)
+                
+                if let data = try? JSONEncoder().encode(searchedCompanies) {
+                    UserDefaults.standard.set(data, forKey: "recentSearchedCompanies")
+                }
+                
+                return .none
                 
             case let .companyInformationFetched(company):
                 state.company = company
