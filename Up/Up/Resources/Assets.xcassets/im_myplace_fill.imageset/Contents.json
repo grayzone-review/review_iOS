@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "닫기-fill.svg",
+      "filename" : "myplace-fill.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -19,6 +19,6 @@
     "version" : 1
   },
   "properties" : {
-    "template-rendering-intent" : "template"
+    "template-rendering-intent" : "original"
   }
 }

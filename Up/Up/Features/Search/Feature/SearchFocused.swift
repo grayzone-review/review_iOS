@@ -205,6 +205,7 @@ struct SearchFocusedView: View {
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
                             totalRating: 3.3,
                             isFollowed: false,
+                            distance: "서울 · 0.8km",
                             title: "복지가 좋고 경력 쌓기에 좋은 회사"
                         )
                     ],
@@ -215,6 +216,7 @@ struct SearchFocusedView: View {
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
                             totalRating: 3.3,
                             isFollowed: false,
+                            distance: "서울 · 0.8km",
                             title: "복지가 좋고 경력 쌓기에 좋은 회사"
                         )
                     ], needLoad: true

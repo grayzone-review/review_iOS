@@ -155,13 +155,25 @@ struct SearchIdleView: View {
         .padding(.vertical, 20)
     }
     
+    @ViewBuilder
     private func themeButton(_ searchTheme: SearchTheme) -> some View {
         Button {
             store.send(.themeButtonTapped(searchTheme))
         } label: {
             HStack(spacing: 12) {
-                AppImage.myplaceLine.image
-                    .frame(width: 18, height: 18)
+                switch searchTheme {
+                case .near:
+                    AppImage.mymapLine.image
+                        .frame(width: 18, height: 18)
+                case .neighborhood:
+                    AppImage.myplaceLine.image
+                        .frame(width: 18, height: 18)
+                case .interest:
+                    AppImage.intersetLine.image
+                        .frame(width: 18, height: 18)
+                default:
+                    EmptyView()
+                }
                 Text(searchTheme.text)
                     .pretendard(.captionSemiBold, color: .gray70)
             }

@@ -37,6 +37,7 @@ struct SearchCompanyFeature {
     enum Search {
         case idle(SearchIdleFeature)
         case focused(SearchFocusedFeature)
+        case submitted(SearchSubmittedFeature)
     }
     
     enum CancelID {
@@ -84,7 +85,7 @@ struct SearchCompanyFeature {
                     searchTerms.removeLast()
                 }
                 
-                searchTerms.append(searchTerm)
+                searchTerms.insert(searchTerm, at: 0)
                 
                 if let data = try? JSONEncoder().encode(searchTerms) {
                     UserDefaults.standard.set(data, forKey: "recentSearchTerms")
@@ -94,6 +95,11 @@ struct SearchCompanyFeature {
                 return .send(.setSearchState(.submitted))
                 
             case let .search(.idle(.delegate(.search(searchTerm, searchTheme)))):
+                state.searchTheme = searchTheme
+                state.searchTerm = searchTerm
+                return .send(.setSearchState(.submitted))
+                
+            case let .search(.submitted(.delegate(.search(searchTerm, searchTheme)))):
                 state.searchTheme = searchTheme
                 state.searchTerm = searchTerm
                 return .send(.setSearchState(.submitted))
@@ -121,6 +127,7 @@ struct SearchCompanyFeature {
                         address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
                         totalRating: 3.3,
                         isFollowed: false,
+                        distance: "서울 · 0.8km",
                         title: "복지가 좋고 경력 쌓기에 좋은 회사"
                     )
                 ] // service 구현 이후 호출결과로 변경
@@ -140,7 +147,12 @@ struct SearchCompanyFeature {
                         )
                     )
                 case .submitted:
-                    state.search = nil // submitted 관련 작업 후 수정 예정
+                    state.search = .submitted(
+                        SearchSubmittedFeature.State(
+                            searchTerm: state.searchTerm,
+                            searchTheme: state.searchTheme
+                        )
+                    )
                 }
                 state.searchState = searchState
                 return .none
@@ -271,8 +283,10 @@ struct SearchCompanyView: View {
             if let focusedStore = store.scope(state: \.search?.focused, action: \.search.focused) {
                 SearchFocusedView(store: focusedStore)
             }
-        default:
-            ScrollView {}
+        case .submitted:
+            if let submittedStore = store.scope(state: \.search?.submitted, action: \.search.submitted) {
+                SearchSubmittedView(store: submittedStore)
+            }
         }
     }
 }

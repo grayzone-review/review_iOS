@@ -75,7 +75,7 @@ struct CompanyDetailFeature {
                     searchedCompanies.remove(at: index)
                 }
                 
-                searchedCompanies.append(company)
+                searchedCompanies.insert(company, at: 0)
                 
                 if let data = try? JSONEncoder().encode(searchedCompanies) {
                     UserDefaults.standard.set(data, forKey: "recentSearchedCompanies")
