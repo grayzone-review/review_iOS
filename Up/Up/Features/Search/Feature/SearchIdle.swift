@@ -13,10 +13,11 @@ struct SearchIdleFeature {
     @ObservableState
     struct State: Equatable {
         var recentSearchTerms: [RecentSearchTerm] = []
+        var needLoad: Bool = true
     }
     
     enum Action {
-        case appear
+        case viewInit
         case delegate(Delegate)
         case recentSearchTermButtonTapped(RecentSearchTerm)
         case deleteButtonTapped(RecentSearchTerm)
@@ -30,11 +31,17 @@ struct SearchIdleFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .appear:
+            case .viewInit:
+                guard state.needLoad else {
+                    return .none
+                }
+                
                 if let data = UserDefaults.standard.data(forKey: "recentSearchTerms"),
                    let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
                     state.recentSearchTerms = recentSearchTerms
                 }
+                
+                state.needLoad = false
                 return .none
                 
             case .delegate:
@@ -66,7 +73,7 @@ struct SearchIdleView: View {
     
     init(store: StoreOf<SearchIdleFeature>) {
         self.store = store
-        store.send(.appear)
+        store.send(.viewInit)
     }
     
     var body: some View {

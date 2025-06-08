@@ -12,7 +12,7 @@ import SwiftUI
 struct SearchCompanyFeature {
     @ObservableState
     struct State: Equatable {
-        var search: Search.State? = .idle(SearchIdleFeature.State(recentSearchTerms: []))
+        var search: Search.State? = .idle(SearchIdleFeature.State())
         var searchState: SearchState = .idle
         var searchTerm: String = ""
         var searchTheme: SearchTheme = .keyword
@@ -119,16 +119,19 @@ struct SearchCompanyFeature {
                         id: 1,
                         name: "포레스트병원",
                         address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
-                        totalRating: 3.3
+                        totalRating: 3.3,
+                        isFollowed: false,
+                        title: "복지가 좋고 경력 쌓기에 좋은 회사"
                     )
                 ] // service 구현 이후 호출결과로 변경
                 return .send(.setSearchState(.focused))
                 
             case let .setSearchState(searchState):
-                state.searchState = searchState
                 switch searchState {
                 case .idle:
-                    state.search = .idle(SearchIdleFeature.State())
+                    if state.searchState != .idle {
+                        state.search = .idle(SearchIdleFeature.State())
+                    }
                 case .focused:
                     state.search = .focused(
                         SearchFocusedFeature.State(
@@ -139,6 +142,7 @@ struct SearchCompanyFeature {
                 case .submitted:
                     state.search = nil // submitted 관련 작업 후 수정 예정
                 }
+                state.searchState = searchState
                 return .none
             }
         }

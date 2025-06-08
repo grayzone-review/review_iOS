@@ -15,21 +15,28 @@ struct SearchFocusedFeature {
         let searchTerm: String
         let searchedCompanies: [SearchedCompany]
         var recentSearchedCompanies: [SearchedCompany] = []
+        var needLoad: Bool = true
     }
 
     enum Action {
-        case appear
+        case viewInit
         case deleteButtonTapped(SearchedCompany)
     }
 
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .appear:
+            case .viewInit:
+                guard state.needLoad else {
+                    return .none
+                }
+                
                 if let data = UserDefaults.standard.data(forKey: "recentSearchedCompanies"),
                    let recentSearchedCompanies = try? JSONDecoder().decode([SearchedCompany].self, from: data) {
                     state.recentSearchedCompanies = recentSearchedCompanies
                 }
+                
+                state.needLoad = false
                 
                 return .none
                 
@@ -54,7 +61,7 @@ struct SearchFocusedView: View {
     
     init(store: StoreOf<SearchFocusedFeature>) {
         self.store = store
-        store.send(.appear)
+        store.send(.viewInit)
     }
 
     var body: some View {
@@ -196,7 +203,9 @@ struct SearchFocusedView: View {
                             id: 1,
                             name: "포레스트병원",
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
-                            totalRating: 3.3
+                            totalRating: 3.3,
+                            isFollowed: false,
+                            title: "복지가 좋고 경력 쌓기에 좋은 회사"
                         )
                     ],
                     recentSearchedCompanies: [
@@ -204,9 +213,11 @@ struct SearchFocusedView: View {
                             id: 1,
                             name: "포레스트병원",
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
-                            totalRating: 3.3
+                            totalRating: 3.3,
+                            isFollowed: false,
+                            title: "복지가 좋고 경력 쌓기에 좋은 회사"
                         )
-                    ]
+                    ], needLoad: true
                 )
             ) {
                 SearchFocusedFeature()

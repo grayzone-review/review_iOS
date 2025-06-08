@@ -12,5 +12,7 @@ struct SearchedCompany: Codable, Equatable, Identifiable {
     let name: String
     let address: String
     let totalRating: Double
+    var isFollowed: Bool
+    var title: String
     var searchedDate: Date = .now
 }

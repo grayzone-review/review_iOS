@@ -20,7 +20,7 @@ struct CompanyDetailFeature {
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case appear
+        case viewInit
         case saveSearchedCompany(SearchedCompany)
         case companyInformationFetched(Company)
         case companyReviewsFetched([Review])
@@ -48,7 +48,11 @@ struct CompanyDetailFeature {
             case .binding:
                 return.none
                 
-            case .appear :
+            case .viewInit :
+                guard state.company == nil else {
+                    return .none
+                }
+                
                 return .run { [companyID = state.companyID, searchedCompany = state.searchedCompany] send in
                     if let searchedCompany {
                         await send(.saveSearchedCompany(searchedCompany))
@@ -150,7 +154,7 @@ struct CompanyDetailView: View {
     
     init(store: StoreOf<CompanyDetailFeature>) {
         self.store = store
-        store.send(.appear)
+        store.send(.viewInit)
     }
     
     var body: some View {
