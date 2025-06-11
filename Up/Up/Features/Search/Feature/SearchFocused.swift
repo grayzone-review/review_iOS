@@ -174,7 +174,8 @@ struct SearchFocusedView: View {
                     AppIcon.searchLine.image
                         .foregroundStyle(AppColor.gray30.color)
                         .frame(width: 20, height: 20)
-                    Text(attributedString)
+                    Text(company.name)
+                        .pretendard(.body1Bold, color: .gray90)
                     AppIcon.starFill.image
                         .foregroundStyle(AppColor.seYellow40.color)
                         .frame(width: 20, height: 20)

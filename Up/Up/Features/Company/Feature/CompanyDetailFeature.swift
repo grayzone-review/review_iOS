@@ -43,6 +43,8 @@ struct CompanyDetailFeature {
     @Dependency(\.reviewService) var reviewService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
             case .binding:
