@@ -13,14 +13,14 @@ struct SearchFocusedFeature {
     @ObservableState
     struct State: Equatable {
         let searchTerm: String
-        let searchedCompanies: [SearchedCompany]
-        var recentSearchedCompanies: [SearchedCompany] = []
+        let proposedCompanies: [ProposedCompany]
+        var savedCompanies: [SavedCompany] = []
         var needLoad: Bool = true
     }
 
     enum Action {
         case viewInit
-        case deleteButtonTapped(SearchedCompany)
+        case deleteButtonTapped(SavedCompany)
     }
 
     var body: some ReducerOf<Self> {
@@ -31,9 +31,9 @@ struct SearchFocusedFeature {
                     return .none
                 }
                 
-                if let data = UserDefaults.standard.data(forKey: "recentSearchedCompanies"),
-                   let recentSearchedCompanies = try? JSONDecoder().decode([SearchedCompany].self, from: data) {
-                    state.recentSearchedCompanies = recentSearchedCompanies
+                if let data = UserDefaults.standard.data(forKey: "savedCompanies"),
+                   let savedCompanies = try? JSONDecoder().decode([SavedCompany].self, from: data) {
+                    state.savedCompanies = savedCompanies
                 }
                 
                 state.needLoad = false
@@ -41,12 +41,12 @@ struct SearchFocusedFeature {
                 return .none
                 
             case let .deleteButtonTapped(company):
-                if let index = state.recentSearchedCompanies.firstIndex(of: company) {
-                    state.recentSearchedCompanies.remove(at: index)
+                if let index = state.savedCompanies.firstIndex(of: company) {
+                    state.savedCompanies.remove(at: index)
                 }
                 
-                if let data = try? JSONEncoder().encode(state.recentSearchedCompanies) {
-                    UserDefaults.standard.set(data, forKey: "recentSearchedCompanies")
+                if let data = try? JSONEncoder().encode(state.savedCompanies) {
+                    UserDefaults.standard.set(data, forKey: "savedCompanies")
                 }
                 
                 
@@ -74,22 +74,21 @@ struct SearchFocusedView: View {
     
     @ViewBuilder
     private var recentSearchedCompany: some View {
-        if store.recentSearchedCompanies.isEmpty {
+        if store.savedCompanies.isEmpty {
             empty
         } else {
             ScrollView {
                 LazyVStack {
                     Divider()
-                    ForEach(store.recentSearchedCompanies) { company in
+                    ForEach(store.savedCompanies) { company in
                         NavigationLink(
                             state: UpFeature.Path.State.detail(
                                 CompanyDetailFeature.State(
-                                    companyID: company.id,
-                                    searchedCompany: company
+                                    companyID: company.id
                                 )
                             )
                         ) {
-                            recentSearchCompanyButton(company)
+                            savedCompanyButton(company)
                         }
                     }
                 }
@@ -110,7 +109,7 @@ struct SearchFocusedView: View {
         }
     }
     
-    private func recentSearchCompanyButton(_ company: SearchedCompany) -> some View {
+    private func savedCompanyButton(_ company: SavedCompany) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -142,33 +141,23 @@ struct SearchFocusedView: View {
         ScrollView {
             LazyVStack {
                 Divider()
-                ForEach(store.searchedCompanies) { company in
+                ForEach(store.proposedCompanies) { company in
                     NavigationLink(
                         state: UpFeature.Path.State.detail(
                             CompanyDetailFeature.State(
-                                companyID: company.id,
-                                searchedCompany: company
+                                companyID: company.id
                             )
                         )
                     ) {
-                        searchCompanyButton(company)
+                        proposedCompanyButton(company)
                     }
                 }
             }
         }
     }
     
-    private func searchCompanyButton(_ company: SearchedCompany) -> some View {
-        var attributedString = AttributedString(company.name)
-        
-        attributedString.foregroundColor = AppColor.gray90.color
-        attributedString.font = Typography.body1Bold.font
-        
-        if let range = attributedString.range(of: store.searchTerm) {
-            attributedString[range].foregroundColor = AppColor.orange40.color
-        }
-        
-        return VStack(spacing: 0) {
+    private func proposedCompanyButton(_ company: ProposedCompany) -> some View {
+        VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 4) {
                     AppIcon.searchLine.image
@@ -199,28 +188,22 @@ struct SearchFocusedView: View {
             store: Store(
                 initialState: SearchFocusedFeature.State(
                     searchTerm: "포레",
-                    searchedCompanies: [
-                        SearchedCompany(
+                    proposedCompanies: [
+                        ProposedCompany(
                             id: 1,
                             name: "포레스트병원",
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
-                            totalRating: 3.3,
-                            isFollowed: false,
-                            distance: "서울 · 0.8km",
-                            title: "복지가 좋고 경력 쌓기에 좋은 회사"
+                            totalRating: 3.3
                         )
                     ],
-                    recentSearchedCompanies: [
-                        SearchedCompany(
+                    savedCompanies: [
+                        SavedCompany(
                             id: 1,
                             name: "포레스트병원",
-                            address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
-                            totalRating: 3.3,
-                            isFollowed: false,
-                            distance: "서울 · 0.8km",
-                            title: "복지가 좋고 경력 쌓기에 좋은 회사"
+                            address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)"
                         )
-                    ], needLoad: true
+                    ],
+                    needLoad: true
                 )
             ) {
                 SearchFocusedFeature()

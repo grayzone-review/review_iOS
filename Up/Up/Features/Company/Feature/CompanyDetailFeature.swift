@@ -13,7 +13,6 @@ struct CompanyDetailFeature {
     @ObservableState
     struct State: Equatable {
         let companyID: Int
-        var searchedCompany: SearchedCompany?
         var company: Company?
         var reviews: [Review] = []
     }
@@ -21,7 +20,7 @@ struct CompanyDetailFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case viewInit
-        case saveSearchedCompany(SearchedCompany)
+        case saveCompany
         case companyInformationFetched(Company)
         case companyReviewsFetched([Review])
         case backButtonTapped
@@ -55,32 +54,39 @@ struct CompanyDetailFeature {
                     return .none
                 }
                 
-                return .run { [companyID = state.companyID, searchedCompany = state.searchedCompany] send in
-                    if let searchedCompany {
-                        await send(.saveSearchedCompany(searchedCompany))
-                    }
-                    
-                    let data = try await companyService.fetchCompany(of: companyID)
+                return .run { [id = state.companyID] send in
+                    let data = try await companyService.fetchCompany(of: id)
                     let company = data.toDomain()
                     
                     await send(.companyInformationFetched(company))
+                    await send(.saveCompany)
                 }
                 
-            case let .saveSearchedCompany(company):
-                var searchedCompanies = [SearchedCompany]()
-                
-                if let data = UserDefaults.standard.data(forKey: "recentSearchedCompanies"),
-                   let recentSearchedCompanies = try? JSONDecoder().decode([SearchedCompany].self, from: data) {
-                    searchedCompanies = recentSearchedCompanies
-                }
-                if let index = searchedCompanies.firstIndex(where: { $0.id == company.id }) {
-                    searchedCompanies.remove(at: index)
+            case .saveCompany:
+                guard let company = state.company else {
+                    return .none
                 }
                 
-                searchedCompanies.insert(company, at: 0)
+                let savedCompany = SavedCompany(
+                    id: company.id,
+                    name: company.name,
+                    address: company.address.displayText
+                )
+                var savedCompanies = [SavedCompany]()
                 
-                if let data = try? JSONEncoder().encode(searchedCompanies) {
-                    UserDefaults.standard.set(data, forKey: "recentSearchedCompanies")
+                if let data = UserDefaults.standard.data(forKey: "savedCompanies"),
+                   let recentSavedCompanies = try? JSONDecoder().decode([SavedCompany].self, from: data) {
+                    savedCompanies = recentSavedCompanies
+                }
+                
+                if let index = savedCompanies.firstIndex(where: { $0.id == company.id }) {
+                    savedCompanies.remove(at: index)
+                }
+                
+                savedCompanies.insert(savedCompany, at: 0)
+                
+                if let data = try? JSONEncoder().encode(savedCompanies) {
+                    UserDefaults.standard.set(data, forKey: "savedCompanies")
                 }
                 
                 return .none

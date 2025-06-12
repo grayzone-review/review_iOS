@@ -17,7 +17,7 @@ struct SearchCompanyFeature {
         var searchTerm: String = ""
         var searchTheme: SearchTheme = .keyword
         var isFocused: Bool = false
-        var searchedCompanies: [SearchedCompany] = []
+        var proposedCompanies: [ProposedCompany] = []
     }
     
     enum Action: BindableAction {
@@ -29,7 +29,7 @@ struct SearchCompanyFeature {
         case enterButtonTapped
         case search(Search.Action)
         case termChanged
-        case fetchRelatedCompanies
+        case fetchProposedCompanies
         case setSearchState(SearchState)
     }
     
@@ -53,7 +53,7 @@ struct SearchCompanyFeature {
         Reduce { state, action in
             switch action {
             case .binding:
-                return.none
+                return .none
                 
             case .backButtonTapped:
                 return .run { _ in await dismiss() }
@@ -78,9 +78,11 @@ struct SearchCompanyFeature {
                    let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
                     searchTerms = recentSearchTerms
                 }
+                
                 if let index = searchTerms.firstIndex(where: { $0.searchTerm == searchTerm.searchTerm }) {
                     searchTerms.remove(at: index)
                 }
+                
                 if searchTerms.count == 10 {
                     searchTerms.removeLast()
                 }
@@ -108,29 +110,19 @@ struct SearchCompanyFeature {
                 return .none
                 
             case .termChanged:
-                return .send(.fetchRelatedCompanies)
+                return .send(.fetchProposedCompanies)
                     .debounce(
                         id: CancelID.debounce,
                         for: 0.5,
                         scheduler: mainQueue
                     )
                 
-            case .fetchRelatedCompanies:
+            case .fetchProposedCompanies:
                 guard state.searchState == .focused else {
                     return .none
                 }
                 
-                state.searchedCompanies = [
-                    SearchedCompany(
-                        id: 1,
-                        name: "포레스트병원",
-                        address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
-                        totalRating: 3.3,
-                        isFollowed: false,
-                        distance: "서울 · 0.8km",
-                        title: "복지가 좋고 경력 쌓기에 좋은 회사"
-                    )
-                ] // service 구현 이후 호출결과로 변경
+                state.proposedCompanies = [] // service 구현 이후 호출결과로 변경
                 return .send(.setSearchState(.focused))
                 
             case let .setSearchState(searchState):
@@ -143,7 +135,7 @@ struct SearchCompanyFeature {
                     state.search = .focused(
                         SearchFocusedFeature.State(
                             searchTerm: state.searchTerm,
-                            searchedCompanies: state.searchedCompanies
+                            proposedCompanies: state.proposedCompanies
                         )
                     )
                 case .submitted:

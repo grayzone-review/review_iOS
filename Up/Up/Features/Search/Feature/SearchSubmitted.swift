@@ -41,18 +41,7 @@ struct SearchSubmittedFeature {
         Reduce { state, action in
             switch action {
             case .viewInit:
-                // service 정의 후 검색결과 로딩 API 호출 예정
-                state.searchedCompanies = [
-                    SearchedCompany(
-                        id: 1,
-                        name: "스타벅스 석촌역점",
-                        address: "서울특별시 송파구 백제고분로 358 1층",
-                        totalRating: 4.0,
-                        isFollowed: false,
-                        distance: "서울 · 0.8km",
-                        title: "복지가 좋고 경력 쌓기에 좋은 회사"
-                    )
-                ]
+                state.searchedCompanies = [] // service 정의 후 검색결과 로딩 API 호출 예정
                 return .none
                 
             case .delegate:
@@ -193,8 +182,7 @@ struct SearchSubmittedView: View {
                     NavigationLink(
                         state: UpFeature.Path.State.detail(
                             CompanyDetailFeature.State(
-                                companyID: company.id,
-                                searchedCompany: company
+                                companyID: company.id
                             )
                         )
                     ) {
@@ -221,7 +209,13 @@ struct SearchSubmittedView: View {
     }
     
     private func searchedCompany(_ company: SearchedCompany) -> some View {
-        VStack(spacing: 40) {
+        var location = String(company.distance.rounded(to: 1))
+        
+        if company.address.count > 1 {
+            location = "\(String(Array(company.address)[...1])) · \(location)"
+        }
+        
+        return VStack(spacing: 40) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(company.name)
@@ -236,8 +230,7 @@ struct SearchSubmittedView: View {
                             Text(String(company.totalRating.rounded(to: 1)))
                                 .pretendard(.captionBold, color: .gray90)
                         }
-                        
-                        Text(company.distance)
+                        Text(location)
                             .pretendard(.captionRegular, color: .gray50)
                     }
                 }
@@ -251,7 +244,7 @@ struct SearchSubmittedView: View {
                     .padding(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .background(AppColor.gray10.color)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
-                Text(company.title)
+                Text(company.reviewTitle)
                     .pretendard(.captionRegular, color: .gray70)
                 Spacer()
             }
