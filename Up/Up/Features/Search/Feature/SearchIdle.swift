@@ -7,23 +7,23 @@
 
 import ComposableArchitecture
 import SwiftUI
-import SwiftData
 
 @Reducer
 struct SearchIdleFeature {
     @ObservableState
     struct State: Equatable {
-        var recentSearchTerms: [RecentSearchTerm]
+        var recentSearchTerms: [RecentSearchTerm] = []
+        var needLoad: Bool = true
     }
     
     enum Action {
+        case viewInit
         case delegate(Delegate)
         case recentSearchTermButtonTapped(RecentSearchTerm)
-        case deleteButtonTapped(RecentSearchTerm, ModelContext)
+        case deleteButtonTapped(RecentSearchTerm)
         case themeButtonTapped(SearchTheme)
         
         enum Delegate: Equatable {
-            case updateRecentSearchTerms([RecentSearchTerm])
             case search(String, SearchTheme)
         }
     }
@@ -31,19 +31,35 @@ struct SearchIdleFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
+            case .viewInit:
+                guard state.needLoad else {
+                    return .none
+                }
+                
+                if let data = UserDefaults.standard.data(forKey: "recentSearchTerms"),
+                   let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
+                    state.recentSearchTerms = recentSearchTerms
+                }
+                
+                state.needLoad = false
+                return .none
+                
             case .delegate:
                 return .none
                 
             case let .recentSearchTermButtonTapped(recentSearchTerm):
                 return .send(.delegate(.search(recentSearchTerm.searchTerm, .keyword)))
                 
-            case let .deleteButtonTapped(recentSearchTerm, modelContext):
+            case let .deleteButtonTapped(recentSearchTerm):
                 if let index = state.recentSearchTerms.firstIndex(of: recentSearchTerm) {
                     state.recentSearchTerms.remove(at: index)
                 }
-                modelContext.delete(recentSearchTerm)
-                try? modelContext.save()
-                return .send(.delegate(.updateRecentSearchTerms(state.recentSearchTerms)))
+                
+                if let data = try? JSONEncoder().encode(state.recentSearchTerms) {
+                    UserDefaults.standard.set(data, forKey: "recentSearchTerms")
+                }
+                
+                return .none
                 
             case let .themeButtonTapped(searchTheme):
                 return .send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
@@ -54,7 +70,11 @@ struct SearchIdleFeature {
 
 struct SearchIdleView: View {
     @Bindable var store: StoreOf<SearchIdleFeature>
-    @Environment(\.modelContext) var modelContext
+    
+    init(store: StoreOf<SearchIdleFeature>) {
+        self.store = store
+        store.send(.viewInit)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -91,7 +111,7 @@ struct SearchIdleView: View {
             Text(recentSearchTerm.searchTerm)
                 .pretendard(.captionSemiBold, color: .gray70)
             Button {
-                store.send(.deleteButtonTapped(recentSearchTerm, modelContext))
+                store.send(.deleteButtonTapped(recentSearchTerm))
             } label: {
                 AppIcon.closeFill.image
                     .foregroundStyle(AppColor.gray10.color)
@@ -135,13 +155,25 @@ struct SearchIdleView: View {
         .padding(.vertical, 20)
     }
     
+    @ViewBuilder
     private func themeButton(_ searchTheme: SearchTheme) -> some View {
         Button {
             store.send(.themeButtonTapped(searchTheme))
         } label: {
             HStack(spacing: 12) {
-                AppImage.myplaceLine.image
-                    .frame(width: 18, height: 18)
+                switch searchTheme {
+                case .near:
+                    AppImage.mymapLine.image
+                        .frame(width: 18, height: 18)
+                case .neighborhood:
+                    AppImage.myplaceLine.image
+                        .frame(width: 18, height: 18)
+                case .interest:
+                    AppImage.intersetLine.image
+                        .frame(width: 18, height: 18)
+                default:
+                    EmptyView()
+                }
                 Text(searchTheme.text)
                     .pretendard(.captionSemiBold, color: .gray70)
             }

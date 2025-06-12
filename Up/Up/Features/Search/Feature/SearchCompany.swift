@@ -7,28 +7,26 @@
 
 import ComposableArchitecture
 import SwiftUI
-import SwiftData
 
 @Reducer
 struct SearchCompanyFeature {
     @ObservableState
     struct State: Equatable {
-        var search: Search.State?
+        var search: Search.State? = .idle(SearchIdleFeature.State())
         var searchState: SearchState = .idle
         var searchTerm: String = ""
         var searchTheme: SearchTheme = .keyword
         var isFocused: Bool = false
-        var recentSearchTerms: [RecentSearchTerm] = []
+        var searchedCompanies: [SearchedCompany] = []
     }
     
     enum Action: BindableAction {
-        case appear(ModelContext)
         case binding(BindingAction<State>)
         case backButtonTapped
         case textFieldFocused
         case clearButtonTapped
         case cancelButtonTapped
-        case enterButtonTapped(ModelContext)
+        case enterButtonTapped
         case search(Search.Action)
         case termChanged
         case fetchRelatedCompanies
@@ -38,6 +36,8 @@ struct SearchCompanyFeature {
     @Reducer
     enum Search {
         case idle(SearchIdleFeature)
+        case focused(SearchFocusedFeature)
+        case submitted(SearchSubmittedFeature)
     }
     
     enum CancelID {
@@ -52,14 +52,6 @@ struct SearchCompanyFeature {
         
         Reduce { state, action in
             switch action {
-            case let .appear(modelContext):
-                do {
-                    state.recentSearchTerms = try modelContext.fetch(FetchDescriptor<RecentSearchTerm>())
-                    return .send(.setSearchState(.idle))
-                } catch {
-                    fatalError("RecentSearchTerm 조회 실패: \(error)")
-                }
-                
             case .binding:
                 return.none
                 
@@ -78,23 +70,27 @@ struct SearchCompanyFeature {
                 state.isFocused = false
                 return .send(.setSearchState(.idle))
                 
-            case let .enterButtonTapped(modelContext):
-                if let existing = state.recentSearchTerms.first(where:{ $0.searchTerm == state.searchTerm }) {
-                    existing.creationDate = .now
-                } else {
-                    if state.recentSearchTerms.count == 10 {
-                        let last = state.recentSearchTerms.removeLast()
-                        modelContext.delete(last)
-                    }
-                    let newSearchTerm = RecentSearchTerm(searchTerm: state.searchTerm)
-                    state.recentSearchTerms.insert(
-                        newSearchTerm,
-                        at: 0
-                    )
-                    modelContext.insert(newSearchTerm)
+            case .enterButtonTapped:
+                let searchTerm = RecentSearchTerm(searchTerm: state.searchTerm)
+                var searchTerms = [RecentSearchTerm]()
+                
+                if let data = UserDefaults.standard.data(forKey: "recentSearchTerms"),
+                   let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
+                    searchTerms = recentSearchTerms
+                }
+                if let index = searchTerms.firstIndex(where: { $0.searchTerm == searchTerm.searchTerm }) {
+                    searchTerms.remove(at: index)
+                }
+                if searchTerms.count == 10 {
+                    searchTerms.removeLast()
                 }
                 
-                try? modelContext.save()
+                searchTerms.insert(searchTerm, at: 0)
+                
+                if let data = try? JSONEncoder().encode(searchTerms) {
+                    UserDefaults.standard.set(data, forKey: "recentSearchTerms")
+                }
+                
                 state.searchTheme = .keyword
                 return .send(.setSearchState(.submitted))
                 
@@ -103,9 +99,10 @@ struct SearchCompanyFeature {
                 state.searchTerm = searchTerm
                 return .send(.setSearchState(.submitted))
                 
-            case let .search(.idle(.delegate(.updateRecentSearchTerms(searchTerms)))):
-                state.recentSearchTerms = searchTerms
-                return .none
+            case let .search(.submitted(.delegate(.search(searchTerm, searchTheme)))):
+                state.searchTheme = searchTheme
+                state.searchTerm = searchTerm
+                return .send(.setSearchState(.submitted))
                 
             case .search:
                 return .none
@@ -119,18 +116,45 @@ struct SearchCompanyFeature {
                     )
                 
             case .fetchRelatedCompanies:
-                return .none // service 구현 이후 연관 검색어 API 호출로 변경 필요
+                guard state.searchState == .focused else {
+                    return .none
+                }
+                
+                state.searchedCompanies = [
+                    SearchedCompany(
+                        id: 1,
+                        name: "포레스트병원",
+                        address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)",
+                        totalRating: 3.3,
+                        isFollowed: false,
+                        distance: "서울 · 0.8km",
+                        title: "복지가 좋고 경력 쌓기에 좋은 회사"
+                    )
+                ] // service 구현 이후 호출결과로 변경
+                return .send(.setSearchState(.focused))
                 
             case let .setSearchState(searchState):
-                state.searchState = searchState
                 switch searchState {
                 case .idle:
-                    state.search = .idle(SearchIdleFeature.State(recentSearchTerms: state.recentSearchTerms))
+                    if state.searchState != .idle {
+                        state.search = .idle(SearchIdleFeature.State())
+                    }
                 case .focused:
-                    state.search = nil // focused 관련 작업 후 수정 예정
+                    state.search = .focused(
+                        SearchFocusedFeature.State(
+                            searchTerm: state.searchTerm,
+                            searchedCompanies: state.searchedCompanies
+                        )
+                    )
                 case .submitted:
-                    state.search = nil // submitted 관련 작업 후 수정 예정
+                    state.search = .submitted(
+                        SearchSubmittedFeature.State(
+                            searchTerm: state.searchTerm,
+                            searchTheme: state.searchTheme
+                        )
+                    )
                 }
+                state.searchState = searchState
                 return .none
             }
         }
@@ -145,19 +169,11 @@ extension SearchCompanyFeature.Search.State: Equatable {}
 struct SearchCompanyView: View {
     @Bindable var store: StoreOf<SearchCompanyFeature>
     @FocusState var isFocused: Bool
-    @Environment(\.modelContext) var modelContext
-    
-    init(store: StoreOf<SearchCompanyFeature>) {
-        self.store = store
-        store.send(.appear(modelContext))
-    }
     
     var body: some View {
         VStack(spacing: 0) {
             enterSearchTermArea
-            ScrollView {
-                bodyArea
-            }
+            bodyArea
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -181,7 +197,7 @@ struct SearchCompanyView: View {
     }
     
     private var enterSearchTermArea: some View {
-        HStack(spacing: 8) { // 추후 디자인 확정되면 버튼과 함께 간격 수정
+        HStack(spacing: 16) {
             HStack(spacing: 8) {
                 searchIcon
                 textField
@@ -191,7 +207,7 @@ struct SearchCompanyView: View {
             .frame(height: 52)
             .overlay {
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColor.gray20.color)
+                    .stroke(store.searchState == .focused ? AppColor.gray90.color : AppColor.gray20.color)
             }
             
             cancelButton
@@ -223,7 +239,7 @@ struct SearchCompanyView: View {
             store.send(.termChanged)
         }
         .onSubmit {
-            store.send(.enterButtonTapped(modelContext))
+            store.send(.enterButtonTapped)
         }
     }
     
@@ -251,7 +267,8 @@ struct SearchCompanyView: View {
             Button {
                 store.send(.cancelButtonTapped)
             } label: {
-                Text("취소") // 디자인 수정되면 변경 필요
+                Text("취소")
+                    .pretendard(.body1Regular, color: .gray90)
             }
         }
     }
@@ -263,8 +280,14 @@ struct SearchCompanyView: View {
             if let idleStore = store.scope(state: \.search?.idle, action: \.search.idle) {
                 SearchIdleView(store: idleStore)
             }
-        default:
-            EmptyView()
+        case .focused:
+            if let focusedStore = store.scope(state: \.search?.focused, action: \.search.focused) {
+                SearchFocusedView(store: focusedStore)
+            }
+        case .submitted:
+            if let submittedStore = store.scope(state: \.search?.submitted, action: \.search.submitted) {
+                SearchSubmittedView(store: submittedStore)
+            }
         }
     }
 }

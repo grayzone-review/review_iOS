@@ -55,8 +55,11 @@ struct CommentView: View {
     
     private var commonComment: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(nickname)
-                .pretendard(.body2Bold, color: .gray90)
+            HStack {
+                Text(nickname)
+                    .pretendard(.body2Bold, color: .gray90)
+                Spacer()
+            }
             Text(attributedString)
         }
     }

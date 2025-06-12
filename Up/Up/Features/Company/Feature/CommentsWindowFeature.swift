@@ -12,7 +12,7 @@ import SwiftUI
 struct CommentsWindowFeature {
     @ObservableState
     struct State: Equatable {
-        @Shared var review: Review
+        var review: Review
         var comments: IdentifiedArrayOf<Comment> = []
         var replies: [Int: IdentifiedArrayOf<Reply>] = [:]
         var targetComment: Comment?
@@ -134,6 +134,7 @@ struct CommentsWindowFeature {
                 state.targetComment = nil
                 state.content = ""
                 state.isFocused = false
+                state.review.commentCount += 1
                 return .run { [state] send in
                     if let targetComment {
                         let data = try await service.createReply(
@@ -155,9 +156,6 @@ struct CommentsWindowFeature {
                 }
                 
             case let .commentAdded(comment):
-                state.$review.withLock { review in
-                    review.commentCount += 1
-                }
                 state.comments.insert(comment, at: 0)
                 return .none
             }
@@ -167,11 +165,16 @@ struct CommentsWindowFeature {
 
 struct CommentsWindowView: View {
     @Bindable var store: StoreOf<CommentsWindowFeature>
+    @Binding var review: Review
     @FocusState var isFocused: Bool
     @State private var selectedDetent: PresentationDetent = .medium
     
-    init(store: StoreOf<CommentsWindowFeature>) {
+    init(
+        store: StoreOf<CommentsWindowFeature>,
+        review: Binding<Review>
+    ) {
         self.store = store
+        self._review = review
         store.send(.commentsNeedLoad)
     }
     
@@ -206,6 +209,7 @@ struct CommentsWindowView: View {
             selection: $selectedDetent
         )
         .presentationContentInteraction(.scrolls)
+        .bind($review, to: $store.review)
     }
     
     @ViewBuilder
@@ -336,6 +340,18 @@ struct CommentCardView: View {
         remainingReplyCount > 0
     }
     
+    private var isTargetComment: Bool {
+        store.targetComment == comment
+    }
+    
+    private var hasInterButtonsSpacing: Bool {
+        replies.isEmpty && isRepliesLoadable
+    }
+    
+    private var hasReplies: Bool {
+        replies.isEmpty == false || isRepliesLoadable
+    }
+    
     var body: some View {
         if comment.isVisible {
             commentCard
@@ -345,13 +361,24 @@ struct CommentCardView: View {
     }
     
     private var commentCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            content
-            makeReplyButton
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                content
+                makeReplyButton
+            }
+            .padding(
+                EdgeInsets(
+                    top: 20,
+                    leading: 20,
+                    bottom: hasInterButtonsSpacing ? 6 : 20,
+                    trailing: 20
+                )
+            )
+            .background(isTargetComment ? AppColor.gray10.color : nil)
+            
             replyList
             showMoreReplyButton
         }
-        .padding(20)
     }
     
     private var content: some View {
@@ -374,11 +401,11 @@ struct CommentCardView: View {
     private var replyList: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(replies) { reply in
-                HStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
                     hyphen
                     replyContent(reply)
                 }
-                .padding([.top], 40)
+                .padding(20)
             }
         }
     }
@@ -410,6 +437,14 @@ struct CommentCardView: View {
                         .pretendard(.captionSemiBold, color: .gray50)
                 }
             }
+            .padding(
+                EdgeInsets(
+                    top: 6,
+                    leading: 20,
+                    bottom: 20,
+                    trailing: 20
+                )
+            )
         }
     }
     
@@ -417,6 +452,7 @@ struct CommentCardView: View {
         Rectangle()
             .frame(width: 12, height: 1)
             .foregroundStyle(AppColor.gray20.color)
+            .frame(height: 18)
     }
 }
 
@@ -424,32 +460,52 @@ struct CommentCardView: View {
     CommentsWindowView(
         store: Store(
             initialState: CommentsWindowFeature.State(
-                review: Shared(
-                    value: Review(
-                        id: 3,
-                        rating: Rating(
-                            workLifeBalance: 3.5,
-                            welfare: 3.5,
-                            salary: 3.0,
-                            companyCulture: 4.0,
-                            management: 3.0
-                        ),
-                        reviewer: "bob",
-                        title: "별로였어요.",
-                        advantagePoint: "연봉이 높아요.",
-                        disadvantagePoint: "상사가 별로예요.",
-                        managementFeedback: "리더십이 부족해요.",
-                        job: "프론트엔드 개발자",
-                        employmentPeriod: "1년 미만",
-                        creationDate: .now,
-                        likeCount: 3,
-                        commentCount: 3,
-                        isLiked: true
-                    )
+                review: Review(
+                    id: 3,
+                    rating: Rating(
+                        workLifeBalance: 3.5,
+                        welfare: 3.5,
+                        salary: 3.0,
+                        companyCulture: 4.0,
+                        management: 3.0
+                    ),
+                    reviewer: "bob",
+                    title: "별로였어요.",
+                    advantagePoint: "연봉이 높아요.",
+                    disadvantagePoint: "상사가 별로예요.",
+                    managementFeedback: "리더십이 부족해요.",
+                    job: "프론트엔드 개발자",
+                    employmentPeriod: "1년 미만",
+                    creationDate: .now,
+                    likeCount: 3,
+                    commentCount: 3,
+                    isLiked: true
                 )
             )
         ) {
             CommentsWindowFeature()
-        }
+        }, review: .constant(
+            Review(
+                id: 3,
+                rating: Rating(
+                    workLifeBalance: 3.5,
+                    welfare: 3.5,
+                    salary: 3.0,
+                    companyCulture: 4.0,
+                    management: 3.0
+                ),
+                reviewer: "bob",
+                title: "별로였어요.",
+                advantagePoint: "연봉이 높아요.",
+                disadvantagePoint: "상사가 별로예요.",
+                managementFeedback: "리더십이 부족해요.",
+                job: "프론트엔드 개발자",
+                employmentPeriod: "1년 미만",
+                creationDate: .now,
+                likeCount: 3,
+                commentCount: 3,
+                isLiked: true
+            )
+        )
     )
 }

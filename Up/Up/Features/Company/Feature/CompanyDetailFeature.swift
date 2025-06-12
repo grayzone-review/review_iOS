@@ -13,48 +13,88 @@ struct CompanyDetailFeature {
     @ObservableState
     struct State: Equatable {
         let companyID: Int
+        var searchedCompany: SearchedCompany?
         var company: Company?
-        @Shared var reviews: IdentifiedArrayOf<Review>
+        var reviews: [Review] = []
     }
     
-    enum Action {
-        case appear
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+        case viewInit
+        case saveSearchedCompany(SearchedCompany)
         case companyInformationFetched(Company)
         case companyReviewsFetched([Review])
         case backButtonTapped
         case followButtonTapped
         case follow
         case makeReviewButtonTapped
+        case likeButtonTapped(Review)
+        case like(id: Int, Bool)
     }
     
-    enum CancelID {
+    enum CancelID: Hashable {
         case follow
+        case like(id: Int)
     }
     
     @Dependency(\.dismiss) var dismiss
     @Dependency(\.mainQueue) var mainQueue
-    @Dependency(\.companyService) var service
+    @Dependency(\.companyService) var companyService
+    @Dependency(\.reviewService) var reviewService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
-            case .appear :
-                return .run { [companyID = state.companyID] send in
-                    let data = try await service.fetchCompany(of: companyID)
+            case .binding:
+                return.none
+                
+            case .viewInit :
+                guard state.company == nil else {
+                    return .none
+                }
+                
+                return .run { [companyID = state.companyID, searchedCompany = state.searchedCompany] send in
+                    if let searchedCompany {
+                        await send(.saveSearchedCompany(searchedCompany))
+                    }
+                    
+                    let data = try await companyService.fetchCompany(of: companyID)
                     let company = data.toDomain()
+                    
                     await send(.companyInformationFetched(company))
                 }
+                
+            case let .saveSearchedCompany(company):
+                var searchedCompanies = [SearchedCompany]()
+                
+                if let data = UserDefaults.standard.data(forKey: "recentSearchedCompanies"),
+                   let recentSearchedCompanies = try? JSONDecoder().decode([SearchedCompany].self, from: data) {
+                    searchedCompanies = recentSearchedCompanies
+                }
+                if let index = searchedCompanies.firstIndex(where: { $0.id == company.id }) {
+                    searchedCompanies.remove(at: index)
+                }
+                
+                searchedCompanies.insert(company, at: 0)
+                
+                if let data = try? JSONEncoder().encode(searchedCompanies) {
+                    UserDefaults.standard.set(data, forKey: "recentSearchedCompanies")
+                }
+                
+                return .none
                 
             case let .companyInformationFetched(company):
                 state.company = company
                 return .run { [companyID = state.companyID] send in
-                    let data = try await service.fetchReviews(of: companyID)
+                    let data = try await companyService.fetchReviews(of: companyID)
                     let reviews = data.reivews.map { $0.toDomain() }
                     await send(.companyReviewsFetched(reviews))
                 }
                 
             case let .companyReviewsFetched(reviews):
-                state.$reviews.withLock { $0 += reviews }
+                state.reviews = reviews
                 return .none
                 
             case .backButtonTapped:
@@ -76,14 +116,36 @@ struct CompanyDetailFeature {
                     }
                     
                     if company.isFollowed {
-                        try await service.createCompanyFollowing(of: company.id)
+                        try await companyService.createCompanyFollowing(of: company.id)
                     } else {
-                        try await service.deleteCompanyFollowing(of: company.id)
+                        try await companyService.deleteCompanyFollowing(of: company.id)
                     }
                 }
                 
             case .makeReviewButtonTapped:
                 return .none
+                
+            case let .likeButtonTapped(review):
+                guard let index = state.reviews.firstIndex(of: review) else {
+                    return .none
+                }
+                state.reviews[index].likeCount += state.reviews[index].isLiked ? -1 : 1
+                state.reviews[index].isLiked.toggle()
+                return .send(.like(id: review.id, state.reviews[index].isLiked))
+                    .debounce(
+                        id: CancelID.like(id: review.id),
+                        for: 1,
+                        scheduler: mainQueue
+                    )
+                
+            case let .like(id, isLiked):
+                return .run { _ in
+                    if isLiked {
+                        try await reviewService.createReviewLike(of: id)
+                    } else {
+                        try await reviewService.deleteReviewLike(of: id)
+                    }
+                }
             }
         }
     }
@@ -94,7 +156,7 @@ struct CompanyDetailView: View {
     
     init(store: StoreOf<CompanyDetailFeature>) {
         self.store = store
-        store.send(.appear)
+        store.send(.viewInit)
     }
     
     var body: some View {
@@ -246,15 +308,16 @@ struct CompanyDetailView: View {
     
     private var reviewList: some View {
         LazyVStack(spacing: 0) {
-            ForEach(Array(store.$reviews)) { $review in
+            ForEach($store.reviews) { $review in
                 ReivewCardView(
                     store: Store(
                         initialState: ReviewCardFeature.State(
-                            review: $review
+                            review: review
                         )
                     ) {
                         ReviewCardFeature()
-                    }
+                    },
+                    review: $review
                 )
                 divider
             }
@@ -272,8 +335,7 @@ struct CompanyDetailView: View {
         CompanyDetailView(
             store: Store(
                 initialState: CompanyDetailFeature.State(
-                    companyID: Int.random(in: 1..<300),
-                    reviews: Shared(value: [])
+                    companyID: 1
                 )
             ) {
                 CompanyDetailFeature()
