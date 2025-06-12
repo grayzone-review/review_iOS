@@ -20,6 +20,7 @@ struct SearchSubmittedFeature {
     
     enum Action {
         case viewInit
+        case setSearchedCompanies([SearchedCompany])
         case delegate(Delegate)
         case themeButtonTapped(SearchTheme)
         case followButtonTapped(SearchedCompany)
@@ -36,12 +37,28 @@ struct SearchSubmittedFeature {
     
     @Dependency(\.mainQueue) var mainQueue
     @Dependency(\.companyService) var companyService
+    @Dependency(\.searchService) var searchService
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .viewInit:
-                state.searchedCompanies = [] // service 정의 후 검색결과 로딩 API 호출 예정
+                return .run { [searchTheme = state.searchTheme, searchTerm = state.searchTerm] send in
+                    let data = switch searchTheme {
+                    default: // 추후 테마별 API 나오면 case별로 대응하도록 변경. 아래는 .keyword의 API.
+                        try await searchService.fetchSearchedCompanies(
+                            keyword: searchTerm,
+                            latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
+                            longitude: 126.9780
+                        )
+                    }
+                    let companies = data.companies.map { $0.toDomain() }
+                    
+                    await send(.setSearchedCompanies(companies))
+                }
+                
+            case let .setSearchedCompanies(companies):
+                state.searchedCompanies = companies
                 return .none
                 
             case .delegate:
@@ -244,8 +261,10 @@ struct SearchSubmittedView: View {
                     .padding(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .background(AppColor.gray10.color)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
-                Text(company.reviewTitle)
-                    .pretendard(.captionRegular, color: .gray70)
+                if let title = company.reviewTitle {
+                    Text(title)
+                        .pretendard(.captionRegular, color: .gray70)
+                }
                 Spacer()
             }
         }

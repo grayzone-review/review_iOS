@@ -14,7 +14,7 @@ struct SearchedCompany: Equatable, Identifiable {
     let totalRating: Double
     var isFollowed: Bool
     let distance: Double
-    let reviewTitle: String
+    let reviewTitle: String?
 }
 
 struct SearchedCompanyDTO: Codable {
@@ -24,7 +24,7 @@ struct SearchedCompanyDTO: Codable {
     let totalRating: Double
     let isFollowed: Bool
     let distance: Double
-    let reviewTitle: String
+    let reviewTitle: String?
     
     enum CodingKeys: String, CodingKey {
         case id
