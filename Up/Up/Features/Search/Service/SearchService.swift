@@ -15,6 +15,7 @@ protocol SearchService {
 private enum SearchServiceKey: DependencyKey {
     static let liveValue: any SearchService = MockSearchService() // 실제로 사용할 구조체를 작성한 이후 변경 필요
     static let previewValue: any SearchService = MockSearchService()
+    static var testValue: any SearchService = MockSearchService()
 }
 
 extension DependencyValues {

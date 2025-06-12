@@ -20,6 +20,8 @@ struct SearchFocusedFeature {
 
     enum Action {
         case viewInit
+        case viewAppear
+        case loadSavedCompanies
         case deleteButtonTapped(SavedCompany)
     }
 
@@ -31,13 +33,20 @@ struct SearchFocusedFeature {
                     return .none
                 }
                 
+                state.needLoad = false
+                
+                return .run { send in
+                    await send(.loadSavedCompanies)
+                }
+                
+            case .viewAppear:
+                return .send(.loadSavedCompanies)
+                
+            case .loadSavedCompanies:
                 if let data = UserDefaults.standard.data(forKey: "savedCompanies"),
                    let savedCompanies = try? JSONDecoder().decode([SavedCompany].self, from: data) {
                     state.savedCompanies = savedCompanies
                 }
-                
-                state.needLoad = false
-                
                 return .none
                 
             case let .deleteButtonTapped(company):
@@ -67,6 +76,9 @@ struct SearchFocusedView: View {
     var body: some View {
         if store.searchTerm.isEmpty {
             recentSearchedCompany
+                .onAppear {
+                    store.send(.viewAppear)
+                }
         } else {
             searchedCompany
         }
@@ -202,8 +214,7 @@ struct SearchFocusedView: View {
                             name: "포레스트병원",
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)"
                         )
-                    ],
-                    needLoad: true
+                    ], needLoad: true
                 )
             ) {
                 SearchFocusedFeature()
