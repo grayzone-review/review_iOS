@@ -8,12 +8,12 @@
 import Foundation
 
 struct ReviewsBody: Codable {
-    let reivews: [ReviewDTO]
+    let reviews: [ReviewDTO]
     let hasNext: Bool
     let currentPage: Int
     
     enum CodingKeys: String, CodingKey {
-        case reivews
+        case reviews
         case hasNext
         case currentPage
     }

@@ -13,8 +13,8 @@ protocol SearchService {
 }
 
 private enum SearchServiceKey: DependencyKey {
-    static let liveValue: any SearchService = MockSearchService() // 실제로 사용할 구조체를 작성한 이후 변경 필요
-    static let previewValue: any SearchService = MockSearchService()
+    static let liveValue: any SearchService = DefaultSearchService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let previewValue: any SearchService = DefaultSearchService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
     static var testValue: any SearchService = MockSearchService()
 }
 
@@ -22,6 +22,30 @@ extension DependencyValues {
     var searchService: any SearchService {
         get { self[SearchServiceKey.self] }
         set { self[SearchServiceKey.self] = newValue }
+    }
+}
+
+struct DefaultSearchService: SearchService {
+    private let session: NetworkSession
+    
+    init(session: NetworkSession) {
+        self.session = session
+    }
+    
+    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> SearchedCompaniesBody {
+        let request = SearchAPI.searchedCompanies(keyword: keyword, latitude: latitude, longitude: longitude)
+        
+        let response = try await session.request(request, as: SearchedCompaniesBody.self)
+        
+        return response.data
+    }
+    
+    func fetchProposedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> ProposedCompaniesBody {
+        let request = SearchAPI.proposedCompanies(keyword: keyword, latitude: latitude, longitude: longitude)
+        
+        let response = try await session.request(request, as: ProposedCompaniesBody.self)
+        
+        return response.data
     }
 }
 

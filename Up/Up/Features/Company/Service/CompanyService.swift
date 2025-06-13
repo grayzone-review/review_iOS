@@ -15,7 +15,7 @@ protocol CompanyService {
 }
 
 private enum CompanyServiceKey: DependencyKey {
-    static let liveValue: any CompanyService = MockCompanyService()
+    static let liveValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
     static let previewValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
     static var testValue: any CompanyService = MockCompanyService()
 }
@@ -24,6 +24,42 @@ extension DependencyValues {
     var companyService: any CompanyService {
         get { self[CompanyServiceKey.self] }
         set { self[CompanyServiceKey.self] = newValue }
+    }
+}
+
+struct DefaultCompanyService: CompanyService {
+    private let session: NetworkSession
+    
+    init(session: NetworkSession) {
+        self.session = session
+    }
+    
+    func fetchCompany(of id: Int) async throws -> CompanyDTO {
+        let request = CompanyAPI.companyDetail(id: id)
+        
+        let response = try await session.request(request, as: CompanyDTO.self)
+        
+        return response.data
+    }
+    
+    func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
+        let request = CompanyAPI.companyReview(id: companyID)
+        
+        let response = try await session.request(request, as: ReviewsBody.self)
+        
+        return response.data
+    }
+    
+    func createCompanyFollowing(of companyID: Int) async throws {
+        let request = CompanyAPI.companyFollow(id: companyID)
+        
+        try await session.execute(request)
+    }
+    
+    func deleteCompanyFollowing(of companyID: Int) async throws {
+        let request = CompanyAPI.companyUnfollow(id: companyID)
+        
+        try await session.execute(request)
     }
 }
 
@@ -44,7 +80,7 @@ struct MockCompanyService: CompanyService {
     
     func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
         ReviewsBody(
-            reivews: [
+            reviews: [
                 ReviewDTO(
                     id: 2,
                     rating: RatingDTO(
@@ -117,40 +153,4 @@ struct MockCompanyService: CompanyService {
     func createCompanyFollowing(of companyID: Int) async throws {}
     
     func deleteCompanyFollowing(of companyID: Int) async throws {}
-}
-
-struct DefaultCompanyService: CompanyService {
-    private let session: NetworkSession
-    
-    init(session: NetworkSession) {
-        self.session = session
-    }
-    
-    func fetchCompany(of id: Int) async throws -> CompanyDTO {
-        let request = CompanyAPI.companyDetail(id: id)
-        
-        let response = try await session.request(request, as: CompanyDTO.self)
-        
-        return response.data
-    }
-    
-    func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
-        let request = CompanyAPI.companyReview(id: companyID)
-        
-        let response = try await session.request(request, as: ReviewsBody.self)
-        
-        return response.data
-    }
-    
-    func createCompanyFollowing(of companyID: Int) async throws {
-        let request = CompanyAPI.companyFollow(id: companyID)
-        
-        try await session.execute(request)
-    }
-    
-    func deleteCompanyFollowing(of companyID: Int) async throws {
-        let request = CompanyAPI.companyUnfollow(id: companyID)
-        
-        try await session.execute(request)
-    }
 }

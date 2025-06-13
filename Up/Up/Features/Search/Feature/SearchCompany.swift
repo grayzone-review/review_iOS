@@ -112,18 +112,23 @@ struct SearchCompanyFeature {
                 return .none
                 
             case .termChanged:
-                return .send(.fetchProposedCompanies)
-                    .debounce(
-                        id: CancelID.debounce,
-                        for: 0.5,
-                        scheduler: mainQueue
-                    )
+                return .run { [state] send in
+                    guard state.searchState == .focused else {
+                        return
+                    }
+                    if state.searchTerm.isEmpty {
+                        await send(.setSearchState(.focused))
+                    } else {
+                        await send(.fetchProposedCompanies)
+                    }
+                }
+                .debounce(
+                    id: CancelID.debounce,
+                    for: 0.5,
+                    scheduler: mainQueue
+                )
                 
             case .fetchProposedCompanies:
-                guard state.searchState == .focused else {
-                    return .none
-                }
-                
                 return .run { [searchTerm = state.searchTerm] send in
                     let data = try await searchService.fetchProposedCompanies(
                         keyword: searchTerm,

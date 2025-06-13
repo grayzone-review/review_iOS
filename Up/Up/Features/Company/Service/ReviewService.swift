@@ -17,7 +17,7 @@ protocol ReviewService {
 }
 
 private enum ReviewServiceKey: DependencyKey {
-    static let liveValue: any ReviewService = MockReviewService()
+    static let liveValue: any ReviewService = DefaultReviewService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
     static let previewValue: any ReviewService = DefaultReviewService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
     static var testValue: any ReviewService = MockReviewService()
 }
@@ -27,6 +27,61 @@ extension DependencyValues {
         get { self[ReviewServiceKey.self] }
         set { self[ReviewServiceKey.self] = newValue }
     }
+}
+
+struct DefaultReviewService: ReviewService {
+    private let session: NetworkSession
+    
+    init(session: NetworkSession) {
+        self.session = session
+    }
+    
+    func fetchComments(of reviewID: Int) async throws -> CommentsBody {
+        let request = ReviewAPI.getReviewComments(id: reviewID)
+        
+        let response = try await session.request(request, as: CommentsBody.self)
+        
+        return response.data
+    }
+    
+    func fetchReplies(of commentID: Int) async throws -> RepliesBody {
+        let request = ReviewAPI.getReviewCommentReplies(id: commentID)
+        
+        let response = try await session.request(request, as: RepliesBody.self)
+        
+        return response.data
+    }
+    
+    func createComment(of reviewID: Int, content: String, isSecret: Bool) async throws -> CommentDTO {
+        let body = ReviewCommentRequest(comment: content, secret: isSecret)
+        let request = ReviewAPI.postReviewComment(id: reviewID, requestBody: body)
+        
+        let response = try await session.request(request, as: CommentDTO.self)
+        
+        return response.data
+    }
+    
+    func createReply(of commentID: Int, content: String, isSecret: Bool) async throws -> ReplyDTO {
+        let body = ReviewCommentRequest(comment: content, secret: isSecret)
+        
+        let request = ReviewAPI.postReviewCommentReply(id: commentID, requestBody: body)
+        
+        let response = try await session.request(request, as: ReplyDTO.self)
+        
+        return response.data
+    }
+    
+    func createReviewLike(of reviewID: Int) async throws {
+        let request = ReviewAPI.reviewLike(id: reviewID)
+        
+        try await session.execute(request)
+        
+    }
+    
+    func deleteReviewLike(of reviewID: Int) async throws {
+        let request = ReviewAPI.reviewUnlike(id: reviewID)
+        
+        try await session.execute(request)}
 }
 
 struct MockReviewService: ReviewService {
@@ -117,59 +172,4 @@ struct MockReviewService: ReviewService {
     func createReviewLike(of reviewID: Int) async throws {}
     
     func deleteReviewLike(of reviewID: Int) async throws {}
-}
-
-struct DefaultReviewService: ReviewService {
-    private let session: NetworkSession
-    
-    init(session: NetworkSession) {
-        self.session = session
-    }
-    
-    func fetchComments(of reviewID: Int) async throws -> CommentsBody {
-        let request = ReviewAPI.getReviewComments(id: reviewID)
-        
-        let response = try await session.request(request, as: CommentsBody.self)
-        
-        return response.data
-    }
-    
-    func fetchReplies(of commentID: Int) async throws -> RepliesBody {
-        let request = ReviewAPI.getReviewCommentReplies(id: commentID)
-        
-        let response = try await session.request(request, as: RepliesBody.self)
-        
-        return response.data
-    }
-    
-    func createComment(of reviewID: Int, content: String, isSecret: Bool) async throws -> CommentDTO {
-        let body = ReviewCommentRequest(comment: content, secret: isSecret)
-        let request = ReviewAPI.postReviewComment(id: reviewID, requestBody: body)
-        
-        let response = try await session.request(request, as: CommentDTO.self)
-        
-        return response.data
-    }
-    
-    func createReply(of commentID: Int, content: String, isSecret: Bool) async throws -> ReplyDTO {
-        let body = ReviewCommentRequest(comment: content, secret: isSecret)
-        
-        let request = ReviewAPI.postReviewCommentReply(id: commentID, requestBody: body)
-        
-        let response = try await session.request(request, as: ReplyDTO.self)
-        
-        return response.data
-    }
-    
-    func createReviewLike(of reviewID: Int) async throws {
-        let request = ReviewAPI.reviewLike(id: reviewID)
-        
-        try await session.execute(request)
-        
-    }
-    
-    func deleteReviewLike(of reviewID: Int) async throws {
-        let request = ReviewAPI.reviewUnlike(id: reviewID)
-        
-        try await session.execute(request)}
 }

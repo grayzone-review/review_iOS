@@ -95,7 +95,7 @@ struct CompanyDetailFeature {
                 state.company = company
                 return .run { [companyID = state.companyID] send in
                     let data = try await companyService.fetchReviews(of: companyID)
-                    let reviews = data.reivews.map { $0.toDomain() }
+                    let reviews = data.reviews.map { $0.toDomain() }
                     await send(.companyReviewsFetched(reviews))
                 }
                 
@@ -315,7 +315,7 @@ struct CompanyDetailView: View {
     private var reviewList: some View {
         LazyVStack(spacing: 0) {
             ForEach($store.reviews) { $review in
-                ReivewCardView(
+                ReviewCardView(
                     store: Store(
                         initialState: ReviewCardFeature.State(
                             review: review

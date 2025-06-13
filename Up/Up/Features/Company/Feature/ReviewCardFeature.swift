@@ -85,7 +85,7 @@ struct ReviewCardFeature {
     }
 }
 
-struct ReivewCardView: View {
+struct ReviewCardView: View {
     @Bindable var store: StoreOf<ReviewCardFeature>
     @Binding var review: Review
     
@@ -289,7 +289,7 @@ struct ReivewCardView: View {
 }
 
 #Preview {
-    ReivewCardView(
+    ReviewCardView(
         store: Store(
             initialState: ReviewCardFeature.State(
                 review: Review(
