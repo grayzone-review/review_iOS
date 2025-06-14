@@ -236,7 +236,7 @@ struct SearchSubmittedView: View {
     }
     
     private func searchedCompany(_ company: SearchedCompany) -> some View {
-        var location = String(company.distance.rounded(to: 1))
+        var location = String(company.distance.rounded(to: 1)) + "km"
         
         if company.address.count > 1 {
             location = "\(String(Array(company.address)[...1])) · \(location)"

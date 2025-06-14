@@ -129,13 +129,17 @@ struct SearchCompanyFeature {
                 )
                 
             case .fetchProposedCompanies:
-                return .run { [searchTerm = state.searchTerm] send in
+                return .run { [state] send in
                     let data = try await searchService.fetchProposedCompanies(
-                        keyword: searchTerm,
+                        keyword: state.searchTerm,
                         latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
                         longitude: 126.9780
                     )
                     let companies = data.companies.map { $0.toDomain() }
+                    
+                    guard state.searchState == .focused else {
+                        return
+                    }
                     
                     await send(.setProposedCompanies(companies))
                 }

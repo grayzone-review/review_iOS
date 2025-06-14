@@ -45,7 +45,7 @@ enum SearchAPI: Sendable, URLRequestConvertible {
         switch self {
         case let .searchedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
             components.queryItems = [
-                URLQueryItem(name: "keyword", value: keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!),
+                URLQueryItem(name: "keyword", value: keyword),
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
                 URLQueryItem(name: "longitude", value: "\(longitude)")
             ]
@@ -55,7 +55,7 @@ enum SearchAPI: Sendable, URLRequestConvertible {
             return request
         case let .proposedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
             components.queryItems = [
-                URLQueryItem(name: "keyword", value: keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!),
+                URLQueryItem(name: "keyword", value: keyword),
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
                 URLQueryItem(name: "longitude", value: "\(longitude)")
             ]
