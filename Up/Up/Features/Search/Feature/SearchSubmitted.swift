@@ -16,10 +16,12 @@ struct SearchSubmittedFeature {
         let searchTheme: SearchTheme
         var needLoad: Bool = true
         var searchedCompanies: [SearchedCompany] = []
+        var totalCount: Int?
     }
     
     enum Action {
         case viewInit
+        case setTotalCount(Int)
         case setSearchedCompanies([SearchedCompany])
         case delegate(Delegate)
         case themeButtonTapped(SearchTheme)
@@ -54,8 +56,16 @@ struct SearchSubmittedFeature {
                     }
                     let companies = data.companies.map { $0.toDomain() }
                     
+                    await send(.setTotalCount(data.totalCount))
                     await send(.setSearchedCompanies(companies))
                 }
+                
+            case let .setTotalCount(count):
+                guard state.totalCount == nil else {
+                    return .none
+                }
+                state.totalCount = count
+                return .none
                 
             case let .setSearchedCompanies(companies):
                 state.searchedCompanies = companies
@@ -174,7 +184,7 @@ struct SearchSubmittedView: View {
         HStack(spacing: 8) {
             Text("검색 결과")
                 .pretendard(.h3, color: .gray90)
-            Text("\(store.searchedCompanies.count)")
+            Text("\(store.totalCount ?? 0)")
                 .pretendard(.h3, color: .gray50)
             Spacer()
         }
