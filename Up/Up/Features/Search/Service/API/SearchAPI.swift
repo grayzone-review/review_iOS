@@ -31,22 +31,37 @@ enum SearchAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 경로(Path)
     private var path: String {
         switch self {
-        case let .searchedCompanies(keyword, latitude, longitude):
-            return "/api/companies/search?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)"
-        case let .proposedCompanies(keyword, latitude, longitude):
-            return "/api/companies/suggestions?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)"
+        case .searchedCompanies:
+            return "/api/companies/search"
+        case .proposedCompanies:
+            return "/api/companies/suggestions"
         }
     }
 
     // `URLRequestConvertible` 프로토콜 요구사항 구현
     func asURLRequest() throws -> URLRequest {
-        let url = URL(string: AppConfig.Network.host + path)! // appendingPathComponent 메서드가 내부적으로 쿼리 시작을 알리는 물음표를 %3F로 인코딩해버리므로 사용 불가. 별도로 인코딩이 필요한 keyword는 addingPercentEncoding 사용중.
-        var request = try URLRequest(url: url, method: method)
-
+        var components = URLComponents(string: AppConfig.Network.host + path)!
+        
         switch self {
-        case .searchedCompanies:
+        case let .searchedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
+            components.queryItems = [
+                URLQueryItem(name: "keyword", value: keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!),
+                URLQueryItem(name: "latitude", value: "\(latitude)"),
+                URLQueryItem(name: "longitude", value: "\(longitude)")
+            ]
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+            
             return request
-        case .proposedCompanies:
+        case let .proposedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
+            components.queryItems = [
+                URLQueryItem(name: "keyword", value: keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!),
+                URLQueryItem(name: "latitude", value: "\(latitude)"),
+                URLQueryItem(name: "longitude", value: "\(longitude)")
+            ]
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+
             return request
         }
     }
