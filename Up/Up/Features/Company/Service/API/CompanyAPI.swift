@@ -52,11 +52,6 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         var components = URLComponents(string: AppConfig.Network.host + path)!
 
         switch self {
-        case .companyDetail:
-            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
-            let request = try URLRequest(url: url, method: method)
-            
-            return request
         case let .companyReview(_, page, size):
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
@@ -66,12 +61,7 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
             let request = try URLRequest(url: url, method: method)
             
             return request
-        case .companyFollow:
-            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
-            let request = try URLRequest(url: url, method: method)
-            
-            return request
-        case .companyUnfollow:
+        default:
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
             

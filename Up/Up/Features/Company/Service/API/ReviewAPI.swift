@@ -11,7 +11,7 @@ import Alamofire
 
 /// CompanyAPI 엔드포인트 정의
 enum ReviewAPI: Sendable, URLRequestConvertible {
-    case getReviewComments(id: Int)
+    case getReviewComments(id: Int, page: Int, size: Int = 10)
     case getReviewCommentReplies(id: Int)
     case postReviewComment(id: Int, requestBody: ReviewCommentRequest)
     case postReviewCommentReply(id: Int, requestBody: ReviewCommentRequest)
@@ -44,7 +44,7 @@ enum ReviewAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 경로(Path)
     private var path: String {
         switch self {
-        case let .getReviewComments(id), let .postReviewComment(id, _):
+        case let .getReviewComments(id, _, _), let .postReviewComment(id, _):
             return "/api/reviews/\(id)/comments"
         case let .getReviewCommentReplies(id), let .postReviewCommentReply(id, _):
             return "/api/comments/\(id)/replies"
@@ -55,17 +55,31 @@ enum ReviewAPI: Sendable, URLRequestConvertible {
     
     // `URLRequestConvertible` 프로토콜 요구사항 구현
     func asURLRequest() throws -> URLRequest {
-        let url = baseURL.appendingPathComponent(path)
-        var request = try URLRequest(url: url, method: method)
+        var components = URLComponents(string: AppConfig.Network.host + path)!
         
         switch self {
+        case let .getReviewComments(_, page, size):
+            components.queryItems = [
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)")
+            ]
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+            
+            return request
         case let .postReviewComment(_, body), let .postReviewCommentReply(_, body):
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            var request = try URLRequest(url: url, method: method)
             let params = body.toDictionary()
             request.httpBody = try JSONSerialization.data(withJSONObject: params)
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            return request
         default:
-            break
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+            
+            return request
         }
-        
-        return request
     }
 }

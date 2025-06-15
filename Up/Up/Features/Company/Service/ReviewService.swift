@@ -8,7 +8,7 @@
 import Dependencies
 
 protocol ReviewService {
-    func fetchComments(of reviewID: Int) async throws -> CommentsBody
+    func fetchComments(of reviewID: Int, page: Int) async throws -> CommentsBody
     func fetchReplies(of commentID: Int) async throws -> RepliesBody
     func createComment(of reviewID: Int, content: String, isSecret: Bool) async throws -> CommentDTO
     func createReply(of commentID: Int, content: String, isSecret: Bool) async throws -> ReplyDTO
@@ -36,8 +36,8 @@ struct DefaultReviewService: ReviewService {
         self.session = session
     }
     
-    func fetchComments(of reviewID: Int) async throws -> CommentsBody {
-        let request = ReviewAPI.getReviewComments(id: reviewID)
+    func fetchComments(of reviewID: Int, page: Int) async throws -> CommentsBody {
+        let request = ReviewAPI.getReviewComments(id: reviewID, page: page)
         
         let response = try await session.request(request, as: CommentsBody.self)
         
@@ -85,7 +85,7 @@ struct DefaultReviewService: ReviewService {
 }
 
 struct MockReviewService: ReviewService {
-    func fetchComments(of reviewID: Int) async throws -> CommentsBody {
+    func fetchComments(of reviewID: Int, page: Int) async throws -> CommentsBody {
         CommentsBody(
             comments: [
                 CommentDTO(

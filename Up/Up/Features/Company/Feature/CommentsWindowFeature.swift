@@ -21,6 +21,16 @@ struct CommentsWindowFeature {
         var content: String = ""
         var text: String = ""
         var isSecret: Bool = false
+        var hasNextPage: Bool = true
+        var isLoading: Bool = false
+        
+        var loadPoint: Comment? {
+            guard comments.count > 3 else {
+                return nil
+            }
+            
+            return comments[comments.count - 3]
+        }
         
         var isValidInput: Bool {
             guard 1...200 ~= content.count else {
@@ -56,8 +66,8 @@ struct CommentsWindowFeature {
         case makeReplyButtonTapped(Int)
         case showMoreRepliesButtonTapped(Int)
         case addMoreReplies(Int, [Reply])
-        case commentsNeedLoad
-        case setComments([Comment])
+        case loadComments
+        case setComments(CommentsBody)
         case cancelReplyButtonTapped
         case textChanged(oldValue: String, newValue: String)
         case secretButtonTapped
@@ -96,15 +106,23 @@ struct CommentsWindowFeature {
                 state.replies[commentID, default: []] += IdentifiedArray(uniqueElements: replies)
                 return .none
                 
-            case .commentsNeedLoad:
-                return .run { [state] send in
-                    let data = try await service.fetchComments(of: state.review.id)
-                    let comments = data.comments.map { $0.toDomain() }
-                    await send(.setComments(comments))
+            case .loadComments:
+                guard state.isLoading == false,
+                      state.hasNextPage else {
+                    return .none
                 }
                 
-            case let .setComments(comments):
-                state.comments = IdentifiedArray(uniqueElements: comments)
+                state.isLoading = true
+                
+                return .run { [id = state.review.id, page = state.comments.count / 10] send in
+                    let data = try await service.fetchComments(of: id, page: page)
+                    await send(.setComments(data))
+                }
+                
+            case let .setComments(body):
+                state.comments.append(contentsOf: body.comments.map { $0.toDomain() })
+                state.hasNextPage = body.hasNext
+                state.isLoading = false
                 return .none
                 
             case .cancelReplyButtonTapped:
@@ -175,7 +193,7 @@ struct CommentsWindowView: View {
     ) {
         self.store = store
         self._review = review
-        store.send(.commentsNeedLoad)
+        store.send(.loadComments)
     }
     
     var body: some View {
@@ -238,6 +256,11 @@ struct CommentsWindowView: View {
                         comment: comment,
                         replies: store.replies[comment.id, default: []]
                     )
+                    .onAppear {
+                        if store.loadPoint == comment {
+                            store.send(.loadComments)
+                        }
+                    }
                 }
             }
         }
