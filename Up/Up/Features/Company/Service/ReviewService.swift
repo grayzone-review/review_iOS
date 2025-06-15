@@ -9,7 +9,7 @@ import Dependencies
 
 protocol ReviewService {
     func fetchComments(of reviewID: Int, page: Int) async throws -> CommentsBody
-    func fetchReplies(of commentID: Int) async throws -> RepliesBody
+    func fetchReplies(of commentID: Int, page: Int) async throws -> RepliesBody
     func createComment(of reviewID: Int, content: String, isSecret: Bool) async throws -> CommentDTO
     func createReply(of commentID: Int, content: String, isSecret: Bool) async throws -> ReplyDTO
     func createReviewLike(of reviewID: Int) async throws
@@ -44,8 +44,8 @@ struct DefaultReviewService: ReviewService {
         return response.data
     }
     
-    func fetchReplies(of commentID: Int) async throws -> RepliesBody {
-        let request = ReviewAPI.getReviewCommentReplies(id: commentID)
+    func fetchReplies(of commentID: Int, page: Int) async throws -> RepliesBody {
+        let request = ReviewAPI.getReviewCommentReplies(id: commentID, page: page)
         
         let response = try await session.request(request, as: RepliesBody.self)
         
@@ -121,7 +121,7 @@ struct MockReviewService: ReviewService {
         )
     }
     
-    func fetchReplies(of commentID: Int) async throws -> RepliesBody {
+    func fetchReplies(of commentID: Int, page: Int) async throws -> RepliesBody {
         RepliesBody(
             replies: [
                 ReplyDTO(

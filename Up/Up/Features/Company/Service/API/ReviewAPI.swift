@@ -12,7 +12,7 @@ import Alamofire
 /// CompanyAPI 엔드포인트 정의
 enum ReviewAPI: Sendable, URLRequestConvertible {
     case getReviewComments(id: Int, page: Int, size: Int = 10)
-    case getReviewCommentReplies(id: Int)
+    case getReviewCommentReplies(id: Int, page: Int, size: Int = 10)
     case postReviewComment(id: Int, requestBody: ReviewCommentRequest)
     case postReviewCommentReply(id: Int, requestBody: ReviewCommentRequest)
     case reviewLike(id: Int)
@@ -46,7 +46,7 @@ enum ReviewAPI: Sendable, URLRequestConvertible {
         switch self {
         case let .getReviewComments(id, _, _), let .postReviewComment(id, _):
             return "/api/reviews/\(id)/comments"
-        case let .getReviewCommentReplies(id), let .postReviewCommentReply(id, _):
+        case let .getReviewCommentReplies(id, _, _), let .postReviewCommentReply(id, _):
             return "/api/comments/\(id)/replies"
         case let .reviewLike(id), let .reviewUnlike(id):
             return "/api/reviews/\(id)/likes"
@@ -58,7 +58,7 @@ enum ReviewAPI: Sendable, URLRequestConvertible {
         var components = URLComponents(string: AppConfig.Network.host + path)!
         
         switch self {
-        case let .getReviewComments(_, page, size):
+        case let .getReviewComments(_, page, size), let .getReviewCommentReplies(_, page, size):
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "size", value: "\(size)")

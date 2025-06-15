@@ -96,8 +96,8 @@ struct CommentsWindowFeature {
                 return .none
                 
             case let .showMoreRepliesButtonTapped(commentID):
-                return .run { send in
-                    let data = try await service.fetchReplies(of: commentID)
+                return .run { [replies = state.replies[commentID, default: []]] send in
+                    let data = try await service.fetchReplies(of: commentID, page: replies.count / 10)
                     let replies = data.replies.map { $0.toDomain() }
                     await send(.addMoreReplies(commentID, replies))
                 }
