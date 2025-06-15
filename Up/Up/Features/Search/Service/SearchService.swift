@@ -8,7 +8,7 @@
 import Dependencies
 
 protocol SearchService {
-    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody
+    func fetchSearchedCompanies(theme: SearchTheme, keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody
     func fetchProposedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> ProposedCompaniesBody
 }
 
@@ -32,8 +32,18 @@ struct DefaultSearchService: SearchService {
         self.session = session
     }
     
-    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody {
-        let request = SearchAPI.searchedCompanies(keyword: keyword, latitude: latitude, longitude: longitude, page: page, size: 20)
+    func fetchSearchedCompanies(theme: SearchTheme, keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody {
+        let request: SearchAPI
+        switch theme {
+        case .keyword:
+            request = .searchedCompanies(keyword: keyword, latitude: latitude, longitude: longitude, page: page)
+        case .near:
+            request = .nearByCompanies(latitude: latitude, longitude: longitude, page: page)
+        case .neighborhood:
+            request = .mainRegionCompanies(latitude: latitude, longitude: longitude, page: page)
+        case .interest:
+            request = .interestedRegionCompanies(latitude: latitude, longitude: longitude, page: page)
+        }
         
         let response = try await session.request(request, as: SearchedCompaniesBody.self)
         
@@ -50,7 +60,7 @@ struct DefaultSearchService: SearchService {
 }
 
 struct MockSearchService: SearchService {
-    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody {
+    func fetchSearchedCompanies(theme: SearchTheme, keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody {
         SearchedCompaniesBody(
             companies: [
                 SearchedCompanyDTO(

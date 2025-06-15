@@ -13,8 +13,23 @@ struct SearchedCompany: Equatable, Identifiable {
     let address: String
     let totalRating: Double
     var isFollowed: Bool
-    let distance: Double
+    let distance: Double?
     let reviewTitle: String?
+    
+    var location: String {
+        var location: String = String(self.address.prefix(2))
+        if let distance = self.distance {
+            let distanceString = String(distance.rounded(to: 1)) + "km"
+            
+            if location.isEmpty {
+                location += "\(distanceString)"
+            } else {
+                location += " · \(distanceString)"
+            }
+        }
+        
+        return location
+    }
 }
 
 struct SearchedCompanyDTO: Codable {
@@ -23,7 +38,7 @@ struct SearchedCompanyDTO: Codable {
     let address: String
     let totalRating: Double
     let isFollowed: Bool
-    let distance: Double
+    let distance: Double?
     let reviewTitle: String?
     
     enum CodingKeys: String, CodingKey {

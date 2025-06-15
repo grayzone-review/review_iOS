@@ -61,15 +61,13 @@ struct SearchSubmittedFeature {
                 
                 return .run { [searchTheme = state.searchTheme, searchTerm = state.searchTerm, currentPage = state.currentPage] send in
                     do {
-                        let data = switch searchTheme {
-                        default: // 추후 테마별 API 나오면 case별로 대응하도록 변경. 아래는 .keyword의 API.
-                            try await searchService.fetchSearchedCompanies(
-                                keyword: searchTerm,
-                                latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
-                                longitude: 126.9780,
-                                page: currentPage
-                            )
-                        }
+                        let data = try await searchService.fetchSearchedCompanies(
+                            theme: searchTheme,
+                            keyword: searchTerm,
+                            latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
+                            longitude: 126.9780,
+                            page: currentPage
+                        )
                         
                         let companies = data.companies.map { $0.toDomain() }
                         await send(.setHasNext(data.hasNext))
@@ -102,6 +100,7 @@ struct SearchSubmittedFeature {
                         let data = switch searchTheme {
                         default:
                             try await searchService.fetchSearchedCompanies(
+                                theme: searchTheme,
                                 keyword: searchTerm,
                                 latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
                                 longitude: 126.9780,
@@ -341,12 +340,6 @@ struct SearchSubmittedView: View {
     }
     
     private func searchedCompany(_ company: SearchedCompany) -> some View {
-        var location = String(company.distance.rounded(to: 1)) + "km"
-        
-        if company.address.count > 1 {
-            location = "\(String(Array(company.address)[...1])) · \(location)"
-        }
-        
         return VStack(spacing: 40) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -354,6 +347,7 @@ struct SearchSubmittedView: View {
                         .multilineTextAlignment(.leading)
                         .pretendard(.body1Bold, color: .black)
                     Text(company.address)
+                        .multilineTextAlignment(.leading)
                         .pretendard(.captionRegular, color: .gray50)
                     HStack(spacing: 8) {
                         HStack(spacing: 4) {
@@ -363,7 +357,7 @@ struct SearchSubmittedView: View {
                             Text(String(company.totalRating.rounded(to: 1)))
                                 .pretendard(.captionBold, color: .gray90)
                         }
-                        Text(location)
+                        Text(company.location)
                             .pretendard(.captionRegular, color: .gray50)
                     }
                 }
