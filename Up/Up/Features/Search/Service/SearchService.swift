@@ -8,7 +8,7 @@
 import Dependencies
 
 protocol SearchService {
-    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> SearchedCompaniesBody
+    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody
     func fetchProposedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> ProposedCompaniesBody
 }
 
@@ -32,8 +32,8 @@ struct DefaultSearchService: SearchService {
         self.session = session
     }
     
-    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> SearchedCompaniesBody {
-        let request = SearchAPI.searchedCompanies(keyword: keyword, latitude: latitude, longitude: longitude)
+    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody {
+        let request = SearchAPI.searchedCompanies(keyword: keyword, latitude: latitude, longitude: longitude, page: page, size: 20)
         
         let response = try await session.request(request, as: SearchedCompaniesBody.self)
         
@@ -50,7 +50,7 @@ struct DefaultSearchService: SearchService {
 }
 
 struct MockSearchService: SearchService {
-    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> SearchedCompaniesBody {
+    func fetchSearchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int) async throws -> SearchedCompaniesBody {
         SearchedCompaniesBody(
             companies: [
                 SearchedCompanyDTO(

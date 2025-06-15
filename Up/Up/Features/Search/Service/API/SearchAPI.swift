@@ -10,8 +10,8 @@ import Alamofire
 
 /// SearchAPI 엔드포인트 정의
 enum SearchAPI: Sendable, URLRequestConvertible {
-    case searchedCompanies(keyword: String, latitude: Double, longitude: Double)
-    case proposedCompanies(keyword: String, latitude: Double, longitude: Double)
+    case searchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int, size: Int = 10)
+    case proposedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int = 0, size: Int = 10)
 
     // 기본 서버 URL
     private var baseURL: URL {
@@ -43,21 +43,25 @@ enum SearchAPI: Sendable, URLRequestConvertible {
         var components = URLComponents(string: AppConfig.Network.host + path)!
         
         switch self {
-        case let .searchedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
+        case let .searchedCompanies(keyword, latitude, longitude, page, size): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
             components.queryItems = [
                 URLQueryItem(name: "keyword", value: keyword),
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
-                URLQueryItem(name: "longitude", value: "\(longitude)")
+                URLQueryItem(name: "longitude", value: "\(longitude)"),
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
             
             return request
-        case let .proposedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
+        case let .proposedCompanies(keyword, latitude, longitude, page, size): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
             components.queryItems = [
                 URLQueryItem(name: "keyword", value: keyword),
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
-                URLQueryItem(name: "longitude", value: "\(longitude)")
+                URLQueryItem(name: "longitude", value: "\(longitude)"),
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
