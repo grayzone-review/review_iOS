@@ -15,6 +15,16 @@ struct CompanyDetailFeature {
         let companyID: Int
         var company: Company?
         var reviews: [Review] = []
+        var hasNextPage: Bool = true
+        var isLoading: Bool = false
+        
+        var loadPoint: Review? {
+            guard reviews.count > 3 else {
+                return nil
+            }
+            
+            return reviews[reviews.count - 3]
+        }
     }
     
     enum Action: BindableAction {
@@ -22,7 +32,8 @@ struct CompanyDetailFeature {
         case viewInit
         case saveCompany
         case companyInformationFetched(Company)
-        case companyReviewsFetched([Review])
+        case loadReivews
+        case companyReviewsFetched(ReviewsBody)
         case backButtonTapped
         case followButtonTapped
         case follow
@@ -53,6 +64,8 @@ struct CompanyDetailFeature {
                 guard state.company == nil else {
                     return .none
                 }
+                
+                state.isLoading = true
                 
                 return .run { [id = state.companyID] send in
                     let data = try await companyService.fetchCompany(of: id)
@@ -93,14 +106,26 @@ struct CompanyDetailFeature {
                 
             case let .companyInformationFetched(company):
                 state.company = company
-                return .run { [companyID = state.companyID] send in
-                    let data = try await companyService.fetchReviews(of: companyID)
-                    let reviews = data.reviews.map { $0.toDomain() }
-                    await send(.companyReviewsFetched(reviews))
+                state.isLoading = false
+                return .send(.loadReivews)
+                
+            case .loadReivews:
+                guard state.isLoading == false,
+                      state.hasNextPage else {
+                    return .none
                 }
                 
-            case let .companyReviewsFetched(reviews):
-                state.reviews = reviews
+                state.isLoading = true
+                
+                return .run { [companyID = state.companyID, page = state.reviews.count / 10] send in
+                    let data = try await companyService.fetchReviews(of: companyID, page: page)
+                    await send(.companyReviewsFetched(data))
+                }
+                
+            case let .companyReviewsFetched(body):
+                state.reviews += body.reviews.map { $0.toDomain() }
+                state.hasNextPage = body.hasNext
+                state.isLoading = false
                 return .none
                 
             case .backButtonTapped:
@@ -325,6 +350,11 @@ struct CompanyDetailView: View {
                     },
                     review: $review
                 )
+                .onAppear {
+                    if store.loadPoint == review {
+                        store.send(.loadReivews)
+                    }
+                }
                 divider
             }
         }

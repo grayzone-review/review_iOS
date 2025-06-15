@@ -93,7 +93,7 @@ struct ReviewDTO: Codable {
         case createdAt
         case likeCount
         case commentCount
-        case isLiked
+        case isLiked = "liked"
     }
 }
 

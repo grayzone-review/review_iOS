@@ -9,7 +9,7 @@ import Dependencies
 
 protocol CompanyService {
     func fetchCompany(of id: Int) async throws -> CompanyDTO
-    func fetchReviews(of companyID: Int) async throws -> ReviewsBody
+    func fetchReviews(of companyID: Int, page: Int) async throws -> ReviewsBody
     func createCompanyFollowing(of companyID: Int) async throws
     func deleteCompanyFollowing(of companyID: Int) async throws
 }
@@ -42,8 +42,8 @@ struct DefaultCompanyService: CompanyService {
         return response.data
     }
     
-    func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
-        let request = CompanyAPI.companyReview(id: companyID)
+    func fetchReviews(of companyID: Int, page: Int) async throws -> ReviewsBody {
+        let request = CompanyAPI.companyReview(id: companyID, page: page)
         
         let response = try await session.request(request, as: ReviewsBody.self)
         
@@ -78,7 +78,7 @@ struct MockCompanyService: CompanyService {
         )
     }
     
-    func fetchReviews(of companyID: Int) async throws -> ReviewsBody {
+    func fetchReviews(of companyID: Int, page: Int) async throws -> ReviewsBody {
         ReviewsBody(
             reviews: [
                 ReviewDTO(
