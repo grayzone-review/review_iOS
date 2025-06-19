@@ -151,6 +151,7 @@ struct CommentsWindowFeature {
                 let content = state.content
                 state.targetComment = nil
                 state.content = ""
+                state.text = ""
                 state.isFocused = false
                 state.review.commentCount += 1
                 return .run { [state] send in
@@ -183,16 +184,11 @@ struct CommentsWindowFeature {
 
 struct CommentsWindowView: View {
     @Bindable var store: StoreOf<CommentsWindowFeature>
-    @Binding var review: Review
     @FocusState var isFocused: Bool
     @State private var selectedDetent: PresentationDetent = .medium
     
-    init(
-        store: StoreOf<CommentsWindowFeature>,
-        review: Binding<Review>
-    ) {
+    init(store: StoreOf<CommentsWindowFeature>) {
         self.store = store
-        self._review = review
         store.send(.loadComments)
     }
     
@@ -227,7 +223,6 @@ struct CommentsWindowView: View {
             selection: $selectedDetent
         )
         .presentationContentInteraction(.scrolls)
-        .bind($review, to: $store.review)
     }
     
     @ViewBuilder
@@ -507,28 +502,6 @@ struct CommentCardView: View {
             )
         ) {
             CommentsWindowFeature()
-        }, review: .constant(
-            Review(
-                id: 3,
-                rating: Rating(
-                    workLifeBalance: 3.5,
-                    welfare: 3.5,
-                    salary: 3.0,
-                    companyCulture: 4.0,
-                    management: 3.0
-                ),
-                reviewer: "bob",
-                title: "별로였어요.",
-                advantagePoint: "연봉이 높아요.",
-                disadvantagePoint: "상사가 별로예요.",
-                managementFeedback: "리더십이 부족해요.",
-                job: "프론트엔드 개발자",
-                employmentPeriod: "1년 미만",
-                creationDate: .now,
-                likeCount: 3,
-                commentCount: 3,
-                isLiked: true
-            )
-        )
+        }
     )
 }

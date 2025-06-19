@@ -42,6 +42,12 @@ struct ReviewCardFeature {
             case .binding:
                 return .none
                 
+            case .comments(.dismiss):
+                if let review = state.comments?.review {
+                    state.review = review
+                }
+                return .none
+                
             case .comments:
                 return .none
                 
@@ -73,9 +79,7 @@ struct ReviewCardFeature {
                 }
                 
             case .commentButtonTapped:
-                state.comments = CommentsWindowFeature.State(
-                    review: state.review
-                )
+                state.comments = CommentsWindowFeature.State(review: state.review)
                 return .none
             }
         }
@@ -107,10 +111,7 @@ struct ReviewCardView: View {
             store.send(.reviewCardTapped)
         }
         .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
-            CommentsWindowView(
-                store: commentsWindowStore,
-                review: $review
-            )
+            CommentsWindowView(store: commentsWindowStore)
         }
         .bind($review, to: $store.review)
     }
