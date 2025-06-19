@@ -10,8 +10,11 @@ import Alamofire
 
 /// SearchAPI 엔드포인트 정의
 enum SearchAPI: Sendable, URLRequestConvertible {
-    case searchedCompanies(keyword: String, latitude: Double, longitude: Double)
-    case proposedCompanies(keyword: String, latitude: Double, longitude: Double)
+    case searchedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int, size: Int = 10)
+    case nearByCompanies(latitude: Double, longitude: Double, page: Int, size: Int = 10)
+    case mainRegionCompanies(latitude: Double, longitude: Double, page: Int, size: Int = 10)
+    case interestedRegionCompanies(latitude: Double, longitude: Double, page: Int, size: Int = 10)
+    case proposedCompanies(keyword: String, latitude: Double, longitude: Double, page: Int = 0, size: Int = 10)
 
     // 기본 서버 URL
     private var baseURL: URL {
@@ -21,7 +24,7 @@ enum SearchAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 HTTP method
     private var method: HTTPMethod {
         switch self {
-        case .searchedCompanies:
+        case .searchedCompanies, .nearByCompanies, .mainRegionCompanies, .interestedRegionCompanies:
             return .get
         case .proposedCompanies:
             return .get
@@ -33,6 +36,12 @@ enum SearchAPI: Sendable, URLRequestConvertible {
         switch self {
         case .searchedCompanies:
             return "/api/companies/search"
+        case .nearByCompanies:
+            return "/api/companies/nearby"
+        case .mainRegionCompanies:
+            return "/api/companies/main-region"
+        case .interestedRegionCompanies:
+            return "/api/companies/interested-region"
         case .proposedCompanies:
             return "/api/companies/suggestions"
         }
@@ -43,25 +52,33 @@ enum SearchAPI: Sendable, URLRequestConvertible {
         var components = URLComponents(string: AppConfig.Network.host + path)!
         
         switch self {
-        case let .searchedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
+        case
+            let .searchedCompanies(keyword, latitude, longitude, page, size),
+            let .proposedCompanies(keyword, latitude, longitude, page, size):
             components.queryItems = [
                 URLQueryItem(name: "keyword", value: keyword),
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
-                URLQueryItem(name: "longitude", value: "\(longitude)")
+                URLQueryItem(name: "longitude", value: "\(longitude)"),
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
             
             return request
-        case let .proposedCompanies(keyword, latitude, longitude): // ?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&latitude=\(latitude)&longitude=\(longitude)
+        case
+            let .nearByCompanies(latitude, longitude, page, size),
+            let .mainRegionCompanies(latitude, longitude, page, size),
+            let .interestedRegionCompanies(latitude, longitude, page, size):
             components.queryItems = [
-                URLQueryItem(name: "keyword", value: keyword),
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
-                URLQueryItem(name: "longitude", value: "\(longitude)")
+                URLQueryItem(name: "longitude", value: "\(longitude)"),
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
-
+            
             return request
         }
     }

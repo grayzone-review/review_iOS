@@ -12,21 +12,30 @@ import SwiftUI
 struct SearchSubmittedFeature {
     @ObservableState
     struct State: Equatable {
+        var needLoad: Bool = true // viewInit을 한번만 호출하기위한 플래그 값.
         let searchTerm: String
         let searchTheme: SearchTheme
-        var needLoad: Bool = true
         var searchedCompanies: [SearchedCompany] = []
+        var isLoading: Bool = true
+        var hasNext: Bool = true
         var totalCount: Int?
+        var currentPage: Int = 0
     }
     
     enum Action {
         case viewInit
+        case loadNext
+        case setIsLoading(Bool)
+        case setHasNext(Bool)
         case setTotalCount(Int)
+        case setCurrentPage
+        case handleError(any Error)
         case setSearchedCompanies([SearchedCompany])
         case delegate(Delegate)
         case themeButtonTapped(SearchTheme)
         case followButtonTapped(SearchedCompany)
         case follow(id: Int, isFollowed: Bool)
+        case checkNeedToLoadNext(id: Int)
         
         enum Delegate: Equatable {
             case search(String, SearchTheme)
@@ -42,23 +51,82 @@ struct SearchSubmittedFeature {
     @Dependency(\.searchService) var searchService
     
     var body: some ReducerOf<Self> {
-        Reduce { state, action in
+        Reduce {
+            state,
+            action in
             switch action {
             case .viewInit:
-                return .run { [searchTheme = state.searchTheme, searchTerm = state.searchTerm] send in
-                    let data = switch searchTheme {
-                    default: // 추후 테마별 API 나오면 case별로 대응하도록 변경. 아래는 .keyword의 API.
-                        try await searchService.fetchSearchedCompanies(
+                guard state.needLoad else { return .none }
+                state.needLoad = false
+                
+                return .run { [searchTheme = state.searchTheme, searchTerm = state.searchTerm, currentPage = state.currentPage] send in
+                    do {
+                        let data = try await searchService.fetchSearchedCompanies(
+                            theme: searchTheme,
                             keyword: searchTerm,
                             latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
-                            longitude: 126.9780
+                            longitude: 126.9780,
+                            page: currentPage
                         )
+                        
+                        let companies = data.companies.map { $0.toDomain() }
+                        await send(.setHasNext(data.hasNext))
+                        await send(.setTotalCount(data.totalCount))
+                        await send(.setSearchedCompanies(companies))
+                        await send(.setIsLoading(false))
+                    } catch {
+                        await send(.handleError(error))
                     }
-                    let companies = data.companies.map { $0.toDomain() }
-                    
-                    await send(.setTotalCount(data.totalCount))
-                    await send(.setSearchedCompanies(companies))
                 }
+                
+            case .loadNext:
+                guard !state.isLoading else { return .none }
+                
+                state.isLoading = true
+                return .run {
+                    [
+                        searchTheme = state.searchTheme,
+                        searchTerm = state.searchTerm,
+                        hasNext = state.hasNext,
+                        currentPage = state.currentPage
+                    ]
+                    send in
+                    guard hasNext else {
+                        await send(.setIsLoading(false))
+                        return
+                    }
+                    
+                    do {
+                        let data = switch searchTheme {
+                        default:
+                            try await searchService.fetchSearchedCompanies(
+                                theme: searchTheme,
+                                keyword: searchTerm,
+                                latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
+                                longitude: 126.9780,
+                                page: currentPage
+                            )
+                        }
+                        
+                        let companies = data.companies.map { $0.toDomain() }
+                        await send(.setHasNext(data.hasNext))
+                        await send(.setTotalCount(data.totalCount))
+                        await send(.setSearchedCompanies(companies))
+                        await send(.setIsLoading(false))
+                    } catch {
+                        await send(.handleError(error))
+                    }
+                }
+                
+            case let .setIsLoading(isLoading):
+                state.isLoading = isLoading
+                
+                return .none
+                
+            case let .setHasNext(hasNext):
+                state.hasNext = hasNext
+                
+                return .send(.setCurrentPage)
                 
             case let .setTotalCount(count):
                 guard state.totalCount == nil else {
@@ -67,8 +135,15 @@ struct SearchSubmittedFeature {
                 state.totalCount = count
                 return .none
                 
+            case .setCurrentPage:
+                if state.hasNext {
+                    state.currentPage += 1
+                }
+                
+                return .none
+                
             case let .setSearchedCompanies(companies):
-                state.searchedCompanies = companies
+                state.searchedCompanies.append(contentsOf: companies)
                 return .none
                 
             case .delegate:
@@ -91,13 +166,32 @@ struct SearchSubmittedFeature {
                     )
                 
             case let .follow(id, isFollowed):
-                return .run { _ in
-                    if isFollowed {
-                        try await companyService.createCompanyFollowing(of: id)
-                    } else {
-                        try await companyService.deleteCompanyFollowing(of: id)
+                return .run { send in
+                    do {
+                        if isFollowed {
+                            try await companyService.createCompanyFollowing(of: id)
+                        } else {
+                            try await companyService.deleteCompanyFollowing(of: id)
+                        }
+                    } catch {
+                        await send(.handleError(error))
                     }
                 }
+                
+            case let .checkNeedToLoadNext(id):
+                guard let index = state.searchedCompanies.firstIndex(where: { $0.id == id }) else { return .none }
+                
+                if index == state.searchedCompanies.count - 2 {
+                    return .send(.loadNext)
+                } else {
+                    return .none
+                }
+                
+            case let .handleError(error):
+                // TODO: - Handling Error
+                print("❌ error: \(error)")
+                
+                return .none
             }
         }
     }
@@ -206,14 +300,24 @@ struct SearchSubmittedView: View {
             ScrollView {
                 LazyVStack(spacing: 20) {
                     ForEach(store.searchedCompanies) { company in
-                    NavigationLink(
-                        state: UpFeature.Path.State.detail(
-                            CompanyDetailFeature.State(
-                                companyID: company.id
+                        NavigationLink(
+                            state: UpFeature.Path.State.detail(
+                                CompanyDetailFeature.State(
+                                    companyID: company.id
+                                )
                             )
-                        )
-                    ) {
+                        ) {
                             searchedCompany(company)
+                        }
+#if DEBUG               // 디버깅 모드에서만 보이는 해당 카드의 ID값을 보여줍니다.
+                        .overlay(alignment: .bottomTrailing) {
+                            Text("\(company.id)")
+                                .pretendard(.h2, color: .red)
+                                .padding()
+                        }
+#endif
+                        .onAppear {
+                            store.send(.checkNeedToLoadNext(id: company.id))
                         }
                     }
                 }
@@ -236,18 +340,14 @@ struct SearchSubmittedView: View {
     }
     
     private func searchedCompany(_ company: SearchedCompany) -> some View {
-        var location = String(company.distance.rounded(to: 1)) + "km"
-        
-        if company.address.count > 1 {
-            location = "\(String(Array(company.address)[...1])) · \(location)"
-        }
-        
         return VStack(spacing: 40) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(company.name)
+                        .multilineTextAlignment(.leading)
                         .pretendard(.body1Bold, color: .black)
                     Text(company.address)
+                        .multilineTextAlignment(.leading)
                         .pretendard(.captionRegular, color: .gray50)
                     HStack(spacing: 8) {
                         HStack(spacing: 4) {
@@ -257,7 +357,7 @@ struct SearchSubmittedView: View {
                             Text(String(company.totalRating.rounded(to: 1)))
                                 .pretendard(.captionBold, color: .gray90)
                         }
-                        Text(location)
+                        Text(company.location)
                             .pretendard(.captionRegular, color: .gray50)
                     }
                 }
@@ -323,7 +423,7 @@ struct SearchSubmittedView: View {
     SearchSubmittedView(
         store: Store(
             initialState: SearchSubmittedFeature.State(
-                searchTerm: "",
+                searchTerm: "스타",
                 searchTheme: .near
             )
         ) {
