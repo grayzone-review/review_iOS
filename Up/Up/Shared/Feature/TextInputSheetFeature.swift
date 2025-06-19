@@ -117,6 +117,7 @@ struct TextInputSheetView: View {
     
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
+            handle
             title
             textField
             controlArea
@@ -127,6 +128,16 @@ struct TextInputSheetView: View {
         .onAppear {
             isFocused = true
         }
+        .presentationCornerRadius(24)
+    }
+    
+    private var handle: some View {
+        VStack {
+            RoundedRectangle(cornerRadius: 2)
+                .foregroundStyle(AppColor.dragIndicator.color)
+                .frame(width: 36, height: 4)
+        }
+        .frame(height: 24)
     }
     
     private var title: some View {

@@ -185,5 +185,4 @@ struct ReviewMakingView: View {
             ReviewMakingFeature()
         }
     )
-    
 }

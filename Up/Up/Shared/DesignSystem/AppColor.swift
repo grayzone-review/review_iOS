@@ -111,6 +111,7 @@ enum AppColor: String {
     case gray80 = "#212121"
     case gray90 = "#141414"
     case black  = "#000000"
+    case dragIndicator = "#C2C0CC"
     
     var color: Color {
         return Color(hex: rawValue)

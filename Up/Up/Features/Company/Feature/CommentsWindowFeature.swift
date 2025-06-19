@@ -193,26 +193,12 @@ struct CommentsWindowView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                commentArea
-                Divider()
-                enterCommentArea
-            }
-            .presentationDetents(
-                [
-                    .medium,
-                    .large
-                ]
-            )
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("댓글")
-                        .pretendard(.body1Bold, color: .gray90)
-                        .frame(height: 37)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
+        VStack(alignment: .leading, spacing: 0) {
+            handle
+            title
+            commentArea
+            Divider()
+            enterCommentArea
         }
         .presentationCornerRadius(24)
         .presentationDetents(
@@ -223,6 +209,35 @@ struct CommentsWindowView: View {
             selection: $selectedDetent
         )
         .presentationContentInteraction(.scrolls)
+        .presentationDragIndicator(.hidden)
+    }
+    
+    private var handle: some View {
+        HStack {
+            Spacer()
+            RoundedRectangle(cornerRadius: 2)
+                .foregroundStyle(AppColor.dragIndicator.color)
+                .frame(width: 36, height: 4)
+            Spacer()
+        }
+        .frame(height: 24)
+    }
+    
+    private var title: some View {
+        HStack {
+            Spacer()
+            Text("댓글")
+                .pretendard(.body1Bold, color: .gray90)
+            Spacer()
+        }
+        .padding(
+            EdgeInsets(
+                top: 8,
+                leading: 20,
+                bottom: 8,
+                trailing: 20
+            )
+        )
     }
     
     @ViewBuilder
