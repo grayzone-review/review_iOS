@@ -113,7 +113,7 @@ struct SearchIdleView: View {
             Button {
                 store.send(.deleteButtonTapped(recentSearchTerm))
             } label: {
-                AppIcon.closeFill.image
+                AppIcon.closeCircleFill.image
                     .foregroundStyle(AppColor.gray10.color)
                     .frame(width: 18, height: 18)
                     .overlay {

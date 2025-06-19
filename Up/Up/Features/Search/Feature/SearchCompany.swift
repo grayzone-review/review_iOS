@@ -264,7 +264,7 @@ struct SearchCompanyView: View {
             Button {
                 store.send(.clearButtonTapped)
             } label: {
-                AppIcon.closeFill.image
+                AppIcon.closeCircleFill.image
                     .foregroundStyle(AppColor.gray10.color)
                     .frame(width: 24, height: 24)
                     .overlay {

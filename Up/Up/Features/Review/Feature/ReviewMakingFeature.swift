@@ -151,6 +151,10 @@ struct ReviewMakingView: View {
     @ViewBuilder
     private var bodyArea: some View {
         switch store.reviewStates.count {
+        case 1:
+            if let companyInformationStore = store.scope(state: \.review?.information, action: \.review.information) {
+                ReviewInformationView(store: companyInformationStore)
+            }
         default:
             Spacer()
         }
@@ -160,7 +164,23 @@ struct ReviewMakingView: View {
 #Preview {
     ReviewMakingView(
         store: Store(
-            initialState: ReviewMakingFeature.State()
+            initialState: ReviewMakingFeature.State(
+                company: Company(
+                    id: 3,
+                    name: "육전국밥 신설동역점",
+                    permissionDate: nil,
+                    address: Address(
+                        lotNumberAddress: "서울특별시 종로구 숭인동 1256 동보빌딩 ",
+                        roadNameAddress: "서울특별시 종로구 종로 413, 동보빌딩 지상1층 (숭인동)"
+                    ),
+                    totalRating: 3.3,
+                    isFollowed: false,
+                    coordinate: Coordinate(
+                        latitude: 37.575715910020854,
+                        longitude: 127.02241002457775
+                    )
+                )
+            )
         ) {
             ReviewMakingFeature()
         }
