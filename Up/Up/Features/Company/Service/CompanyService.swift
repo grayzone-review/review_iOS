@@ -12,6 +12,19 @@ protocol CompanyService {
     func fetchReviews(of companyID: Int, page: Int) async throws -> ReviewsBody
     func createCompanyFollowing(of companyID: Int) async throws
     func deleteCompanyFollowing(of companyID: Int) async throws
+    func createReview(
+        of companyID: Int,
+        workLifeBalance: Double,
+        welfare: Double,
+        salary: Double,
+        companyCulture: Double,
+        management: Double,
+        advantagePoint: String,
+        disadvantagePoint: String,
+        managementFeedback: String,
+        jobRole: String,
+        employmentPeriod: String
+    ) async throws -> ReviewDTO
 }
 
 private enum CompanyServiceKey: DependencyKey {
@@ -43,7 +56,7 @@ struct DefaultCompanyService: CompanyService {
     }
     
     func fetchReviews(of companyID: Int, page: Int) async throws -> ReviewsBody {
-        let request = CompanyAPI.companyReview(id: companyID, page: page)
+        let request = CompanyAPI.companyReviews(id: companyID, page: page)
         
         let response = try await session.request(request, as: ReviewsBody.self)
         
@@ -60,6 +73,41 @@ struct DefaultCompanyService: CompanyService {
         let request = CompanyAPI.companyUnfollow(id: companyID)
         
         try await session.execute(request)
+    }
+    
+    func createReview(
+        of companyID: Int,
+        workLifeBalance: Double,
+        welfare: Double,
+        salary: Double,
+        companyCulture: Double,
+        management: Double,
+        advantagePoint: String,
+        disadvantagePoint: String,
+        managementFeedback: String,
+        jobRole: String,
+        employmentPeriod: String
+    ) async throws -> ReviewDTO {
+        let body = ReviewRequest(
+            ratings: ReviewRequest.Ratings(
+                workLifeBalance: workLifeBalance,
+                welfare: welfare,
+                salary: salary,
+                companyCulture: companyCulture,
+                management: management
+            ),
+            advantagePoint: advantagePoint,
+            disadvantagePoint: disadvantagePoint,
+            managementFeedback: managementFeedback,
+            jobRole: jobRole,
+            employmentPeriod: employmentPeriod
+        )
+        
+        let request = CompanyAPI.companyReview(id: companyID, requestBody: body)
+        
+        let response = try await session.request(request, as: ReviewDTO.self)
+        
+        return response.data
     }
 }
 
@@ -153,4 +201,40 @@ struct MockCompanyService: CompanyService {
     func createCompanyFollowing(of companyID: Int) async throws {}
     
     func deleteCompanyFollowing(of companyID: Int) async throws {}
+    
+    func createReview(
+        of companyID: Int,
+        workLifeBalance: Double,
+        welfare: Double,
+        salary: Double,
+        companyCulture: Double,
+        management: Double,
+        advantagePoint: String,
+        disadvantagePoint: String,
+        managementFeedback: String,
+        jobRole: String,
+        employmentPeriod: String
+    ) async throws -> ReviewDTO {
+        ReviewDTO(
+            id: 2,
+            rating: RatingDTO(
+                workLifeBalance: workLifeBalance,
+                welfare: welfare,
+                salary: salary,
+                companyCulture: companyCulture,
+                management: management
+            ),
+            reviewer: "alice",
+            title: "좋은 회사입니다.",
+            advantagePoint: advantagePoint,
+            disadvantagePoint: disadvantagePoint,
+            managementFeedback: managementFeedback,
+            job: jobRole,
+            employmentPeriod: employmentPeriod,
+            createdAt: "2025-05-23T17:40:33",
+            likeCount: 3,
+            commentCount: 19,
+            isLiked: true
+        )
+    }
 }

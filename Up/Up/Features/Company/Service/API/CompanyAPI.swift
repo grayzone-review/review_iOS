@@ -12,9 +12,10 @@ import Alamofire
 /// CompanyAPI 엔드포인트 정의
 enum CompanyAPI: Sendable, URLRequestConvertible {
     case companyDetail(id: Int)
-    case companyReview(id: Int, page: Int, size: Int = 10)
+    case companyReviews(id: Int, page: Int, size: Int = 10)
     case companyFollow(id: Int)
     case companyUnfollow(id: Int)
+    case companyReview(id: Int, requestBody: ReviewRequest)
 
     // 기본 서버 URL
     private var baseURL: URL {
@@ -26,12 +27,14 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         switch self {
         case .companyDetail:
             return .get
-        case .companyReview:
+        case .companyReviews:
             return .get
         case .companyFollow:
             return .post
         case .companyUnfollow:
             return .delete
+        case .companyReview:
+            return .post
         }
     }
 
@@ -40,7 +43,7 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         switch self {
         case let .companyDetail(id):
             return "/api/companies/\(id)"
-        case let .companyReview(id, _, _):
+        case let .companyReviews(id, _, _), let .companyReview(id, _):
             return "/api/companies/\(id)/reviews"
         case let .companyFollow(id), let .companyUnfollow(id):
             return "/api/companies/\(id)/follows"
@@ -52,13 +55,21 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         var components = URLComponents(string: AppConfig.Network.host + path)!
 
         switch self {
-        case let .companyReview(_, page, size):
+        case let .companyReviews(_, page, size):
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "size", value: "\(size)")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
+            
+            return request
+        case let .companyReview(_, body):
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            var request = try URLRequest(url: url, method: method)
+            let params = body.toDictionary()
+            request.httpBody = try JSONSerialization.data(withJSONObject: params)
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             
             return request
         default:
