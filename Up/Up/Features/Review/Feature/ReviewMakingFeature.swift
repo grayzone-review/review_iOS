@@ -15,6 +15,24 @@ struct ReviewMakingFeature {
         var review: Review.State?
         var reviewStates: [Review.State] = []
         
+        init(company: Company? = nil) {
+            var injectedCompany: ProposedCompany?
+            
+            if let company {
+                injectedCompany = ProposedCompany(
+                    id: company.id,
+                    name: company.name,
+                    address: company.address.displayText,
+                    totalRating: company.totalRating
+                )
+            }
+            
+            let reviewInformationState: Review.State = .information(ReviewInformationFeature.State(company: injectedCompany))
+            
+            reviewStates.append(reviewInformationState)
+            review = reviewInformationState
+        }
+        
         var currentPageText: AttributedString {
             let isLast = reviewStates.count == 3
             var attributedString = AttributedString("\(reviewStates.count)/3")
@@ -40,7 +58,9 @@ struct ReviewMakingFeature {
     }
     
     @Reducer
-    enum Review {}
+    enum Review {
+        case information(ReviewInformationFeature)
+    }
     
     @Dependency(\.dismiss) var dismiss
     
@@ -49,6 +69,9 @@ struct ReviewMakingFeature {
             switch action {
             case .closeButtonTapped:
                 return .run { _ in await dismiss() }
+                
+            case .review(.information(.delegate(.nextButtonTapped))):
+                return .none
                 
             case .review:
                 return .none
