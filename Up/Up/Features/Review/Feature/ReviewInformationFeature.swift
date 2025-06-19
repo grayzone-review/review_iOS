@@ -39,7 +39,9 @@ struct ReviewInformationFeature {
     }
     
     @Reducer
-    enum Destination {}
+    enum Destination {
+        case jobRole(TextInputSheetFeature)
+    }
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -48,6 +50,15 @@ struct ReviewInformationFeature {
                 return .none
                 
             case .inputJobRoleFieldTapped:
+                state.destination = .jobRole(
+                    TextInputSheetFeature.State(
+                        title: "업무 내용",
+                        placeholder: "담당하신 역할을 입력해주세요 ex) 서빙",
+                        minimum: 2,
+                        maximum: 10,
+                        text: state.jobRole ?? ""
+                    )
+                )
                 return .none
                 
             case .selectEmploymentPeriodFieldTapped:
@@ -59,6 +70,10 @@ struct ReviewInformationFeature {
                 }
                 
                 return .send(.delegate(.nextButtonTapped))
+                
+            case let .destination(.presented(.jobRole(.delegate(.save(jobRole))))):
+                state.jobRole = jobRole
+                return .none
                     
             case .destination:
                 return .none
@@ -143,6 +158,11 @@ struct ReviewInformationView: View {
             }
         }
         .padding(.vertical, 20)
+        .sheet(
+            item: $store.scope(state: \.destination?.jobRole, action: \.destination.jobRole)
+        ) { textInputSheetStore in
+            TextInputSheetView(store: textInputSheetStore)
+        }
     }
     
     private var jobRole: some View {
