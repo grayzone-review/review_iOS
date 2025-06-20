@@ -18,6 +18,7 @@ struct EmploymentPeriodSheetFeature {
     enum Action {
         case select(EmploymentPeriod)
         case closeButtonTapped
+        case close
         case delegate(Delegate)
         
         enum Delegate: Equatable {
@@ -25,21 +26,33 @@ struct EmploymentPeriodSheetFeature {
         }
     }
     
+    enum CancelID: Hashable {
+        case debounce
+    }
+    
     @Dependency(\.dismiss) var dismiss
+    @Dependency(\.mainQueue) var mainQueue
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .select(period):
                 state.selected = period
-                return .none
+                return .send(.close)
+                .debounce(
+                    id: CancelID.debounce,
+                    for: 0.3,
+                    scheduler: mainQueue
+                )
                 
             case .closeButtonTapped:
+                return .send(.close)
+                
+            case .close:
                 return .run { [period = state.selected] send in
                     await send(.delegate(.select(period)))
                     await dismiss()
                 }
-                
             case .delegate:
                 return .none
             }
