@@ -41,6 +41,7 @@ struct ReviewInformationFeature {
     @Reducer
     enum Destination {
         case jobRole(TextInputSheetFeature)
+        case employmentPeriod(EmploymentPeriodSheetFeature)
     }
     
     var body: some ReducerOf<Self> {
@@ -62,6 +63,11 @@ struct ReviewInformationFeature {
                 return .none
                 
             case .selectEmploymentPeriodFieldTapped:
+                state.destination = .employmentPeriod(
+                    EmploymentPeriodSheetFeature.State(
+                        selected: state.employmentPeriod
+                    )
+                )
                 return .none
                 
             case .nextButtonTapped:
@@ -73,6 +79,10 @@ struct ReviewInformationFeature {
                 
             case let .destination(.presented(.jobRole(.delegate(.save(jobRole))))):
                 state.jobRole = jobRole
+                return .none
+                
+            case let .destination(.presented(.employmentPeriod(.delegate(.select(period))))):
+                state.employmentPeriod = period
                 return .none
                     
             case .destination:
@@ -160,8 +170,8 @@ struct ReviewInformationView: View {
         .padding(.vertical, 20)
         .sheet(
             item: $store.scope(state: \.destination?.jobRole, action: \.destination.jobRole)
-        ) { textInputSheetStore in
-            TextInputSheetView(store: textInputSheetStore)
+        ) { sheetStore in
+            TextInputSheetView(store: sheetStore)
         }
     }
     
@@ -176,7 +186,7 @@ struct ReviewInformationView: View {
                 .pretendard(.h3, color: .gray90)
             
             Button {
-                store.send(.inputCompanyFieldTapped)
+                store.send(.selectEmploymentPeriodFieldTapped)
             } label: {
                 HStack(spacing: 8) {
                     employmentPeriodText
@@ -194,6 +204,11 @@ struct ReviewInformationView: View {
             }
         }
         .padding(.vertical, 20)
+        .sheet(
+            item: $store.scope(state: \.destination?.employmentPeriod, action: \.destination.employmentPeriod)
+        ) { sheetStore in
+            EmploymentPeriodSheetView(store: sheetStore)
+        }
     }
     
     private var employmentPeriodText: some View {

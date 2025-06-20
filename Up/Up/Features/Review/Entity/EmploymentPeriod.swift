@@ -5,13 +5,17 @@
 //  Created by Jun Young Lee on 6/20/25.
 //
 
-enum EmploymentPeriod: CaseIterable {
+enum EmploymentPeriod: Int, Identifiable, CaseIterable {
     case lessThanOneYear
     case oneYearOrMore
     case twoYearsOrMore
     case threeYearsOrMore
     case fourYearsOrMore
     case fiveYearsOrMore
+    
+    var id: Int {
+        rawValue
+    }
     
     var text: String {
         switch self {
