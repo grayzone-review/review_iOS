@@ -150,6 +150,11 @@ struct ReviewInformationView: View {
             }
         }
         .padding(.vertical, 20)
+        .sheet(
+            item: $store.scope(state: \.destination?.company, action: \.destination.company)
+        ) { sheetStore in
+            SelectCompanySheetView(store: sheetStore)
+        }
     }
     
     private var companyName: some View {

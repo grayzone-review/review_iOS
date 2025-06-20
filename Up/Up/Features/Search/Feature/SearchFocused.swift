@@ -87,7 +87,7 @@ struct SearchFocusedView: View {
     @ViewBuilder
     private var recentSearchedCompany: some View {
         if store.savedCompanies.isEmpty {
-            empty
+            emptyRecent
         } else {
             ScrollView {
                 LazyVStack {
@@ -108,7 +108,7 @@ struct SearchFocusedView: View {
         }
     }
     
-    private var empty: some View {
+    private var emptyRecent: some View {
         VStack(spacing: 12) {
             Spacer()
             AppIcon.infoFill.image
@@ -149,22 +149,40 @@ struct SearchFocusedView: View {
         }
     }
     
+    @ViewBuilder
     private var searchedCompany: some View {
-        ScrollView {
-            LazyVStack {
-                Divider()
-                ForEach(store.proposedCompanies) { company in
-                    NavigationLink(
-                        state: UpFeature.Path.State.detail(
-                            CompanyDetailFeature.State(
-                                companyID: company.id
+        if store.proposedCompanies.isEmpty {
+            emptyProposed
+        } else {
+            ScrollView {
+                LazyVStack {
+                    Divider()
+                    ForEach(store.proposedCompanies) { company in
+                        NavigationLink(
+                            state: UpFeature.Path.State.detail(
+                                CompanyDetailFeature.State(
+                                    companyID: company.id
+                                )
                             )
-                        )
-                    ) {
-                        proposedCompanyButton(company)
+                        ) {
+                            proposedCompanyButton(company)
+                        }
                     }
                 }
             }
+        }
+    }
+    
+    private var emptyProposed: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            AppIcon.searchLine.image
+                .foregroundStyle(AppColor.gray30.color)
+                .frame(width: 48, height: 48)
+            
+            Text("검색 결과를 찾을 수 없습니다.")
+                .pretendard(.body1Regular, color: .gray50)
+            Spacer()
         }
     }
     
