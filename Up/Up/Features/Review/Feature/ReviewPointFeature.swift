@@ -6,6 +6,7 @@
 //
 
 import ComposableArchitecture
+import SwiftUI
 
 @Reducer
 struct ReviewPointFeature {
@@ -36,7 +37,7 @@ struct ReviewPointFeature {
     enum Destination {
         case advantage(TextInputSheetFeature)
         case disadvantage(TextInputSheetFeature)
-        case managedmentFeedback(TextInputSheetFeature)
+        case managementFeedback(TextInputSheetFeature)
     }
     
     var body: some ReducerOf<Self> {
@@ -57,7 +58,7 @@ struct ReviewPointFeature {
                 case .disadvantage:
                         .disadvantage(textInputState)
                 case .managementFeedback:
-                        .managedmentFeedback(textInputState)
+                        .managementFeedback(textInputState)
                 }
                 return .none
                 
@@ -79,7 +80,7 @@ struct ReviewPointFeature {
                 state.reviewPoints[.disadvantage] = text
                 return .none
                 
-            case let .destination(.presented(.managedmentFeedback(.delegate(.save(text))))):
+            case let .destination(.presented(.managementFeedback(.delegate(.save(text))))):
                 state.reviewPoints[.managementFeedback] = text
                 return .none
                 
@@ -95,3 +96,123 @@ struct ReviewPointFeature {
 }
 
 extension ReviewPointFeature.Destination.State: Equatable {}
+
+struct ReviewPointView: View {
+    @Bindable var store: StoreOf<ReviewPointFeature>
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    advantageField
+                    disadvantageField
+                    managementFeedbackField
+                }
+                .padding(.horizontal, 20)
+            }
+            buttons
+        }
+    }
+    
+    private var advantageField: some View {
+        reviewPointField(point: .advantage)
+            .sheet(
+                item: $store.scope(state: \.destination?.advantage, action: \.destination.advantage)
+            ) { sheetStore in
+                TextInputSheetView(store: sheetStore)
+            }
+    }
+    
+    private var disadvantageField: some View {
+        reviewPointField(point: .disadvantage)
+            .sheet(
+                item: $store.scope(state: \.destination?.disadvantage, action: \.destination.disadvantage)
+            ) { sheetStore in
+                TextInputSheetView(store: sheetStore)
+            }
+    }
+    
+    private var managementFeedbackField: some View {
+        reviewPointField(point: .managementFeedback)
+            .sheet(
+                item: $store.scope(state: \.destination?.managementFeedback, action: \.destination.managementFeedback)
+            ) { sheetStore in
+                TextInputSheetView(store: sheetStore)
+            }
+    }
+    
+    private func reviewPointField(point: Review.Point) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(point.title)
+                .pretendard(.h3, color: .gray90)
+            
+            Button {
+                store.send(.inputReviewPointFieldTapped(point))
+            } label: {
+                HStack(spacing: 8) {
+                    Text(store.reviewPoints[point] ?? point.placeholder)
+                        .pretendard(.body1Regular, color: store.reviewPoints[point] == nil ? .gray50 : .gray90)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
+                .padding(.vertical, 12)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundStyle(AppColor.gray20.color)
+                }
+            }
+        }
+        .padding(.vertical, 20)
+    }
+    
+    private var buttons: some View {
+        HStack(spacing: 12) {
+            previousButton
+            doneButton
+        }
+        .padding(20)
+    }
+    
+    private var previousButton: some View {
+        Button {
+            store.send(.previousButtonTapped)
+        } label: {
+            HStack(spacing: 6) {
+                Text("이전")
+                    .pretendard(.body1Bold, color: .orange40)
+            }
+            .frame(height: 52)
+            .frame(maxWidth: .infinity)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(AppColor.orange40.color)
+            )
+        }
+    }
+    
+    private var doneButton: some View {
+        Button {
+            store.send(.doneButtonTapped)
+        } label: {
+            HStack(spacing: 6) {
+                Text("작성완료")
+                    .pretendard(.body1Bold, color: .white)
+            }
+            .frame(height: 52)
+            .frame(maxWidth: .infinity)
+            .background(store.isDoneButtonEnabled ? AppColor.orange40.color : AppColor.orange20.color)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
+}
+
+#Preview {
+    ReviewPointView(
+        store: Store(
+            initialState: ReviewPointFeature.State()
+        ) {
+            ReviewPointFeature()
+        }
+    )
+}

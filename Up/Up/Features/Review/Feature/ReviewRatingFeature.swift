@@ -98,10 +98,14 @@ struct ReviewRatingView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            Divider()
-            information
-            Divider()
-            ratingButtons
+            ScrollView {
+                VStack(spacing: 0) {
+                    Divider()
+                    information
+                    Divider()
+                    ratingButtons
+                }
+            }
             buttons
         }
     }

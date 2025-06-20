@@ -59,6 +59,7 @@ struct ReviewMakingFeature {
     enum Review {
         case information(ReviewInformationFeature)
         case rating(ReviewRatingFeature)
+        case point(ReviewPointFeature)
     }
     
     @Dependency(\.dismiss) var dismiss
@@ -83,6 +84,19 @@ struct ReviewMakingFeature {
                 return .send(.review(.information(.setCompany(company))))
                 
             case .review(.rating(.delegate(.nextButtonTapped))):
+                guard let currentState = state.review else {
+                    return .none
+                }
+                
+                state.reviewStates.append(currentState)
+                state.review = .point(ReviewPointFeature.State())
+                return .none
+                
+            case .review(.point(.delegate(.previousButtonTapped))):
+                state.review = state.reviewStates.popLast()
+                return .none
+                
+            case .review(.point(.delegate(.doneButtonTapped))):
                 return .none
                 
             case .review:
@@ -170,6 +184,10 @@ struct ReviewMakingView: View {
         case 1:
             if let ratingStore = store.scope(state: \.review?.rating, action: \.review.rating) {
                 ReviewRatingView(store: ratingStore)
+            }
+        case 2:
+            if let reviewPointStore = store.scope(state: \.review?.point, action: \.review.point) {
+                ReviewPointView(store: reviewPointStore)
             }
         default:
             Spacer()
