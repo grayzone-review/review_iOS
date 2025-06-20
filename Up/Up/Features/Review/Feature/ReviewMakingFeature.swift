@@ -162,6 +162,7 @@ struct ReviewMakingFeature {
                     let review = data.toDomain()
                     
                     await send(.delegate(.created(review)))
+                    await dismiss()
                 }
                 
             case .review:

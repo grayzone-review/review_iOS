@@ -186,7 +186,7 @@ struct SelectCompanySheetView: View {
             emptyProposed
         } else {
             ScrollView {
-                LazyVStack {
+                LazyVStack(spacing: 0) {
                     Divider()
                     ForEach(store.proposedCompanies) { company in
                         proposedCompanyButton(company)
@@ -224,14 +224,14 @@ struct SelectCompanySheetView: View {
                     }
                     .multilineTextAlignment(.leading)
                     Spacer()
-                    if store.selected == company {
+                    if store.selected?.id == company.id {
                         AppIcon.checkCircleFill.image
                             .foregroundStyle(AppColor.orange40.color)
                             .frame(width: 24, height: 24)
                     }
                 }
                 .padding(20)
-                .background(store.selected == company ? AppColor.gray10.color : nil)
+                .background(store.selected?.id == company.id ? AppColor.gray10.color : nil)
             }
             Divider()
         }

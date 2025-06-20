@@ -12,6 +12,7 @@ import SwiftUI
 struct CompanyDetailFeature {
     @ObservableState
     struct State: Equatable {
+        @Presents var destination: Destination.State?
         let companyID: Int
         var company: Company?
         var reviews: [Review] = []
@@ -40,6 +41,12 @@ struct CompanyDetailFeature {
         case makeReviewButtonTapped
         case likeButtonTapped(Review)
         case like(id: Int, Bool)
+        case destination(PresentationAction<Destination.Action>)
+    }
+    
+    @Reducer
+    enum Destination {
+        case review(ReviewMakingFeature)
     }
     
     enum CancelID: Hashable {
@@ -154,6 +161,7 @@ struct CompanyDetailFeature {
                 }
                 
             case .makeReviewButtonTapped:
+                state.destination = .review(ReviewMakingFeature.State(company: state.company))
                 return .none
                 
             case let .likeButtonTapped(review):
@@ -177,10 +185,20 @@ struct CompanyDetailFeature {
                         try await reviewService.deleteReviewLike(of: id)
                     }
                 }
+                
+            case let .destination(.presented(.review(.delegate(.created(review))))):
+                state.reviews.insert(review, at: 0)
+                return .none
+                
+            case .destination:
+                return .none
             }
         }
+        .ifLet(\.$destination, action: \.destination)
     }
 }
+
+extension CompanyDetailFeature.Destination.State: Equatable {}
 
 struct CompanyDetailView: View {
     @Bindable var store: StoreOf<CompanyDetailFeature>
@@ -289,6 +307,11 @@ struct CompanyDetailView: View {
             .frame(maxWidth: .infinity)
             .background(AppColor.orange40.color)
             .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .fullScreenCover(
+            item: $store.scope(state: \.destination?.review, action: \.destination.review)
+        ) { reviewStore in
+            ReviewMakingView(store: reviewStore)
         }
     }
     
