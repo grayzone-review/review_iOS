@@ -27,20 +27,18 @@ struct ReviewMakingFeature {
                 )
             }
             
-            let reviewInformationState: Review.State = .information(ReviewInformationFeature.State(company: injectedCompany))
-            
-            reviewStates.append(reviewInformationState)
-            review = reviewInformationState
+            review = .information(ReviewInformationFeature.State(company: injectedCompany))
         }
         
         var currentPageText: AttributedString {
-            let isLast = reviewStates.count == 3
-            var attributedString = AttributedString("\(reviewStates.count)/3")
+            let currentPage = reviewStates.count + 1
+            let isLast = currentPage == 3
+            var attributedString = AttributedString("\(currentPage)/3")
             
             attributedString.foregroundColor = isLast ? AppColor.orange40.color : AppColor.gray50.color
             attributedString.font = Typography.captionBold.font
             
-            if let range = attributedString.range(of: "\(reviewStates.count)") {
+            if let range = attributedString.range(of: "\(currentPage)") {
                 attributedString[range].foregroundColor = AppColor.orange40.color
             }
             
@@ -60,6 +58,7 @@ struct ReviewMakingFeature {
     @Reducer
     enum Review {
         case information(ReviewInformationFeature)
+        case rating(ReviewRatingFeature)
     }
     
     @Dependency(\.dismiss) var dismiss
@@ -70,7 +69,20 @@ struct ReviewMakingFeature {
             case .closeButtonTapped:
                 return .run { _ in await dismiss() }
                 
-            case .review(.information(.delegate(.nextButtonTapped))):
+            case let .review(.information(.delegate(.nextButtonTapped(company)))):
+                guard let currentState = state.review else {
+                    return .none
+                }
+                
+                state.reviewStates.append(currentState)
+                state.review = .rating(ReviewRatingFeature.State(company: company))
+                return .none
+                
+            case let .review(.rating(.delegate(.previousButtonTapped(company)))):
+                state.review = state.reviewStates.popLast()
+                return .send(.review(.information(.setCompany(company))))
+                
+            case .review(.rating(.delegate(.nextButtonTapped))):
                 return .none
                 
             case .review:
@@ -151,7 +163,7 @@ struct ReviewMakingView: View {
     @ViewBuilder
     private var bodyArea: some View {
         switch store.reviewStates.count {
-        case 1:
+        case 0:
             if let companyInformationStore = store.scope(state: \.review?.information, action: \.review.information) {
                 ReviewInformationView(store: companyInformationStore)
             }

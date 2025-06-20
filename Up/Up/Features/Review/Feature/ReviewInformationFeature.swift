@@ -27,6 +27,7 @@ struct ReviewInformationFeature {
     
     enum Action {
         case inputCompanyFieldTapped
+        case setCompany(ProposedCompany)
         case inputJobRoleFieldTapped
         case selectEmploymentPeriodFieldTapped
         case nextButtonTapped
@@ -34,7 +35,7 @@ struct ReviewInformationFeature {
         case delegate(Delegate)
         
         enum Delegate: Equatable {
-            case nextButtonTapped
+            case nextButtonTapped(ProposedCompany)
         }
     }
     
@@ -54,6 +55,10 @@ struct ReviewInformationFeature {
                         selected: state.company
                     )
                 )
+                return .none
+                
+            case let .setCompany(company):
+                state.company = company
                 return .none
                 
             case .inputJobRoleFieldTapped:
@@ -77,15 +82,15 @@ struct ReviewInformationFeature {
                 return .none
                 
             case .nextButtonTapped:
-                guard state.isNextButtonEnabled else {
+                guard state.isNextButtonEnabled,
+                      let company = state.company else {
                     return .none
                 }
                 
-                return .send(.delegate(.nextButtonTapped))
+                return .send(.delegate(.nextButtonTapped(company)))
                 
             case let .destination(.presented(.company(.delegate(.select(company))))):
-                state.company = company
-                return .none
+                return .send(.setCompany(company))
                 
             case let .destination(.presented(.jobRole(.delegate(.save(jobRole))))):
                 state.jobRole = jobRole
