@@ -59,7 +59,7 @@ struct CompanyDTO: Codable {
 
 extension CompanyDTO {
     func toDomain() -> Company {
-        let permissionDate = DateFormatter.shared.date(from: permittedAt)
+        let permissionDate = DateFormatter.serverFormat.date(from: permittedAt)
         
         return Company(
             id: id,

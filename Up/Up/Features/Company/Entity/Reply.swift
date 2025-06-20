@@ -36,7 +36,7 @@ struct ReplyDTO: Codable {
 
 extension ReplyDTO {
     func toDomain() -> Reply {
-        let creationDate = DateFormatter.shared.date(from: createdAt)
+        let creationDate = DateFormatter.serverFormat.date(from: createdAt)
         
         return Reply(
             id: id,

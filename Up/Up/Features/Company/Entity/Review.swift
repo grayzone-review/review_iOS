@@ -125,7 +125,7 @@ struct ReviewDTO: Codable {
 
 extension ReviewDTO {
     func toDomain() -> Review {
-        let creationDate = DateFormatter.shared.date(from: createdAt) ?? .now
+        let creationDate = DateFormatter.serverFormat.date(from: createdAt) ?? .now
         
         return Review(
             id: id,

@@ -14,6 +14,10 @@ struct ReviewCardFeature {
     struct State: Equatable {
         @Presents var comments: CommentsWindowFeature.State?
         var review: Review
+        
+        var creationDateText: String {
+            DateFormatter.reviewCardFormat.string(from: review.creationDate)
+        }
     }
     
     enum Action: BindableAction {
@@ -124,7 +128,7 @@ struct ReviewCardView: View {
             divider
             Text(store.review.employmentPeriod)
             divider
-            Text("2025. 05 작성") // Date 포맷팅 필요
+            Text(store.creationDateText)
             Spacer()
         }
         .pretendard(.captionRegular, color: .gray50)
