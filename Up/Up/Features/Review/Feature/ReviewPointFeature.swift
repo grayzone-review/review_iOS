@@ -29,7 +29,11 @@ struct ReviewPointFeature {
         
         enum Delegate: Equatable {
             case previousButtonTapped
-            case doneButtonTapped
+            case doneButtonTapped(
+                advantage: String,
+                disAdavantage: String,
+                managementFeedback: String
+            )
         }
     }
     
@@ -70,7 +74,11 @@ struct ReviewPointFeature {
                     return .none
                 }
                 
-                return .send(.delegate(.doneButtonTapped))
+                return .send(.delegate(.doneButtonTapped(
+                    advantage: state.reviewPoints[.advantage, default: ""],
+                    disAdavantage: state.reviewPoints[.disadvantage, default: ""],
+                    managementFeedback: state.reviewPoints[.managementFeedback, default: ""]
+                )))
                 
             case let .destination(.presented(.advantage(.delegate(.save(text))))):
                 state.reviewPoints[.advantage] = text

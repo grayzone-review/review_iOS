@@ -14,7 +14,7 @@ struct ReviewRatingFeature {
     struct State: Equatable {
         @Presents var destination: Destination.State?
         var company: ProposedCompany
-        var ratings = [RatingType: Int]()
+        var ratings = [RatingType: Double]()
         
         var totalRating: Double {
             guard ratings.isEmpty == false else {
@@ -22,7 +22,7 @@ struct ReviewRatingFeature {
             }
             
             let total = ratings.reduce(0, { $0 + $1.value })
-            let average = Double(total) / Double(ratings.count)
+            let average = total / Double(ratings.count)
             
             return average.rounded(to: 1)
         }
@@ -34,7 +34,7 @@ struct ReviewRatingFeature {
     
     enum Action {
         case companyButtonTapped
-        case ratingButtonTapped(RatingType, Int)
+        case ratingButtonTapped(RatingType, Double)
         case previousButtonTapped
         case nextButtonTapped
         case destination(PresentationAction<Destination.Action>)
@@ -42,7 +42,13 @@ struct ReviewRatingFeature {
         
         enum Delegate: Equatable {
             case previousButtonTapped(ProposedCompany)
-            case nextButtonTapped
+            case nextButtonTapped(
+                workLifeBalance: Double?,
+                welfare: Double?,
+                salary: Double?,
+                companyCulture: Double?,
+                management: Double?
+            )
         }
     }
     
@@ -74,7 +80,13 @@ struct ReviewRatingFeature {
                     return .none
                 }
                 
-                return .send(.delegate(.nextButtonTapped))
+                return .send(.delegate(.nextButtonTapped(
+                    workLifeBalance: state.ratings[.workLifeBalance],
+                    welfare: state.ratings[.welfare],
+                    salary: state.ratings[.salary],
+                    companyCulture: state.ratings[.companyCulture],
+                    management: state.ratings[.management]
+                )))
                 
             case let .destination(.presented(.company(.delegate(.select(company))))):
                 state.company = company
@@ -158,7 +170,7 @@ struct ReviewRatingView: View {
                     ForEach(RatingType.allCases) { type in
                         HStack(spacing: 4) {
                             ForEach(1...5, id: \.self) { rating in
-                                ratingButton(type: type, rating: rating)
+                                ratingButton(type: type, rating: Double(rating))
                             }
                         }
                         .frame(height: store.ratings[type] == nil ? 76 : 64)
@@ -169,7 +181,7 @@ struct ReviewRatingView: View {
         }
     }
     
-    private func ratingButton(type: RatingType, rating: Int) -> some View {
+    private func ratingButton(type: RatingType, rating: Double) -> some View {
         let color = store.ratings[type, default: 0] < rating ? AppColor.gray20.color : AppColor.seYellow40.color
         let length: CGFloat = store.ratings[type] == nil ? 36 : 24
         

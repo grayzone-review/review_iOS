@@ -12,8 +12,16 @@ import SwiftUI
 struct ReviewMakingFeature {
     @ObservableState
     struct State: Equatable {
-        var review: Review.State?
-        var reviewStates: [Review.State] = []
+        var review: ReviewMaking.State?
+        var reviewStates: [ReviewMaking.State] = []
+        var company: ProposedCompany?
+        var workLifeBalance: Double?
+        var welfare: Double?
+        var salary: Double?
+        var companyCulture: Double?
+        var management: Double?
+        var jobRole: String?
+        var employmentPeriod: EmploymentPeriod?
         
         init(company: Company? = nil) {
             var injectedCompany: ProposedCompany?
@@ -52,17 +60,23 @@ struct ReviewMakingFeature {
     
     enum Action {
         case closeButtonTapped
-        case review(Review.Action)
+        case review(ReviewMaking.Action)
+        case delegate(Delegate)
+        
+        enum Delegate: Equatable {
+            case created(Review)
+        }
     }
     
     @Reducer
-    enum Review {
+    enum ReviewMaking {
         case information(ReviewInformationFeature)
         case rating(ReviewRatingFeature)
         case point(ReviewPointFeature)
     }
     
     @Dependency(\.dismiss) var dismiss
+    @Dependency(\.companyService) var companyService
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -70,46 +84,100 @@ struct ReviewMakingFeature {
             case .closeButtonTapped:
                 return .run { _ in await dismiss() }
                 
-            case let .review(.information(.delegate(.nextButtonTapped(company)))):
-                guard let currentState = state.review else {
+            case let .review(.information(.delegate(.nextButtonTapped(
+                company,
+                jobRole,
+                employmentPeriod
+            )))):
+                guard let currentState = state.review,
+                      let company else {
                     return .none
                 }
                 
                 state.reviewStates.append(currentState)
                 state.review = .rating(ReviewRatingFeature.State(company: company))
+                state.company = company
+                state.jobRole = jobRole
+                state.employmentPeriod = employmentPeriod
                 return .none
                 
             case let .review(.rating(.delegate(.previousButtonTapped(company)))):
                 state.review = state.reviewStates.popLast()
                 return .send(.review(.information(.setCompany(company))))
                 
-            case .review(.rating(.delegate(.nextButtonTapped))):
+            case let .review(.rating(.delegate(.nextButtonTapped(
+                workLifeBalance,
+                welfare,
+                salary,
+                companyCulture,
+                management
+            )))):
                 guard let currentState = state.review else {
                     return .none
                 }
                 
                 state.reviewStates.append(currentState)
                 state.review = .point(ReviewPointFeature.State())
+                state.workLifeBalance = workLifeBalance
+                state.welfare = welfare
+                state.salary = salary
+                state.companyCulture = companyCulture
+                state.management = management
                 return .none
                 
             case .review(.point(.delegate(.previousButtonTapped))):
                 state.review = state.reviewStates.popLast()
                 return .none
                 
-            case .review(.point(.delegate(.doneButtonTapped))):
-                return .none
+            case let .review(.point(.delegate(.doneButtonTapped(
+                advantagePoint,
+                disadvantagePoint,
+                managementFeedback
+            )))):
+                return .run { [state] send in
+                    guard let id = state.company?.id,
+                          let workLifeBalance = state.workLifeBalance,
+                          let welfare = state.welfare,
+                          let salary = state.salary,
+                          let companyCulture = state.companyCulture,
+                          let management = state.management,
+                          let jobRole = state.jobRole,
+                          let employmentPeriod = state.employmentPeriod else {
+                        return
+                    }
+                    
+                    let data = try await companyService.createReview(
+                        of: id,
+                        workLifeBalance: workLifeBalance,
+                        welfare: welfare,
+                        salary: salary,
+                        companyCulture: companyCulture,
+                        management: management,
+                        advantagePoint: advantagePoint,
+                        disadvantagePoint: disadvantagePoint,
+                        managementFeedback: managementFeedback,
+                        jobRole: jobRole,
+                        employmentPeriod: employmentPeriod.text
+                    )
+                    let review = data.toDomain()
+                    
+                    await send(.delegate(.created(review)))
+                }
                 
             case .review:
+                return .none
+                
+            case .delegate:
                 return .none
             }
         }
         .ifLet(\.review, action: \.review) {
-            Review.body
+            ReviewMaking.body
         }
     }
 }
 
-extension ReviewMakingFeature.Review.State: Equatable {}
+extension ReviewMakingFeature.ReviewMaking.State: Equatable {}
 
 struct ReviewMakingView: View {
     @Bindable var store: StoreOf<ReviewMakingFeature>
