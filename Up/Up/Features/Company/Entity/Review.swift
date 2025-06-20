@@ -25,7 +25,7 @@ struct Review: Equatable, Identifiable {
 }
 
 extension Review {
-    enum Point {
+    enum Point: Int, CaseIterable, Equatable, Identifiable {
         case advantage
         case disadvantage
         case managementFeedback
@@ -60,6 +60,32 @@ extension Review {
                 return "단점"
             case .managementFeedback:
                 return "바라는 점"
+            }
+        }
+        
+        var id: Int {
+            rawValue
+        }
+        
+        var title: String {
+            switch self {
+            case .advantage:
+                "기업의 장점"
+            case .disadvantage:
+                "기업의 단점"
+            case .managementFeedback:
+                "경영진에게 한마디"
+            }
+        }
+        
+        var placeholder: String {
+            switch self {
+            case .advantage:
+                "만족스러운 점은 무엇인가요?"
+            case .disadvantage:
+                "아쉬웠던 점은 무엇인가요?"
+            case .managementFeedback:
+                "개선되었으면 하는 점이 있나요?"
             }
         }
     }
