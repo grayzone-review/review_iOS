@@ -17,9 +17,7 @@ protocol ReviewService {
 }
 
 private enum ReviewServiceKey: DependencyKey {
-    static let liveValue: any ReviewService = DefaultReviewService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static let previewValue: any ReviewService = DefaultReviewService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static var testValue: any ReviewService = MockReviewService()
+    static let liveValue: any ReviewService = MockReviewService()
 }
 
 extension DependencyValues {
