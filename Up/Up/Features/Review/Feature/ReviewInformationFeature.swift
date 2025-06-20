@@ -40,6 +40,7 @@ struct ReviewInformationFeature {
     
     @Reducer
     enum Destination {
+        case company(SelectCompanySheetFeature)
         case jobRole(TextInputSheetFeature)
         case employmentPeriod(EmploymentPeriodSheetFeature)
     }
@@ -48,6 +49,11 @@ struct ReviewInformationFeature {
         Reduce { state, action in
             switch action {
             case .inputCompanyFieldTapped:
+                state.destination = .company(
+                    SelectCompanySheetFeature.State(
+                        selected: state.company
+                    )
+                )
                 return .none
                 
             case .inputJobRoleFieldTapped:
@@ -76,6 +82,10 @@ struct ReviewInformationFeature {
                 }
                 
                 return .send(.delegate(.nextButtonTapped))
+                
+            case let .destination(.presented(.company(.delegate(.select(company))))):
+                state.company = company
+                return .none
                 
             case let .destination(.presented(.jobRole(.delegate(.save(jobRole))))):
                 state.jobRole = jobRole
