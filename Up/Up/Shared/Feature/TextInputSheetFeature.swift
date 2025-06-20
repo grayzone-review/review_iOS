@@ -129,6 +129,7 @@ struct TextInputSheetView: View {
             isFocused = true
         }
         .presentationCornerRadius(24)
+        .presentationDragIndicator(.hidden)
     }
     
     private var handle: some View {
