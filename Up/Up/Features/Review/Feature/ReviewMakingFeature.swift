@@ -46,7 +46,7 @@ struct ReviewMakingFeature {
         }
         
         var progressBarScale: Double {
-            Double(reviewStates.count) / 3
+            Double(reviewStates.count + 1) / 3
         }
     }
     
@@ -166,6 +166,10 @@ struct ReviewMakingView: View {
         case 0:
             if let companyInformationStore = store.scope(state: \.review?.information, action: \.review.information) {
                 ReviewInformationView(store: companyInformationStore)
+            }
+        case 1:
+            if let ratingStore = store.scope(state: \.review?.rating, action: \.review.rating) {
+                ReviewRatingView(store: ratingStore)
             }
         default:
             Spacer()

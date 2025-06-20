@@ -249,14 +249,7 @@ struct ReviewInformationView: View {
             .background(store.isNextButtonEnabled ? AppColor.orange40.color : AppColor.orange20.color)
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .padding(
-            EdgeInsets(
-                top: 11,
-                leading: 24,
-                bottom: 11,
-                trailing: 24
-            )
-        )
+        .padding(20)
     }
 }
 

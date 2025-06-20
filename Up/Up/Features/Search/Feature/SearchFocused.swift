@@ -124,18 +124,19 @@ struct SearchFocusedView: View {
     private func savedCompanyButton(_ company: SavedCompany) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 4) {
-                        AppIcon.clockLine.image
-                            .foregroundStyle(AppColor.gray30.color)
-                            .frame(width: 20, height: 20)
+                HStack(alignment: .top, spacing: 4) {
+                    AppIcon.clockLine.image
+                        .foregroundStyle(AppColor.gray30.color)
+                        .frame(width: 20, height: 20)
+                    VStack(alignment: .leading, spacing: 8) {
                         Text(company.name)
                             .pretendard(.body1Bold, color: .gray90)
-                        Spacer()
+                        Text(company.address)
+                            .pretendard(.captionRegular, color: .gray50)
                     }
-                    Text(company.address)
-                        .pretendard(.captionRegular, color: .gray50)
+                    .multilineTextAlignment(.leading)
                 }
+                Spacer()
                 Button {
                     store.send(.deleteButtonTapped(company))
                 } label: {
@@ -188,23 +189,26 @@ struct SearchFocusedView: View {
     
     private func proposedCompanyButton(_ company: ProposedCompany) -> some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 4) {
-                    AppIcon.searchLine.image
-                        .foregroundStyle(AppColor.gray30.color)
-                        .frame(width: 20, height: 20)
-                    Text(company.name)
-                        .pretendard(.body1Bold, color: .gray90)
-                    AppIcon.starFill.image
-                        .foregroundStyle(AppColor.seYellow40.color)
-                        .frame(width: 20, height: 20)
-                    
-                    Text(String(company.totalRating.rounded(to: 1)))
-                        .pretendard(.body1Bold, color: .gray90)
-                    Spacer()
+            HStack(alignment: .top, spacing: 4) {
+                AppIcon.searchLine.image
+                    .foregroundStyle(AppColor.gray30.color)
+                    .frame(width: 20, height: 20)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 4) {
+                        Text(company.name)
+                            .pretendard(.body1Bold, color: .gray90)
+                        AppIcon.starFill.image
+                            .foregroundStyle(AppColor.seYellow40.color)
+                            .frame(width: 20, height: 20)
+                        
+                        Text(String(company.totalRating.rounded(to: 1)))
+                            .pretendard(.body1Bold, color: .gray90)
+                        Spacer()
+                    }
+                    Text(company.address)
+                        .pretendard(.captionRegular, color: .gray50)
                 }
-                Text(company.address)
-                    .pretendard(.captionRegular, color: .gray50)
+                .multilineTextAlignment(.leading)
             }
             .padding(20)
             Divider()

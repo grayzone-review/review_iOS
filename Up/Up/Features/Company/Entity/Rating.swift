@@ -41,11 +41,11 @@ struct RatingDTO: Codable {
     let management: Double
     
     enum CodingKeys: String, CodingKey {
-        case workLifeBalance = "WORK_LIFE_BALANCE"
-        case welfare = "WELFARE"
-        case salary = "SALARY"
-        case companyCulture = "COMPANY_CULTURE"
-        case management = "MANAGEMENT"
+        case workLifeBalance
+        case welfare
+        case salary
+        case companyCulture
+        case management
     }
 }
 

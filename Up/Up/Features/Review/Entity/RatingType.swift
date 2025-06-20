@@ -5,12 +5,16 @@
 //  Created by Jun Young Lee on 6/20/25.
 //
 
-enum RatingType: CaseIterable, Equatable {
+enum RatingType: Int, CaseIterable, Equatable, Identifiable {
     case workLifeBalance
     case welfare
     case salary
     case companyCulture
     case management
+    
+    var id: Int {
+        rawValue
+    }
     
     var text: String {
         switch self {

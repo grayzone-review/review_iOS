@@ -212,22 +212,27 @@ struct SelectCompanySheetView: View {
     @ViewBuilder
     private func proposedCompanyButton(_ company: ProposedCompany) -> some View {
         VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 0) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(company.name)
-                        .pretendard(.body1Bold, color: .gray90)
-                    Text(company.address)
-                        .pretendard(.captionRegular, color: .gray50)
+            Button {
+                store.send(.selectCompany(company))
+            } label: {
+                HStack(alignment: .top, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(company.name)
+                            .pretendard(.body1Bold, color: .gray90)
+                        Text(company.address)
+                            .pretendard(.captionRegular, color: .gray50)
+                    }
+                    .multilineTextAlignment(.leading)
+                    Spacer()
+                    if store.selected == company {
+                        AppIcon.checkCircleFill.image
+                            .foregroundStyle(AppColor.orange40.color)
+                            .frame(width: 24, height: 24)
+                    }
                 }
-                Spacer()
-                if store.selected == company {
-                    AppIcon.checkCircleFill.image
-                        .foregroundStyle(AppColor.orange40.color)
-                        .frame(width: 24, height: 24)
-                }
+                .padding(20)
+                .background(store.selected == company ? AppColor.gray10.color : nil)
             }
-            .padding(20)
-            .background(store.selected == company ? AppColor.gray10.color : nil)
             Divider()
         }
     }
