@@ -226,7 +226,6 @@ struct SelectCompanySheetView: View {
                     Spacer()
                     if store.selected?.id == company.id {
                         AppIcon.checkCircleFill.image
-                            .foregroundStyle(AppColor.orange40.color)
                             .frame(width: 24, height: 24)
                     }
                 }
