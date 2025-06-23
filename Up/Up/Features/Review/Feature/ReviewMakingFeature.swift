@@ -192,16 +192,10 @@ struct ReviewMakingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        store.send(.closeButtonTapped)
-                    } label: {
-                        AppIcon.closeLine.image(
-                            width: 24,
-                            height: 24,
-                            appColor: .gray90
-                        )
-                        .padding(10)
-                    }
+                    IconButton(
+                        icon: .closeLine) {
+                            store.send(.closeButtonTapped)
+                        }
                 }
                 ToolbarItem(placement: .principal) {
                     Text("리뷰 작성")

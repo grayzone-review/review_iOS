@@ -195,16 +195,10 @@ struct SearchCompanyView: View {
         .toolbar(store.searchState == .idle ? .visible : .hidden)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button {
-                    store.send(.backButtonTapped)
-                } label: {
-                    AppIcon.arrowLeft.image(
-                        width: 24,
-                        height: 24,
-                        appColor: .gray90
-                    )
-                    .padding(10)
-                }
+                IconButton(
+                    icon: .arrowLeft) {
+                        store.send(.backButtonTapped)
+                    }
             }
             ToolbarItem(placement: .principal) {
                 Text("업체 검색")
