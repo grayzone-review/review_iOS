@@ -329,10 +329,11 @@ struct SearchSubmittedView: View {
     private var empty: some View {
         VStack(spacing: 12) {
             Spacer()
-            AppIcon.searchLine.image
-                .foregroundStyle(AppColor.gray30.color)
-                .frame(width: 48, height: 48)
-            
+            AppIcon.searchLine.image(
+                width: 48,
+                height: 48,
+                appColor: .gray30
+            )
             Text("검색 결과를 찾을 수 없습니다.")
                 .pretendard(.body1Regular, color: .gray50)
             Spacer()
@@ -351,9 +352,11 @@ struct SearchSubmittedView: View {
                         .pretendard(.captionRegular, color: .gray50)
                     HStack(spacing: 8) {
                         HStack(spacing: 4) {
-                            AppIcon.starFill.image
-                                .foregroundStyle(AppColor.seYellow40.color)
-                                .frame(width: 16, height: 16)
+                            AppIcon.starFill.image(
+                                width: 16,
+                                height: 16,
+                                appColor: .seYellow40
+                            )
                             Text(String(company.totalRating.rounded(to: 1)))
                                 .pretendard(.captionBold, color: .gray90)
                         }
@@ -399,23 +402,27 @@ struct SearchSubmittedView: View {
     }
     
     private var following: some View {
-        AppIcon.followingFill.image
-            .foregroundStyle(AppColor.white.color)
-            .frame(width: 24, height: 24)
-            .padding(4)
-            .background(AppColor.orange40.color)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+        AppIcon.followingFill.image(
+            width: 24,
+            height: 24,
+            appColor: .white
+        )
+        .padding(4)
+        .background(AppColor.orange40.color)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
     
     private var follow: some View {
-        AppIcon.followLine.image
-            .foregroundStyle(AppColor.orange40.color)
-            .frame(width: 24, height: 24)
-            .padding(4)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColor.orange40.color)
-            }
+        AppIcon.followLine.image(
+            width: 24,
+            height: 24,
+            appColor: .orange40
+        )
+        .padding(4)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.orange40.color)
+        }
     }
 }
 

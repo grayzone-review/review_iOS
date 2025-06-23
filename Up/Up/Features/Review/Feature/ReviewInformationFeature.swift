@@ -106,7 +106,7 @@ struct ReviewInformationFeature {
             case let .destination(.presented(.employmentPeriod(.delegate(.select(period))))):
                 state.employmentPeriod = period
                 return .none
-                    
+                
             case .destination:
                 return .none
                 
@@ -149,9 +149,11 @@ struct ReviewInformationView: View {
                 HStack(spacing: 8) {
                     companyName
                     Spacer()
-                    AppIcon.arrowDown.image
-                        .foregroundStyle(AppColor.gray50.color)
-                        .frame(width: 24, height: 24)
+                    AppIcon.arrowDown.image(
+                        width: 24,
+                        height: 24,
+                        appColor: .gray50
+                    )
                 }
                 .padding(.vertical, 12)
                 .overlay(alignment: .bottom) {
@@ -218,9 +220,11 @@ struct ReviewInformationView: View {
                 HStack(spacing: 8) {
                     employmentPeriodText
                     Spacer()
-                    AppIcon.arrowDown.image
-                        .foregroundStyle(AppColor.gray50.color)
-                        .frame(width: 24, height: 24)
+                    AppIcon.arrowDown.image(
+                        width: 24,
+                        height: 24,
+                        appColor: .gray50
+                    )
                 }
                 .padding(.vertical, 12)
                 .overlay(alignment: .bottom) {
@@ -264,12 +268,12 @@ struct ReviewInformationView: View {
     ReviewInformationView(
         store: Store(
             initialState: ReviewInformationFeature.State(
-//                company: ProposedCompany(
-//                    id: 1,
-//                    name: "스타벅스 석촌역점",
-//                    address: "서울특별시 송파구 백제고분로 358 1층",
-//                    totalRating: 0
-//                )
+                //                company: ProposedCompany(
+                //                    id: 1,
+                //                    name: "스타벅스 석촌역점",
+                //                    address: "서울특별시 송파구 백제고분로 358 1층",
+                //                    totalRating: 0
+                //                )
             )
         ) {
             ReviewInformationFeature()

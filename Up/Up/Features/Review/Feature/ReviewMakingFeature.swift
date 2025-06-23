@@ -195,10 +195,12 @@ struct ReviewMakingView: View {
                     Button {
                         store.send(.closeButtonTapped)
                     } label: {
-                        AppIcon.closeLine.image
-                            .foregroundStyle(AppColor.gray90.color)
-                            .frame(width: 24, height: 24)
-                            .padding(10)
+                        AppIcon.closeLine.image(
+                            width: 24,
+                            height: 24,
+                            appColor: .gray90
+                        )
+                        .padding(10)
                     }
                 }
                 ToolbarItem(placement: .principal) {

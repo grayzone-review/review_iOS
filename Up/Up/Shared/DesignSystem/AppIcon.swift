@@ -49,4 +49,11 @@ enum AppIcon: String {
         Image(rawValue)
             .resizable()
     }
+    
+    // 사이즈와 색상이 지정된 경우 사용
+    func image(width: CGFloat, height: CGFloat, appColor: AppColor) -> some View {
+        image
+            .frame(width: width, height: height)
+            .foregroundStyle(appColor.color)
+    }
 }

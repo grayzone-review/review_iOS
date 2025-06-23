@@ -305,9 +305,11 @@ struct CommentsWindowView: View {
                 Button {
                     store.send(.cancelReplyButtonTapped)
                 } label: {
-                    AppIcon.closeLine.image
-                        .foregroundStyle(AppColor.gray50.color)
-                        .frame(width: 18, height: 18)
+                    AppIcon.closeLine.image(
+                        width: 18,
+                        height: 18,
+                        appColor: .gray50
+                    )
                 }
             }
             .padding([.leading, .trailing], 16)
@@ -341,10 +343,12 @@ struct CommentsWindowView: View {
         Button {
             store.send(.secretButtonTapped)
         } label: {
-            (store.isSecret ? AppIcon.lockFill : .unlockLine).image
-                .foregroundStyle(AppColor.gray50.color)
-                .frame(width: 28, height: 28)
-                .padding(10)
+            (store.isSecret ? AppIcon.lockFill : .unlockLine).image(
+                width: 28,
+                height: 28,
+                appColor: .gray50
+            )
+            .padding(10)
         }
     }
     
@@ -352,10 +356,12 @@ struct CommentsWindowView: View {
         Button {
             store.send(.enterCommentButtonTapped)
         } label: {
-            AppIcon.sendFill.image
-                .foregroundStyle(store.isValidInput ? AppColor.orange40.color : AppColor.gray50.color)
-                .frame(width: 28, height: 28)
-                .padding(10)
+            AppIcon.sendFill.image(
+                width: 28,
+                height: 28,
+                appColor: store.isValidInput ? .orange40 : .gray50
+            )
+            .padding(10)
         }
     }
 }

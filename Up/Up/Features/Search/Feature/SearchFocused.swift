@@ -17,14 +17,14 @@ struct SearchFocusedFeature {
         var savedCompanies: [SavedCompany] = []
         var needLoad: Bool = true
     }
-
+    
     enum Action {
         case viewInit
         case viewAppear
         case loadSavedCompanies
         case deleteButtonTapped(SavedCompany)
     }
-
+    
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
@@ -72,7 +72,7 @@ struct SearchFocusedView: View {
         self.store = store
         store.send(.viewInit)
     }
-
+    
     var body: some View {
         if store.searchTerm.isEmpty {
             recentSearchedCompany
@@ -111,10 +111,11 @@ struct SearchFocusedView: View {
     private var emptyRecent: some View {
         VStack(spacing: 12) {
             Spacer()
-            AppIcon.infoFill.image
-                .foregroundStyle(AppColor.gray30.color)
-                .frame(width: 48, height: 48)
-            
+            AppIcon.infoFill.image(
+                width: 48,
+                height: 48,
+                appColor: .gray30
+            )
             Text("최근 검색한 기록이 없습니다.")
                 .pretendard(.body1Regular, color: .gray50)
             Spacer()
@@ -125,9 +126,11 @@ struct SearchFocusedView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
                 HStack(alignment: .top, spacing: 4) {
-                    AppIcon.clockLine.image
-                        .foregroundStyle(AppColor.gray30.color)
-                        .frame(width: 20, height: 20)
+                    AppIcon.clockLine.image(
+                        width: 20,
+                        height: 20,
+                        appColor: .gray30
+                    )
                     VStack(alignment: .leading, spacing: 8) {
                         Text(company.name)
                             .pretendard(.body1Bold, color: .gray90)
@@ -140,9 +143,11 @@ struct SearchFocusedView: View {
                 Button {
                     store.send(.deleteButtonTapped(company))
                 } label: {
-                    AppIcon.closeLine.image
-                        .foregroundStyle(AppColor.gray50.color)
-                        .frame(width: 20, height: 20)
+                    AppIcon.closeLine.image(
+                        width: 20,
+                        height: 20,
+                        appColor: .gray50
+                    )
                 }
             }
             .padding(20)
@@ -177,10 +182,11 @@ struct SearchFocusedView: View {
     private var emptyProposed: some View {
         VStack(spacing: 12) {
             Spacer()
-            AppIcon.searchLine.image
-                .foregroundStyle(AppColor.gray30.color)
-                .frame(width: 48, height: 48)
-            
+            AppIcon.searchLine.image(
+                width: 48,
+                height: 48,
+                appColor: .gray30
+            )
             Text("검색 결과를 찾을 수 없습니다.")
                 .pretendard(.body1Regular, color: .gray50)
             Spacer()
@@ -190,17 +196,20 @@ struct SearchFocusedView: View {
     private func proposedCompanyButton(_ company: ProposedCompany) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 4) {
-                AppIcon.searchLine.image
-                    .foregroundStyle(AppColor.gray30.color)
-                    .frame(width: 20, height: 20)
+                AppIcon.searchLine.image(
+                    width: 20,
+                    height: 20,
+                    appColor: .gray30
+                )
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .top, spacing: 4) {
                         Text(company.name)
                             .pretendard(.body1Bold, color: .gray90)
-                        AppIcon.starFill.image
-                            .foregroundStyle(AppColor.seYellow40.color)
-                            .frame(width: 20, height: 20)
-                        
+                        AppIcon.starFill.image(
+                            width: 20,
+                            height: 20,
+                            appColor: .seYellow40
+                        )
                         Text(String(company.totalRating.rounded(to: 1)))
                             .pretendard(.body1Bold, color: .gray90)
                         Spacer()

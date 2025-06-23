@@ -91,7 +91,7 @@ struct ReviewRatingFeature {
             case let .destination(.presented(.company(.delegate(.select(company))))):
                 state.company = company
                 return .none
-                    
+                
             case .destination:
                 return .none
                 
@@ -182,15 +182,17 @@ struct ReviewRatingView: View {
     }
     
     private func ratingButton(type: RatingType, rating: Double) -> some View {
-        let color = store.ratings[type, default: 0] < rating ? AppColor.gray20.color : AppColor.seYellow40.color
+        let color = store.ratings[type, default: 0] < rating ? AppColor.gray20 : AppColor.seYellow40
         let length: CGFloat = store.ratings[type] == nil ? 36 : 24
         
         return Button {
             store.send(.ratingButtonTapped(type, rating))
         } label: {
-            AppIcon.starFill.image
-                .foregroundStyle(color)
-                .frame(width: length, height: length)
+            AppIcon.starFill.image(
+                width: length,
+                height: length,
+                appColor: color
+            )
         }
     }
     

@@ -227,10 +227,12 @@ struct CompanyDetailView: View {
                 Button {
                     store.send(.backButtonTapped)
                 } label: {
-                    AppIcon.arrowLeft.image
-                        .foregroundStyle(AppColor.gray90.color)
-                        .frame(width: 24, height: 24)
-                        .padding(10)
+                    AppIcon.arrowLeft.image(
+                        width: 24,
+                        height: 24,
+                        appColor: .gray90
+                    )
+                    .padding(10)
                 }
             }
             ToolbarItem(placement: .principal) {
@@ -250,9 +252,11 @@ struct CompanyDetailView: View {
                     .pretendard(.captionRegular, color: .gray50)
             }
             HStack(spacing: 4) {
-                AppIcon.starFill.image
-                    .foregroundStyle(AppColor.seYellow40.color)
-                    .frame(width: 24, height: 24)
+                AppIcon.starFill.image(
+                    width: 24,
+                    height: 24,
+                    appColor: .seYellow40
+                )
                 Text(String(store.company?.totalRating.rounded(to: 1) ?? 0))
                     .pretendard(.h1, color: .gray90)
             }
@@ -275,9 +279,11 @@ struct CompanyDetailView: View {
             store.send(.followButtonTapped)
         } label: {
             HStack(spacing: 6) {
-                (isFollowed ? AppIcon.followingFill : .followLine).image
-                    .frame(width: 16, height: 16)
-                    .foregroundStyle(isFollowed ? AppColor.white.color : AppColor.orange40.color)
+                (isFollowed ? AppIcon.followingFill : .followLine).image(
+                    width: 16,
+                    height: 16,
+                    appColor: isFollowed ? .white : .orange40
+                )
                 Text("팔로우")
                     .pretendard(.body1Bold, color: isFollowed ? .white : .orange40)
             }
@@ -297,9 +303,11 @@ struct CompanyDetailView: View {
             store.send(.makeReviewButtonTapped)
         } label: {
             HStack(spacing: 6) {
-                AppIcon.penFill.image
-                    .frame(width: 16, height: 16)
-                    .foregroundStyle(AppColor.white.color)
+                AppIcon.penFill.image(
+                    width: 16,
+                    height: 16,
+                    appColor: .white
+                )
                 Text("리뷰 작성")
                     .pretendard(.body1Bold, color: .white)
             }
@@ -350,10 +358,11 @@ struct CompanyDetailView: View {
     
     private var empty: some View {
         VStack(alignment: .center, spacing: 12) {
-            AppIcon.reviewFill.image
-                .resizable()
-                .frame(width: 48, height: 48)
-                .foregroundStyle(AppColor.gray30.color)
+            AppIcon.reviewFill.image(
+                width: 48,
+                height: 48,
+                appColor: .gray30
+            )
             Text("아직 등록된 리뷰가 없습니다.")
                 .pretendard(.body1Regular, color: .gray50)
         }

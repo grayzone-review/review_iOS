@@ -198,10 +198,12 @@ struct SearchCompanyView: View {
                 Button {
                     store.send(.backButtonTapped)
                 } label: {
-                    AppIcon.arrowLeft.image
-                        .foregroundStyle(AppColor.gray90.color)
-                        .frame(width: 24, height: 24)
-                        .padding(10)
+                    AppIcon.arrowLeft.image(
+                        width: 24,
+                        height: 24,
+                        appColor: .gray90
+                    )
+                    .padding(10)
                 }
             }
             ToolbarItem(placement: .principal) {
@@ -231,9 +233,11 @@ struct SearchCompanyView: View {
     }
     
     private var searchIcon: some View {
-        AppIcon.searchLine.image
-            .foregroundStyle(AppColor.gray90.color)
-            .frame(width: 24, height: 24)
+        AppIcon.searchLine.image(
+            width: 24,
+            height: 24,
+            appColor: .gray90
+        )
     }
     
     private var textField: some View {
@@ -264,14 +268,18 @@ struct SearchCompanyView: View {
             Button {
                 store.send(.clearButtonTapped)
             } label: {
-                AppIcon.closeCircleFill.image
-                    .foregroundStyle(AppColor.gray10.color)
-                    .frame(width: 24, height: 24)
-                    .overlay {
-                        AppIcon.closeLine.image
-                            .foregroundStyle(AppColor.gray50.color)
-                            .frame(width: 16, height: 16)
-                    }
+                AppIcon.closeCircleFill.image(
+                    width: 24,
+                    height: 24,
+                    appColor: .gray10
+                )
+                .overlay {
+                    AppIcon.closeLine.image(
+                        width: 16,
+                        height: 16,
+                        appColor: .gray50
+                    )
+                }
             }
         }
     }

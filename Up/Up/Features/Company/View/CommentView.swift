@@ -68,10 +68,11 @@ struct CommentView: View {
         HStack(spacing: 2) {
             Text("비밀댓글입니다.")
                 .pretendard(.body2Bold, color: .gray50)
-            AppIcon.lockFill.image
-                .resizable()
-                .frame(width: 14, height: 14)
-                .foregroundStyle(AppColor.gray50.color)
+            AppIcon.lockFill.image(
+                width: 14,
+                height: 14,
+                appColor: .gray50
+            )
         }
     }
 }

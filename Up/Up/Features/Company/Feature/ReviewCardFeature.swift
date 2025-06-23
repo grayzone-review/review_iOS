@@ -267,10 +267,12 @@ struct ReviewCardView: View {
             let isLiked = store.review.isLiked
             
             HStack(alignment: .center, spacing: 0) {
-                (isLiked ? AppIcon.heartFill : .heartLine).image
-                    .foregroundStyle(isLiked ? AppColor.seRed50.color : AppColor.black.color)
-                    .frame(width: 24, height: 24)
-                    .padding(10)
+                (isLiked ? AppIcon.heartFill : .heartLine).image(
+                    width: 24,
+                    height: 24,
+                    appColor: isLiked ? .seRed50 : .black
+                )
+                .padding(10)
                 Text(String(store.review.likeCount))
                     .pretendard(.body1Bold)
             }
@@ -282,10 +284,12 @@ struct ReviewCardView: View {
             store.send(.commentButtonTapped)
         } label: {
             HStack(alignment: .center, spacing: 0) {
-                AppIcon.chatLine.image
-                    .foregroundStyle(AppColor.black.color)
-                    .frame(width: 24, height: 24)
-                    .padding(10)
+                AppIcon.chatLine.image(
+                    width: 24,
+                    height: 24,
+                    appColor: .black
+                )
+                .padding(10)
                 Text(String(store.review.commentCount))
                     .pretendard(.body1Bold)
             }

@@ -39,11 +39,11 @@ struct EmploymentPeriodSheetFeature {
             case let .select(period):
                 state.selected = period
                 return .send(.close)
-                .debounce(
-                    id: CancelID.debounce,
-                    for: 0.3,
-                    scheduler: mainQueue
-                )
+                    .debounce(
+                        id: CancelID.debounce,
+                        for: 0.3,
+                        scheduler: mainQueue
+                    )
                 
             case .closeButtonTapped:
                 return .send(.close)
