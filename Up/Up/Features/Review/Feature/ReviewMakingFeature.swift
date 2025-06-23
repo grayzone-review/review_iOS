@@ -181,7 +181,7 @@ struct ReviewMakingFeature {
 extension ReviewMakingFeature.ReviewMaking.State: Equatable {}
 
 struct ReviewMakingView: View {
-    @Bindable var store: StoreOf<ReviewMakingFeature>
+    let store: StoreOf<ReviewMakingFeature>
     
     var body: some View {
         NavigationStack {

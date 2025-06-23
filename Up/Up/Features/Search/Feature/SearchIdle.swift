@@ -69,7 +69,7 @@ struct SearchIdleFeature {
 }
 
 struct SearchIdleView: View {
-    @Bindable var store: StoreOf<SearchIdleFeature>
+    let store: StoreOf<SearchIdleFeature>
     
     init(store: StoreOf<SearchIdleFeature>) {
         self.store = store

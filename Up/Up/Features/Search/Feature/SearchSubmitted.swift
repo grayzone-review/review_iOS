@@ -198,7 +198,7 @@ struct SearchSubmittedFeature {
 }
 
 struct SearchSubmittedView: View {
-    @Bindable var store: StoreOf<SearchSubmittedFeature>
+    let store: StoreOf<SearchSubmittedFeature>
     
     init(store: StoreOf<SearchSubmittedFeature>) {
         self.store = store

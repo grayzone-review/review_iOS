@@ -367,7 +367,7 @@ struct CommentsWindowView: View {
 }
 
 struct CommentCardView: View {
-    @Bindable var store: StoreOf<CommentsWindowFeature>
+    let store: StoreOf<CommentsWindowFeature>
     let comment: Comment
     let replies: IdentifiedArrayOf<Reply>
     

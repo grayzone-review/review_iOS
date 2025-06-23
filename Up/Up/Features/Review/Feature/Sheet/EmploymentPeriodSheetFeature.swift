@@ -61,7 +61,7 @@ struct EmploymentPeriodSheetFeature {
 }
 
 struct EmploymentPeriodSheetView: View {
-    @Bindable var store: StoreOf<EmploymentPeriodSheetFeature>
+    let store: StoreOf<EmploymentPeriodSheetFeature>
     
     var body: some View {
         VStack(alignment: .center, spacing: 0) {

@@ -66,7 +66,7 @@ struct SearchFocusedFeature {
 }
 
 struct SearchFocusedView: View {
-    @Bindable var store: StoreOf<SearchFocusedFeature>
+    let store: StoreOf<SearchFocusedFeature>
     
     init(store: StoreOf<SearchFocusedFeature>) {
         self.store = store
