@@ -205,34 +205,22 @@ struct ReviewRatingView: View {
     }
     
     private var previousButton: some View {
-        Button {
+        AppButton(
+            text: "이전",
+            size: .large,
+            isFilled: false
+        ) {
             store.send(.previousButtonTapped)
-        } label: {
-            HStack(spacing: 6) {
-                Text("이전")
-                    .pretendard(.body1Bold, color: .orange40)
-            }
-            .frame(height: 52)
-            .frame(maxWidth: .infinity)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColor.orange40.color)
-            )
         }
     }
     
     private var nextButton: some View {
-        Button {
+        AppButton(
+            text: "다음",
+            size: .large,
+            isEnabled: store.isNextButtonEnabled
+        ) {
             store.send(.nextButtonTapped)
-        } label: {
-            HStack(spacing: 6) {
-                Text("다음")
-                    .pretendard(.body1Bold, color: .white)
-            }
-            .frame(height: 52)
-            .frame(maxWidth: .infinity)
-            .background(store.isNextButtonEnabled ? AppColor.orange40.color : AppColor.orange20.color)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 }

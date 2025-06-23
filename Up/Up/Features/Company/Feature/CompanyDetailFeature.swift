@@ -268,53 +268,28 @@ struct CompanyDetailView: View {
             followButton
             makeReviewButton
         }
-        .frame(maxWidth: .infinity, maxHeight: 48)
     }
     
     @ViewBuilder
     var followButton: some View {
         let isFollowed = store.company?.isFollowed == true
         
-        Button {
+        AppButton(
+            icon: isFollowed ? .followingFill : .followLine,
+            text: "팔로우",
+            isFilled: isFollowed,
+            isEnabled: true
+        ) {
             store.send(.followButtonTapped)
-        } label: {
-            HStack(spacing: 6) {
-                (isFollowed ? AppIcon.followingFill : .followLine).image(
-                    width: 16,
-                    height: 16,
-                    appColor: isFollowed ? .white : .orange40
-                )
-                Text("팔로우")
-                    .pretendard(.body1Bold, color: isFollowed ? .white : .orange40)
-            }
-            .frame(height: 48)
-            .frame(maxWidth: .infinity)
-            .background(isFollowed ? AppColor.orange40.color : AppColor.white.color)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColor.orange40.color)
-            )
         }
     }
     
     var makeReviewButton: some View {
-        Button {
+        AppButton(
+            icon: .penFill,
+            text: "리뷰 작성"
+        ) {
             store.send(.makeReviewButtonTapped)
-        } label: {
-            HStack(spacing: 6) {
-                AppIcon.penFill.image(
-                    width: 16,
-                    height: 16,
-                    appColor: .white
-                )
-                Text("리뷰 작성")
-                    .pretendard(.body1Bold, color: .white)
-            }
-            .frame(height: 48)
-            .frame(maxWidth: .infinity)
-            .background(AppColor.orange40.color)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .fullScreenCover(
             item: $store.scope(state: \.destination?.review, action: \.destination.review)

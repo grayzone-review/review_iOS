@@ -248,17 +248,12 @@ struct ReviewInformationView: View {
     }
     
     private var nextButton: some View {
-        Button {
+        AppButton(
+            text: "다음",
+            size: .large,
+            isEnabled: store.isNextButtonEnabled
+        ) {
             store.send(.nextButtonTapped)
-        } label: {
-            HStack(spacing: 6) {
-                Text("다음")
-                    .pretendard(.body1Bold, color: .white)
-            }
-            .frame(height: 52)
-            .frame(maxWidth: .infinity)
-            .background(store.isNextButtonEnabled ? AppColor.orange40.color : AppColor.orange20.color)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .padding(20)
     }

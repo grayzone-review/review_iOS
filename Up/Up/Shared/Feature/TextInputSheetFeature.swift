@@ -21,7 +21,17 @@ struct TextInputSheetFeature {
         var text: String
         
         var isSaveButtonEnabled: Bool {
-            minimum...maximum ~= text.count
+            var text = text
+            
+            while text.last?.isWhitespace == true {
+                text.removeLast()
+            }
+            
+            while text.first?.isWhitespace == true {
+                text.removeFirst()
+            }
+            
+            return minimum...maximum ~= text.count
         }
         
         var textCount: AttributedString {
