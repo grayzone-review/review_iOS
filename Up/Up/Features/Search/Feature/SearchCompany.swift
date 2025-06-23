@@ -61,10 +61,10 @@ struct SearchCompanyFeature {
                 return .run { _ in await dismiss() }
                 
             case .textFieldFocused:
+                state.isFocused = true
                 return .send(.setSearchState(.focused))
                 
             case .clearButtonTapped:
-                state.searchTerm = ""
                 return .send(.textFieldFocused)
                 
             case .cancelButtonTapped:
@@ -209,73 +209,25 @@ struct SearchCompanyView: View {
     
     private var enterSearchTermArea: some View {
         HStack(spacing: 16) {
-            HStack(spacing: 8) {
-                searchIcon
-                textField
-                clearButton
+            SearchField(
+                text: $store.searchTerm,
+                isFocused: $store.isFocused,
+                placeholder: "상호명으로 검색하기"
+            ) {  _, isFocused in
+                if isFocused {
+                    store.send(.textFieldFocused)
+                }
+            } onTextChange: { _, _ in
+                store.send(.termChanged)
+            } onClearButtonTapped: {
+                store.send(.clearButtonTapped)
             }
-            .padding(16)
-            .frame(height: 52)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(store.searchState == .focused ? AppColor.gray90.color : AppColor.gray20.color)
+            .onSubmit {
+                store.send(.enterButtonTapped)
             }
-            
             cancelButton
         }
         .padding(EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20))
-    }
-    
-    private var searchIcon: some View {
-        AppIcon.searchLine.image(
-            width: 24,
-            height: 24,
-            appColor: .gray90
-        )
-    }
-    
-    private var textField: some View {
-        TextField(
-            "상호명으로 검색하기",
-            text: $store.searchTerm
-        )
-        .focused($isFocused)
-        .bind($store.isFocused, to: $isFocused)
-        .lineLimit(1)
-        .pretendard(.body1Regular, color: .gray90)
-        .onChange(of: isFocused) { _, isFocused in
-            if isFocused {
-                store.send(.textFieldFocused)
-            }
-        }
-        .onChange(of: store.searchTerm) { _, _ in
-            store.send(.termChanged)
-        }
-        .onSubmit {
-            store.send(.enterButtonTapped)
-        }
-    }
-    
-    @ViewBuilder
-    private var clearButton: some View {
-        if store.searchState != .idle {
-            Button {
-                store.send(.clearButtonTapped)
-            } label: {
-                AppIcon.closeCircleFill.image(
-                    width: 24,
-                    height: 24,
-                    appColor: .gray10
-                )
-                .overlay {
-                    AppIcon.closeLine.image(
-                        width: 16,
-                        height: 16,
-                        appColor: .gray50
-                    )
-                }
-            }
-        }
     }
     
     @ViewBuilder

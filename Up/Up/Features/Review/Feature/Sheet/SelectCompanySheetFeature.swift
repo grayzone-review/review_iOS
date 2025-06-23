@@ -22,7 +22,6 @@ struct SelectCompanySheetFeature {
         case termChanged
         case fetchProposedCompanies
         case setProposedCompanies([ProposedCompany])
-        case clearButtonTapped
         case selectCompany(ProposedCompany)
         case delegate(Delegate)
         
@@ -75,10 +74,6 @@ struct SelectCompanySheetFeature {
                 state.proposedCompanies = companies
                 return .none
                 
-            case .clearButtonTapped:
-                state.searchTerm = ""
-                return .none
-                
             case let .selectCompany(company):
                 state.selected = company
                 return .run { send in
@@ -100,7 +95,7 @@ struct SelectCompanySheetFeature {
 
 struct SelectCompanySheetView: View {
     @Bindable var store: StoreOf<SelectCompanySheetFeature>
-    @FocusState var isFocused: Bool
+    @State var isFocused = true
     
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
@@ -125,17 +120,12 @@ struct SelectCompanySheetView: View {
     }
     
     private var enterSearchTermArea: some View {
-        HStack(spacing: 8) {
-            searchIcon
-            textField
-            clearButton
-        }
-        .padding(16)
-        .frame(height: 52)
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(isFocused ? AppColor.gray90.color : AppColor.gray20.color)
-        }
+        SearchField(
+            text: $store.searchTerm,
+            isFocused: $isFocused,
+            placeholder: "상호명으로 검색하기",
+            onTextChange: { _, _ in store.send(.termChanged) }
+        )
         .padding(
             EdgeInsets(
                 top: 16,
@@ -144,46 +134,6 @@ struct SelectCompanySheetView: View {
                 trailing: 20
             )
         )
-    }
-    
-    private var searchIcon: some View {
-        AppIcon.searchLine.image(
-            width: 24,
-            height: 24,
-            appColor: .gray90
-        )
-    }
-    
-    private var textField: some View {
-        TextField(
-            "상호명으로 검색하기",
-            text: $store.searchTerm
-        )
-        .focused($isFocused)
-        .lineLimit(1)
-        .pretendard(.body1Regular, color: .gray90)
-        .onChange(of: store.searchTerm) { _, _ in
-            store.send(.termChanged)
-        }
-    }
-    
-    private var clearButton: some View {
-        Button {
-            store.send(.clearButtonTapped)
-        } label: {
-            AppIcon.closeCircleFill.image(
-                width: 24,
-                height: 24,
-                appColor: .gray10
-            )
-            .overlay {
-                AppIcon.closeLine.image(
-                    width: 16,
-                    height: 16,
-                    appColor: .gray50
-                )
-            }
-        }
     }
     
     @ViewBuilder
