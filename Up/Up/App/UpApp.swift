@@ -53,8 +53,7 @@ struct UpView: View {
     
     var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            let mainStore = store.scope(state: \.main, action: \.main)
-            EmptyView() // MainView 작업 이후 교체
+            MainView(store: store.scope(state: \.main, action: \.main))
         } destination: { store in
             switch store.case {
             case let .search(searchStore):
