@@ -11,32 +11,34 @@ import KakaoMapsSDK
 
 @Reducer
 struct UpFeature {
-    @Reducer
-    enum Path {
-        case detail(CompanyDetailFeature)
-    }
-    
     @ObservableState
     struct State: Equatable {
         var path = StackState<Path.State>()
-        var search = SearchCompanyFeature.State()
+        var main = MainFeature.State()
     }
     
     enum Action {
         case path(StackActionOf<Path>)
-        case search(SearchCompanyFeature.Action)
+        case main(MainFeature.Action)
+    }
+    
+    @Reducer
+    enum Path {
+        case search(SearchCompanyFeature)
+        case detail(CompanyDetailFeature)
     }
     
     var body: some ReducerOf<Self> {
-        Scope(state: \.search, action: \.search) {
-            SearchCompanyFeature()
+        Scope(state: \.main, action: \.main) {
+            MainFeature()
         }
+        
         Reduce { state, action in
             switch action {
             case .path:
                 return .none
                 
-            case .search:
+            case .main:
                 return .none
             }
         }
@@ -51,11 +53,13 @@ struct UpView: View {
     
     var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            SearchCompanyView(
-                store: store.scope(state: \.search, action: \.search)
-            )
+            let mainStore = store.scope(state: \.main, action: \.main)
+            EmptyView() // MainView 작업 이후 교체
         } destination: { store in
             switch store.case {
+            case let .search(searchStore):
+                SearchCompanyView(store: searchStore)
+                
             case let .detail(detailStore):
                 CompanyDetailView(store: detailStore)
             }
