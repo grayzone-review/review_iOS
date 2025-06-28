@@ -120,10 +120,12 @@ struct SelectCompanySheetView: View {
     }
     
     private var enterSearchTermArea: some View {
-        SearchField(
+        UPTextField(
             text: $store.searchTerm,
             isFocused: $isFocused,
             placeholder: "상호명으로 검색하기",
+            leftComponent: .icon(appIcon: .searchLine, size: 24, color: .gray90),
+            rightComponent: .clear(),
             onTextChange: { _, _ in store.send(.termChanged) }
         )
         .padding(

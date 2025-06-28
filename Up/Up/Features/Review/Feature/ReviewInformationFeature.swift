@@ -249,8 +249,9 @@ struct ReviewInformationView: View {
     
     private var nextButton: some View {
         AppButton(
-            text: "다음",
+            style: .fill,
             size: .large,
+            text: "다음",
             isEnabled: store.isNextButtonEnabled
         ) {
             store.send(.nextButtonTapped)

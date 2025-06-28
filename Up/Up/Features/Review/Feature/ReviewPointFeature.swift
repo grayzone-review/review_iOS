@@ -184,9 +184,9 @@ struct ReviewPointView: View {
     
     private var previousButton: some View {
         AppButton(
-            text: "이전",
-            size: .large,
-            isFilled: false
+            style: .stroke,
+            size: .large, 
+            text: "이전"
         ) {
             store.send(.previousButtonTapped)
         }
@@ -194,8 +194,9 @@ struct ReviewPointView: View {
     
     private var doneButton: some View {
         AppButton(
-            text: "작성완료",
+            style: .fill,
             size: .large,
+            text: "작성완료",
             isEnabled: store.isDoneButtonEnabled
         ) {
             store.send(.doneButtonTapped)

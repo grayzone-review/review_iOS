@@ -209,18 +209,20 @@ struct SearchCompanyView: View {
     
     private var enterSearchTermArea: some View {
         HStack(spacing: 16) {
-            SearchField(
+            UPTextField(
                 text: $store.searchTerm,
                 isFocused: $store.isFocused,
-                placeholder: "상호명으로 검색하기"
+                placeholder: "상호명으로 검색하기",
+                leftComponent: .icon(appIcon: .searchLine, size: 24, color: .gray90),
+                rightComponent: .clear {
+                    store.send(.clearButtonTapped)
+                }
             ) {  _, isFocused in
                 if isFocused {
                     store.send(.textFieldFocused)
                 }
             } onTextChange: { _, _ in
                 store.send(.termChanged)
-            } onClearButtonTapped: {
-                store.send(.clearButtonTapped)
             }
             .onSubmit {
                 store.send(.enterButtonTapped)

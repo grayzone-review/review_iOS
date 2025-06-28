@@ -270,9 +270,8 @@ struct CompanyDetailView: View {
         
         AppButton(
             icon: isFollowed ? .followingFill : .followLine,
-            text: "팔로우",
-            isFilled: isFollowed,
-            isEnabled: true
+            style: .fill,
+            text: "팔로우"
         ) {
             store.send(.followButtonTapped)
         }
@@ -281,6 +280,7 @@ struct CompanyDetailView: View {
     var makeReviewButton: some View {
         AppButton(
             icon: .penFill,
+            style: .stroke,
             text: "리뷰 작성"
         ) {
             store.send(.makeReviewButtonTapped)
