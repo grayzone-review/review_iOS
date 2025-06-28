@@ -206,9 +206,9 @@ struct ReviewRatingView: View {
     
     private var previousButton: some View {
         AppButton(
-            text: "이전",
+            style: .stroke,
             size: .large,
-            isFilled: false
+            text: "이전"
         ) {
             store.send(.previousButtonTapped)
         }
@@ -216,8 +216,9 @@ struct ReviewRatingView: View {
     
     private var nextButton: some View {
         AppButton(
-            text: "다음",
+            style: .fill,
             size: .large,
+            text: "다음",
             isEnabled: store.isNextButtonEnabled
         ) {
             store.send(.nextButtonTapped)

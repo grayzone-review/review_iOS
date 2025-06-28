@@ -20,7 +20,8 @@ enum AppIcon: String {
     case checkCircleFill = "ic_check_circle_fill"
     case checkLine = "ic_check_line"
     case clockLine = "ic_clock_line"
-    case closeCircleFill = "ic_close_circle_fill"
+    case closeCircleFillBk24 = "ic_close_circle_fill_bk_24"
+    case closeCircleFillGray24 = "ic_close_circle_fill_gray_24"
     case closeCircleLine = "ic_close_circle_line"
     case closeLine = "ic_close_line"
     case followLine = "ic_follow_line"
@@ -50,9 +51,16 @@ enum AppIcon: String {
             .resizable()
     }
     
+    func image(width: CGFloat, height: CGFloat) -> some View {
+        image
+            .scaledToFit()
+            .frame(width: width, height: height)
+    }
+    
     // 사이즈와 색상이 지정된 경우 사용
     func image(width: CGFloat, height: CGFloat, appColor: AppColor) -> some View {
         image
+            .scaledToFit()
             .frame(width: width, height: height)
             .foregroundStyle(appColor.color)
     }
