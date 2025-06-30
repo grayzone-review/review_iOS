@@ -1,0 +1,349 @@
+//
+//  SignUp.swift
+//  Up
+//
+//  Created by Wonbi on 6/30/25.
+//
+
+import SwiftUI
+
+import ComposableArchitecture
+
+
+@Reducer
+struct SignUpFeature {
+    @ObservableState
+    struct State: Equatable {
+        /// 사용자에게 입력받은 nickname
+        var nickname: String = ""
+        // TODO: - API나오면 요청하는 값에 맞게 모델(엔티티)을 구현해야함
+        /// 사용자가 설정한 우리동네
+        var myArea: String = ""
+        /// 사용자가 설정한 관심동네 리스트
+        var preferredAreaList: [String] = ["수유 3동", "미아동", "국토정중앙면"]
+        /// 사용자가 관심동네를 3개 설정했는지 나타내는 값
+        var isPreferredFull: Bool = false
+        // TODO: - API나오면 약관 리스트에 대한 모델을 구현해야함 (ex: title(제목), url(보여줄 웹 뷰의 URL), isRequired(필수 동의 약관인지에 대한 여부), isAgree(변수; 사용자가 동의했는지에 대한 여부))
+        /// 약관 리스트
+        var termList: [String] = ["[필수] 서비스 이용 약관 동의", "[필수] 개인정보 수집 및 이용 동의", "[필수] 위치 기반 서비스 이용 동의"]
+        /// 중복 검사 결과를 보여주는 값
+        var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
+        /// 사용자가 가입 가능한 상태인지 나타내는 값
+        var canSignUp: Bool = false
+        /// 비동기 로직이 수행중인지 아닌지 나타내는 값
+        var isLoading: Bool = false
+        var isFocused: Bool = false
+    }
+    
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+        case viewInit
+        case xButtonTapped
+        case checkNicknameTapped
+        case setMyAreaTapped
+        case addPreferredAreaTapped
+        case deletePreferredAreaTapped(Int)
+        case agreeAllTermsTapped
+        case agreeTermTapped(Int)
+        case termDetailTapped(Int)
+        case handleCanSignUp
+        case signUpTapped
+        case handleError(Error)
+    }
+    
+    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.companyService) var companyService
+    @Dependency(\.searchService) var searchService
+    
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+        
+        Reduce { state, action in
+            switch action {
+            case .binding:
+                // TODO: - ???
+                return .none
+            case .viewInit:
+                // TODO: - 약관 가져오기
+                return .none
+            case .xButtonTapped:
+                // TODO: - dismiss?
+                print("xButtonTapped")
+                return .none
+            case .checkNicknameTapped:
+                // TODO: - 닉네임 중복 검사
+                print("checkNicknameTapped \(state.nickname)")
+                return .none
+            case .setMyAreaTapped:
+                // TODO: - 우리동네 설정 화면으로 이동
+                print("setMyAreaTapped")
+                return .none
+            case .addPreferredAreaTapped:
+                // TODO: - 관심 동네 설정 화면으로 이동
+                print("addPreferredAreaTapped")
+                return .none
+            case let .deletePreferredAreaTapped(index):
+                // TODO: - 관심 동네 제거
+                print("deletePreferredAreaTapped \(index)")
+                return .none
+            case .agreeAllTermsTapped:
+                // TODO: - 약관 모두 동의 선택
+                print("agreeAllTermsTapped")
+                return .none
+            case let .agreeTermTapped(index):
+                // TODO: - 약관 동의 체크
+                print("agreeTermTapped \(index)")
+                return .none
+            case let .termDetailTapped(index):
+                // TODO: - 약관 상세 화면으로 이동
+                print("termDetailTapped \(index)")
+                return .none
+            case .handleCanSignUp:
+                // TODO: - 가입 가능한 상태인지 체크
+                return .none
+            case .signUpTapped:
+                // TODO: - 회원 가입
+                print("signUpTapped")
+                return .none
+            case let .handleError(error):
+                // TODO: - 에러 핸들링
+                return .none
+            }
+        }
+    }
+}
+
+struct SignUpView: View {
+    @Bindable var store: StoreOf<SignUpFeature>
+    
+    init(store: StoreOf<SignUpFeature>) {
+        self.store = store
+        store.send(.viewInit)
+    }
+    
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            VStack(spacing: 0) {
+                mainView
+                
+                Spacer()
+            }
+            
+            ScrollView {
+                mainView
+                
+                Spacer()
+                    .frame(height: 92)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            AppButton(
+                style: .fill,
+                size: .large,
+                text: "가입하기",
+                isEnabled: store.canSignUp
+            ) {
+                store.send(.signUpTapped)
+            }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 20)
+            .background {
+                AppColor.white.color.ignoresSafeArea()
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                IconButton(
+                    icon: .closeLine) {
+                        store.send(.xButtonTapped)
+                    }
+            }
+            ToolbarItem(placement: .principal) {
+                Text("회원 가입")
+                    .pretendard(.h2, color: .gray90)
+            }
+        }
+    }
+    
+    var mainView: some View {
+        VStack(spacing: 0) {
+            inputNicknameView
+            
+            setMyAreaView
+            
+            setPreferredAreaView
+            
+            termsAgreeView
+        }
+    }
+    
+    var inputNicknameView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("닉네임")
+                .pretendard(.h3, color: .gray90)
+            
+            DupCheckTextField(
+                text: $store.nickname,
+                isFocused: $store.isFocused,
+                noti: $store.notice,
+                placeholder: "닉네임"
+            ) {
+                store.send(.checkNicknameTapped)
+            }
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 20)
+    }
+    
+    var setMyAreaView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("우리 동네 설정")
+                .pretendard(.h3, color: .gray90)
+            
+            Text(store.myArea.isEmpty ? "동 검색하기" : store.myArea)
+                .pretendard(.body1Regular, color: store.myArea.isEmpty ? .gray50 : .gray90)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 16)
+                .background {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(AppColor.gray20.color, lineWidth: 1)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    store.send(.setMyAreaTapped)
+                }
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 20)
+    }
+    
+    var setPreferredAreaView: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("관심 동네 설정 (선택)")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .pretendard(.h3, color: .gray90)
+                .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal) {
+                HStack(spacing: 10) {
+                    Spacer(minLength: 10)
+                    
+                    ForEach(Array(store.preferredAreaList.enumerated()), id: \.element) { index, title in
+                        makePreferredAreaButton(title: title, index: index)
+                    }
+                    
+                    AppButton(
+                        style: .fill,
+                        size: .regular,
+                        mode: .intrinsic,
+                        text: "추가하기"
+                    ) {
+                        store.send(.addPreferredAreaTapped)
+                    }
+                    .padding(.top, 8)
+                    
+                    Spacer(minLength: 10)
+                }
+            }
+            .scrollIndicators(.never)
+        }
+        .padding(.vertical, 20)
+    }
+    
+    func makePreferredAreaButton(title: String, index: Int) -> some View {
+        AppButton(
+            style: .strokeFill,
+            size: .regular,
+            mode: .intrinsic,
+            text: title,
+            isEnabled: false
+        )
+        .overlay(alignment: .topTrailing) {
+            IconButton(icon: .closeCircleLineRed24) {
+                store.send(.deletePreferredAreaTapped(index))
+            }
+            .offset(x: 7, y: -7)
+        }
+        .padding(.top, 8)
+    }
+    
+    var termsAgreeView: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                CheckBox(isSelected: .random())
+                
+                Text("약관 전체 동의")
+                    .pretendard(.body1Bold, color: .gray70)
+                    .lineLimit(1)
+                
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 16)
+            .contentShape(Rectangle())
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(AppColor.gray20.color)
+                    .frame(height: 1)
+            }
+            .onTapGesture {
+                store.send(.agreeAllTermsTapped)
+            }
+            
+            ForEach(Array(store.termList.enumerated()), id: \.element) { index, title in
+                makeTermAgreeCell(isSelected: .random(), title: title, index: index)
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+    
+    func makeTermAgreeCell(isSelected: Bool, title: String, index: Int) -> some View {
+        HStack(spacing: 0) {
+            HStack(spacing: 8) {
+                CheckBox(isSelected: isSelected)
+                
+                Text(title)
+                    .pretendard(.body1Regular, color: .gray70)
+                    .lineLimit(1)
+                
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 16)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                store.send(.agreeTermTapped(index))
+            }
+            
+            HStack(spacing: 4) {
+                Text("자세히")
+                    .pretendard(.captionRegular, color: .gray50)
+                
+                AppIcon.arrowRight.image(
+                    width: 14,
+                    height: 14,
+                    appColor: .gray50
+                )
+            }
+            .padding(.vertical, 16)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                store.send(.termDetailTapped(index))
+            }
+        }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SignUpView(
+            store: Store(
+                initialState: SignUpFeature.State(),
+                reducer: {
+                    SignUpFeature()
+                }
+            )
+        )
+    }
+}

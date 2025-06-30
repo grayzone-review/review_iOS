@@ -26,7 +26,7 @@ struct AppButton: View {
         text: String,
         typography: Typography = .body1Bold,
         isEnabled: Bool = true,
-        action: @escaping () -> Void
+        action: @escaping () -> Void = { }
     ) {
         self.icon = icon
         self.style = style
