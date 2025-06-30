@@ -61,11 +61,27 @@ struct DupCheckTextField: View {
     @State private var state: FieldState = .default
     @State private var isCheckable: Bool = false
     
-    @Binding var text: String
     @FocusState private var focused: Bool
+    @Binding var text: String
     @Binding var isFocused: Bool
-    let placeholder: String
     @Binding var noti: String
+    
+    let placeholder: String
+    let checkDupTapped: () -> Void
+    
+    init(
+        text: Binding<String>,
+        isFocused: Binding<Bool>,
+        noti: Binding<String>,
+        placeholder: String,
+        checkDupTapped: @escaping () -> Void
+    ) {
+        self._text = text
+        self._isFocused = isFocused
+        self._noti = noti
+        self.placeholder = placeholder
+        self.checkDupTapped = checkDupTapped
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -119,7 +135,7 @@ struct DupCheckTextField: View {
     
     var verifyButton: some View {
         Button {
-            
+            checkDupTapped()
         } label: {
             Text("중복 확인")
                 .pretendard(.body2Regular, color: .white)
@@ -149,5 +165,5 @@ struct DupCheckTextField: View {
 #Preview {
     @Previewable @State var text: String = ""
     
-    DupCheckTextField(text: $text, isFocused: .constant(false), placeholder: ":qwe", noti: .constant("asdkwdaoowrf"))
+    DupCheckTextField(text: $text, isFocused: .constant(false), noti: .constant("asdkwdaoowrf"), placeholder: ":qwe") { }
 }

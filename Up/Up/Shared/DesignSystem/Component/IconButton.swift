@@ -31,11 +31,11 @@ struct IconButton: View {
                 height: 24,
                 appColor: appColor
             )
-            .padding(10)
+//            .padding(10)
         }
     }
 }
 
 #Preview {
-    IconButton(icon: .arrowLeft, action: {})
+    IconButton(icon: .closeLine, action: {})
 }

@@ -23,6 +23,7 @@ enum AppIcon: String {
     case closeCircleFillBk24 = "ic_close_circle_fill_bk_24"
     case closeCircleFillGray24 = "ic_close_circle_fill_gray_24"
     case closeCircleLine = "ic_close_circle_line"
+    case closeCircleLineRed24 = "ic_close_circle_line_red_24"
     case closeLine = "ic_close_line"
     case followLine = "ic_follow_line"
     case followingFill = "ic_following_fill"
