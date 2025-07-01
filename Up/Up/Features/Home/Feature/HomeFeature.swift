@@ -96,10 +96,16 @@ struct HomeView: View {
     }
     
     private var nicknameButton: some View { // 관련 화면 작업 후 NavigationLink로 래핑
-        HStack(spacing: 4) {
-            Text("건디님") // 계정 관련 작업 이후 계정 닉네임 받아 사용
-                .pretendard(.body1Bold, color: .orange40)
-            AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
+        NavigationLink(
+            state: UpFeature.Path.State.activity(
+                MyActivityFeature.State(selectedTab: .review)
+            )
+        ) {
+            HStack(spacing: 4) {
+                Text("건디님") // 계정 관련 작업 이후 계정 닉네임 받아 사용
+                    .pretendard(.body1Bold, color: .orange40)
+                AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
+            }
         }
     }
     
@@ -171,60 +177,72 @@ struct HomeView: View {
         }
     }
     
-    private var myReviewsBanner: some View { // 모아보기 화면 작업 후 NavigationLink로 래핑
-        ZStack(alignment: .bottomTrailing) {
-            HStack {
-                VStack(spacing: 8) {
-                    Text("내가\n작성한 리뷰")
-                        .pretendard(.body1Bold, color: .gray80)
-                        .multilineTextAlignment(.leading)
-                        .padding([.leading, .top], 16)
+    private var myReviewsBanner: some View {
+        NavigationLink(
+            state: UpFeature.Path.State.activity(
+                MyActivityFeature.State(selectedTab: .review)
+            )
+        ) {
+            ZStack(alignment: .bottomTrailing) {
+                HStack {
+                    VStack(spacing: 8) {
+                        Text("내가\n작성한 리뷰")
+                            .pretendard(.body1Bold, color: .gray80)
+                            .multilineTextAlignment(.leading)
+                            .padding([.leading, .top], 16)
+                        Spacer()
+                    }
                     Spacer()
                 }
-                Spacer()
+                AppIcon.chatSecondFill.image(
+                    width: 32,
+                    height: 32,
+                    appColor: .orange40
+                )
+                .padding([.bottom, .trailing], 16)
             }
-            AppIcon.chatSecondFill.image(
-                width: 32,
-                height: 32,
-                appColor: .orange40
-            )
-            .padding([.bottom, .trailing], 16)
-        }
-        .frame(maxWidth: .infinity)
-        .background(AppColor.gray10.color)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColor.gray20.color)
+            .frame(maxWidth: .infinity)
+            .background(AppColor.gray10.color)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(AppColor.gray20.color)
+            }
         }
     }
     
-    private var followingListBanner: some View { // 모아보기 화면 작업 후 NavigationLink로 래핑
-        ZStack(alignment: .bottomTrailing) {
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("팔로우한\n업체")
-                        .pretendard(.body1Bold, color: .gray80)
-                        .multilineTextAlignment(.leading)
+    private var followingListBanner: some View {
+        NavigationLink(
+            state: UpFeature.Path.State.activity(
+                MyActivityFeature.State(selectedTab: .following)
+            )
+        ) {
+            ZStack(alignment: .bottomTrailing) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("팔로우한\n업체")
+                            .pretendard(.body1Bold, color: .gray80)
+                            .multilineTextAlignment(.leading)
+                        Spacer()
+                    }
+                    .padding([.top, .leading], 16)
+                    
                     Spacer()
                 }
-                .padding([.top, .leading], 16)
-                
-                Spacer()
+                AppIcon.followingFill.image(
+                    width: 32,
+                    height: 32,
+                    appColor: .orange40
+                )
+                .padding([.bottom, .trailing], 16)
             }
-            AppIcon.followingFill.image(
-                width: 32,
-                height: 32,
-                appColor: .orange40
-            )
-            .padding([.bottom, .trailing], 16)
-        }
-        .frame(maxWidth: .infinity)
-        .background(AppColor.gray10.color)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColor.gray20.color)
+            .frame(maxWidth: .infinity)
+            .background(AppColor.gray10.color)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(AppColor.gray20.color)
+            }
         }
     }
     
@@ -333,12 +351,12 @@ struct HomeView: View {
             )
         ) {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: 0) {
                     Text("현재의 저를 만들어준 공고대행사, 정석으로 생각하며 실행하는 곳")
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .pretendard(.body1Bold, color: .gray80)
-                    Spacer()
+                    Spacer(minLength: 12)
                     HStack(spacing: 4) {
                         AppIcon.starFill.image(width: 24, height: 24, appColor: .seYellow40)
                         Text("4.0")
@@ -346,7 +364,7 @@ struct HomeView: View {
                     }
                 }
                 Spacer(minLength: 12)
-                Text("리뷰 내용입니다.\n리뷰 내용입니다.\n리뷰 내용입니다.")
+                Text("리뷰 내용입니다.\n리뷰 내용입니다.\n리뷰 내용입니다.\n네 줄")
                     .lineLimit(3)
                     .multilineTextAlignment(.leading)
                     .pretendard(.captionRegular, color: .gray70)
