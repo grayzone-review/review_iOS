@@ -14,6 +14,8 @@ enum AppImage: String {
     case mymapFill = "im_mymap_fill"
     case myplaceLine = "im_myplace_line"
     case myplaceFill = "im_myplace_fill"
+    case mapPin = "im_map_pin"
+    case banner = "im_banner"
     
     var image: Image {
         Image(rawValue)

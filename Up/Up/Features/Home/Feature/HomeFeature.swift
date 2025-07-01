@@ -67,6 +67,7 @@ struct HomeView: View {
                     neighborhoodReviews
                     interestReviews
                 }
+                .padding(.bottom, 60)
                 .id(ScrollPosition.top)
             }
             .scrollPosition(id: $scrollPosition, anchor: .top)
@@ -141,21 +142,27 @@ struct HomeView: View {
                 SearchCompanyFeature.State()
             )
         ) {
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("우리 동네 리뷰가\n궁금하다면?")
-                        .pretendard(.body1Bold, color: .white)
-                        .multilineTextAlignment(.leading)
-                    HStack(spacing: 4) {
-                        Text("지금 리뷰 작성하러 가기")
-                            .pretendard(.captionSemiBold, color: .white)
-                        AppIcon.arrowRight.image(width: 14, height: 14, appColor: .white)
+            ZStack(alignment: .bottomTrailing) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("우리 동네 리뷰가\n궁금하다면?")
+                            .pretendard(.body1Bold, color: .white)
+                            .multilineTextAlignment(.leading)
+                        HStack(spacing: 4) {
+                            Text("지금 리뷰 작성하러 가기")
+                                .pretendard(.captionSemiBold, color: .white)
+                            AppIcon.arrowRight.image(width: 14, height: 14, appColor: .white)
+                        }
+                        Spacer()
                     }
+                    .padding([.top, .leading], 16)
+                    
                     Spacer()
                 }
-                .padding([.top, .leading], 16)
                 
-                Spacer()
+                AppImage.mapPin.image
+                    .frame(width: 68, height: 68)
+                    .padding([.bottom, .trailing], 8)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 188)
@@ -165,16 +172,23 @@ struct HomeView: View {
     }
     
     private var myReviewsBanner: some View { // 모아보기 화면 작업 후 NavigationLink로 래핑
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("내가\n작성한 리뷰")
-                    .pretendard(.body1Bold, color: .gray80)
-                    .multilineTextAlignment(.leading)
+        ZStack(alignment: .bottomTrailing) {
+            HStack {
+                VStack(spacing: 8) {
+                    Text("내가\n작성한 리뷰")
+                        .pretendard(.body1Bold, color: .gray80)
+                        .multilineTextAlignment(.leading)
+                        .padding([.leading, .top], 16)
+                    Spacer()
+                }
                 Spacer()
             }
-            .padding([.top, .leading], 16)
-            
-            Spacer()
+            AppIcon.chatSecondFill.image(
+                width: 32,
+                height: 32,
+                appColor: .orange40
+            )
+            .padding([.bottom, .trailing], 16)
         }
         .frame(maxWidth: .infinity)
         .background(AppColor.gray10.color)
@@ -186,16 +200,24 @@ struct HomeView: View {
     }
     
     private var followingListBanner: some View { // 모아보기 화면 작업 후 NavigationLink로 래핑
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("팔로우한\n업체")
-                    .pretendard(.body1Bold, color: .gray80)
-                    .multilineTextAlignment(.leading)
+        ZStack(alignment: .bottomTrailing) {
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("팔로우한\n업체")
+                        .pretendard(.body1Bold, color: .gray80)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
+                .padding([.top, .leading], 16)
+                
                 Spacer()
             }
-            .padding([.top, .leading], 16)
-            
-            Spacer()
+            AppIcon.followingFill.image(
+                width: 32,
+                height: 32,
+                appColor: .orange40
+            )
+            .padding([.bottom, .trailing], 16)
         }
         .frame(maxWidth: .infinity)
         .background(AppColor.gray10.color)
@@ -206,8 +228,8 @@ struct HomeView: View {
         }
     }
     
-    private var selectInterestButton: some View { // 관련 화면 작업 후 NavigationLink로 래핑
-        HStack {
+    private var selectInterestButton: some View {  // 관심 동네가 있을 경우에만 노출
+        HStack { // 관련 화면 작업 후 NavigationLink로 래핑
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 4) {
                     Text("관심 동네 선택하러 가기 ")
@@ -218,7 +240,7 @@ struct HomeView: View {
                     .pretendard(.captionRegular, color: .gray50)
             }
             Spacer()
-            Color.white // 이미지로 변경 필요
+            AppImage.banner.image
                 .frame(width: 123, height: 121.81)
         }
         .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20))
@@ -231,21 +253,119 @@ struct HomeView: View {
     }
     
     private var popularReviews: some View {
-        Rectangle()
-            .foregroundStyle(AppColor.seRed50.color)
-            .frame(height: 249)
+        VStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Text("지금 인기 있는 리뷰")
+                    .pretendard(.h3, color: .gray90)
+                AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
+                Spacer()
+                HStack(spacing: 4) { // 이후 NavigationLink로 래핑
+                    Text("더보기")
+                        .pretendard(.captionRegular, color: .gray50)
+                    AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                }
+            }
+            .padding(20)
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) { // 추후 API Response 확정되면 변경
+                    reviewCard()
+                    reviewCard()
+                }
+                .padding(.leading, 20)
+            }
+        }
     }
     
     private var neighborhoodReviews: some View {
-        Rectangle()
-            .foregroundStyle(AppColor.seBlue50.color)
-            .frame(height: 249)
+        VStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Text("우리 동네 최근 리뷰")
+                    .pretendard(.h3, color: .gray90)
+                AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
+                Spacer()
+                HStack(spacing: 4) { // 이후 NavigationLink로 래핑
+                    Text("더보기")
+                        .pretendard(.captionRegular, color: .gray50)
+                    AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                }
+            }
+            .padding(20)
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) { // 추후 API Response 확정되면 변경
+                    reviewCard()
+                    reviewCard()
+                }
+                .padding(.leading, 20)
+            }
+        }
     }
     
-    private var interestReviews: some View {
-        Rectangle()
-            .foregroundStyle(AppColor.seRed50.color)
-            .frame(height: 249)
+    private var interestReviews: some View { // 관심 동네가 있을 경우에만 노출
+        VStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Text("관심 동네 최근 리뷰")
+                    .pretendard(.h3, color: .gray90)
+                AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
+                Spacer()
+                HStack(spacing: 4) { // 이후 NavigationLink로 래핑
+                    Text("더보기")
+                        .pretendard(.captionRegular, color: .gray50)
+                    AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                }
+            }
+            .padding(20)
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) { // 추후 API Response 확정되면 변경
+                    reviewCard()
+                    reviewCard()
+                }
+                .padding(.leading, 20)
+            }
+        }
+    }
+    
+    private func reviewCard() -> some View {
+        NavigationLink(
+            state: UpFeature.Path.State.detail(
+                CompanyDetailFeature.State(
+                    companyID: 1 // 리뷰에 있는 컴퍼니 id 사용
+                )
+            )
+        ) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 12) {
+                    Text("현재의 저를 만들어준 공고대행사, 정석으로 생각하며 실행하는 곳")
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .pretendard(.body1Bold, color: .gray80)
+                    Spacer()
+                    HStack(spacing: 4) {
+                        AppIcon.starFill.image(width: 24, height: 24, appColor: .seYellow40)
+                        Text("4.0")
+                            .pretendard(.body1Bold, color: .gray80)
+                    }
+                }
+                Spacer(minLength: 12)
+                Text("리뷰 내용입니다.\n리뷰 내용입니다.\n리뷰 내용입니다.")
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
+                    .pretendard(.captionRegular, color: .gray70)
+                Spacer(minLength: 12)
+                HStack {
+                    Text("스타벅스 석촌역점")
+                        .pretendard(.captionRegular, color: .gray50)
+                    Spacer()
+                    Text("2025. 05 작성")
+                        .pretendard(.captionRegular, color: .gray50)
+                }
+            }
+            .padding(20)
+        }
+        .frame(width: 325, height: 186)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.gray20.color)
+        }
     }
 }
 
