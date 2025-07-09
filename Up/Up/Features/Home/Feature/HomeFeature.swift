@@ -96,16 +96,10 @@ struct HomeView: View {
     }
     
     private var nicknameButton: some View { // 관련 화면 작업 후 NavigationLink로 래핑
-        NavigationLink(
-            state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(selectedTab: .review)
-            )
-        ) {
-            HStack(spacing: 4) {
-                Text("건디님") // 계정 관련 작업 이후 계정 닉네임 받아 사용
-                    .pretendard(.body1Bold, color: .orange40)
-                AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
-            }
+        HStack(spacing: 4) {
+            Text("건디님") // 계정 관련 작업 이후 계정 닉네임 받아 사용
+                .pretendard(.body1Bold, color: .orange40)
+            AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
         }
     }
     
@@ -148,7 +142,7 @@ struct HomeView: View {
                 SearchCompanyFeature.State()
             )
         ) {
-            ZStack(alignment: .bottomTrailing) {
+            ZStack(alignment: .bottom) {
                 HStack {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("우리 동네 리뷰가\n궁금하다면?")
@@ -167,8 +161,7 @@ struct HomeView: View {
                 }
                 
                 AppImage.mapPin.image
-                    .frame(width: 68, height: 68)
-                    .padding([.bottom, .trailing], 8)
+                    .aspectRatio(165/84, contentMode: .fit)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 188)
@@ -289,7 +282,7 @@ struct HomeView: View {
                     reviewCard()
                     reviewCard()
                 }
-                .padding(.leading, 20)
+                .padding(.horizontal, 20)
             }
         }
     }
@@ -313,7 +306,7 @@ struct HomeView: View {
                     reviewCard()
                     reviewCard()
                 }
-                .padding(.leading, 20)
+                .padding(.horizontal, 20)
             }
         }
     }
@@ -337,7 +330,7 @@ struct HomeView: View {
                     reviewCard()
                     reviewCard()
                 }
-                .padding(.leading, 20)
+                .padding(.horizontal, 20)
             }
         }
     }
