@@ -252,7 +252,7 @@ struct CompanyDetailView: View {
                     appColor: .seYellow40
                 )
                 Text(String(store.company?.totalRating.rounded(to: 1) ?? 0))
-                    .pretendard(.h1, color: .gray90)
+                    .pretendard(.h1Bold, color: .gray90)
             }
         }
     }

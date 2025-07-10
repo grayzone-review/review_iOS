@@ -18,21 +18,44 @@ struct UpFeature {
     
     @ObservableState
     struct State: Equatable {
+        var onboarding = OnboardingFeature.State()
         var path = StackState<Path.State>()
         var search = SearchCompanyFeature.State()
+        var isFirstLaunch = true
+        
+        init() {
+            let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+            
+            isFirstLaunch = hasLaunchedBefore != true
+        }
     }
     
     enum Action {
+        case onboarding(OnboardingFeature.Action)
         case path(StackActionOf<Path>)
         case search(SearchCompanyFeature.Action)
     }
     
     var body: some ReducerOf<Self> {
+        Scope(state: \.onboarding, action: \.onboarding) {
+            OnboardingFeature()
+        }
+        
         Scope(state: \.search, action: \.search) {
             SearchCompanyFeature()
         }
+        
         Reduce { state, action in
             switch action {
+            case .onboarding(.delegate(.startButtonTapped)):
+                UserDefaults.standard.setValue(true, forKey: "hasLaunchedBefore")
+                state.isFirstLaunch = false
+                
+                return .none
+                
+            case .onboarding:
+                return .none
+                
             case .path:
                 return .none
                 
@@ -50,14 +73,20 @@ struct UpView: View {
     @Bindable var store: StoreOf<UpFeature>
     
     var body: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            SearchCompanyView(
-                store: store.scope(state: \.search, action: \.search)
+        if store.isFirstLaunch {
+            OnboardingView(
+                store: store.scope(state: \.onboarding, action: \.onboarding)
             )
-        } destination: { store in
-            switch store.case {
-            case let .detail(detailStore):
-                CompanyDetailView(store: detailStore)
+        } else {
+            NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+                SearchCompanyView(
+                    store: store.scope(state: \.search, action: \.search)
+                )
+            } destination: { store in
+                switch store.case {
+                case let .detail(detailStore):
+                    CompanyDetailView(store: detailStore)
+                }
             }
         }
     }

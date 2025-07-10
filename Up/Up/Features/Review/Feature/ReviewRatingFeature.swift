@@ -150,7 +150,7 @@ struct ReviewRatingView: View {
         HStack(spacing: 8) {
             StarRatingView(rating: store.totalRating, length: 36)
             Text(String(store.totalRating))
-                .pretendard(.h1, color: store.isNextButtonEnabled ? .gray90 : .gray50)
+                .pretendard(.h1Bold, color: store.isNextButtonEnabled ? .gray90 : .gray50)
         }
     }
     
