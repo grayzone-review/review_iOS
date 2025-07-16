@@ -13,11 +13,21 @@ struct HomeFeature {
     @ObservableState
     struct State: Equatable {
         var user: User?
+        var popularReviews = [HomeReview]()
+        var mainRegionReviews = [HomeReview]()
+        var interestedRegionReviews = [HomeReview]()
     }
     
     enum Action {
         case viewInit
+        case fetchUser
         case userFetched(User)
+        case fetchPopularReviews
+        case popularReviewsFetched([HomeReview])
+        case fetchMainRegionReviews
+        case mainRegionReviewsFetched([HomeReview])
+        case fetchInterestedRegionReviews
+        case interestedRegionReviewsFetched([HomeReview])
     }
     
     @Dependency(\.homeService) var homeService
@@ -26,6 +36,14 @@ struct HomeFeature {
         Reduce { state, action in
             switch action {
             case .viewInit:
+                return .run { send in
+                    await send(.fetchUser)
+                    await send(.fetchPopularReviews)
+                    await send(.fetchMainRegionReviews)
+                    await send(.fetchInterestedRegionReviews)
+                }
+                
+            case .fetchUser:
                 guard state.user == nil else {
                     return .none
                 }
@@ -39,6 +57,66 @@ struct HomeFeature {
                 
             case let .userFetched(user):
                 state.user = user
+                return .none
+                
+            case .fetchPopularReviews:
+                guard state.popularReviews.isEmpty else {
+                    return .none
+                }
+                
+                return .run { send in
+                    let data = try await homeService.fetchPopularReviews(
+                        latitude: 37.5665, // 위치 관련 작업 이후 수정
+                        longitude: 126.9780,
+                        page: 0
+                    )
+                    let reviews = data.reviews.map { $0.toDomain() }
+                    
+                    await send(.popularReviewsFetched(reviews))
+                }
+                
+            case let .popularReviewsFetched(reviews):
+                state.popularReviews = reviews
+                return .none
+                
+            case .fetchMainRegionReviews:
+                guard state.mainRegionReviews.isEmpty else {
+                    return .none
+                }
+                
+                return .run { send in
+                    let data = try await homeService.fetchMainRegionReviews(
+                        latitude: 37.5665, // 위치 관련 작업 이후 수정
+                        longitude: 126.9780,
+                        page: 0
+                    )
+                    let reviews = data.reviews.map { $0.toDomain() }
+                    
+                    await send(.mainRegionReviewsFetched(reviews))
+                }
+                
+            case let .mainRegionReviewsFetched(reviews):
+                state.mainRegionReviews = reviews
+                return .none
+                
+            case .fetchInterestedRegionReviews:
+                guard state.interestedRegionReviews.isEmpty else {
+                    return .none
+                }
+                
+                return .run { send in
+                    let data = try await homeService.fetchInterestedRegionReviews(
+                        latitude: 37.5665, // 위치 관련 작업 이후 수정
+                        longitude: 126.9780,
+                        page: 0
+                    )
+                    let reviews = data.reviews.map { $0.toDomain() }
+                    
+                    await send(.interestedRegionReviewsFetched(reviews))
+                }
+                
+            case let .interestedRegionReviewsFetched(reviews):
+                state.interestedRegionReviews = reviews
                 return .none
             }
         }
@@ -74,8 +152,8 @@ struct HomeView: View {
                     selectInterestButton
                     seperator
                     popularReviews
-                    neighborhoodReviews
-                    interestReviews
+                    mainRegionReviews
+                    interestRegionReviews
                 }
                 .padding(.bottom, 60)
                 .id(ScrollPosition.top)
@@ -294,16 +372,17 @@ struct HomeView: View {
             }
             .padding(20)
             ScrollView(.horizontal) {
-                HStack(spacing: 12) { // 추후 API Response 확정되면 변경
-                    reviewCard()
-                    reviewCard()
+                HStack(spacing: 12) {
+                    ForEach(store.popularReviews) { homeReview in
+                        reviewCard(homeReview)
+                    }
                 }
                 .padding(.horizontal, 20)
             }
         }
     }
     
-    private var neighborhoodReviews: some View {
+    private var mainRegionReviews: some View {
         VStack(spacing: 0) {
             HStack(spacing: 4) {
                 Text("우리 동네 최근 리뷰")
@@ -318,16 +397,17 @@ struct HomeView: View {
             }
             .padding(20)
             ScrollView(.horizontal) {
-                HStack(spacing: 12) { // 추후 API Response 확정되면 변경
-                    reviewCard()
-                    reviewCard()
+                HStack(spacing: 12) {
+                    ForEach(store.mainRegionReviews) { homeReview in
+                        reviewCard(homeReview)
+                    }
                 }
                 .padding(.horizontal, 20)
             }
         }
     }
     
-    private var interestReviews: some View { // 관심 동네가 있을 경우에만 노출
+    private var interestRegionReviews: some View { // 관심 동네가 있을 경우에만 노출
         VStack(spacing: 0) {
             HStack(spacing: 4) {
                 Text("관심 동네 최근 리뷰")
@@ -342,47 +422,48 @@ struct HomeView: View {
             }
             .padding(20)
             ScrollView(.horizontal) {
-                HStack(spacing: 12) { // 추후 API Response 확정되면 변경
-                    reviewCard()
-                    reviewCard()
+                HStack(spacing: 12) {
+                    ForEach(store.interestedRegionReviews) { homeReview in
+                        reviewCard(homeReview)
+                    }
                 }
                 .padding(.horizontal, 20)
             }
         }
     }
     
-    private func reviewCard() -> some View {
+    private func reviewCard(_ homeReview: HomeReview) -> some View {
         NavigationLink(
             state: UpFeature.Path.State.detail(
                 CompanyDetailFeature.State(
-                    companyID: 1 // 리뷰에 있는 컴퍼니 id 사용
+                    companyID: homeReview.company.id
                 )
             )
         ) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 0) {
-                    Text("현재의 저를 만들어준 공고대행사, 정석으로 생각하며 실행하는 곳")
+                    Text(homeReview.review.title)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .pretendard(.body1Bold, color: .gray80)
                     Spacer(minLength: 12)
                     HStack(spacing: 4) {
                         AppIcon.starFill.image(width: 24, height: 24, appColor: .seYellow40)
-                        Text("4.0")
+                        Text(homeReview.review.rating.displayText)
                             .pretendard(.body1Bold, color: .gray80)
                     }
                 }
                 Spacer(minLength: 12)
-                Text("리뷰 내용입니다.\n리뷰 내용입니다.\n리뷰 내용입니다.\n네 줄")
+                Text(homeReview.review.advantagePoint)
                     .lineLimit(3)
                     .multilineTextAlignment(.leading)
                     .pretendard(.captionRegular, color: .gray70)
                 Spacer(minLength: 12)
                 HStack {
-                    Text("스타벅스 석촌역점")
+                    Text(homeReview.company.name)
                         .pretendard(.captionRegular, color: .gray50)
                     Spacer()
-                    Text("2025. 05 작성")
+                    Text(DateFormatter.reviewCardFormat.string(from: homeReview.review.creationDate))
                         .pretendard(.captionRegular, color: .gray50)
                 }
             }
