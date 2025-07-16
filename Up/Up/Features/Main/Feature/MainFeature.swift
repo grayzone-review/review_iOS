@@ -38,6 +38,10 @@ struct MainFeature {
     var body: some ReducerOf<Self> {
         BindingReducer()
         
+        Scope(state: \.home, action: \.home) {
+            HomeFeature()
+        }
+        
         Reduce { state, action in
             switch action {
             case .binding:

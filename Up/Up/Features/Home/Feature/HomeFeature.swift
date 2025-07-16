@@ -12,34 +12,38 @@ import SwiftUI
 struct HomeFeature {
     @ObservableState
     struct State: Equatable {
-        @Presents var destination: Destination.State?
+        var user: User?
     }
     
     enum Action {
-        case makeReviewButtonTapped
-        case destination(PresentationAction<Destination.Action>)
+        case viewInit
+        case userFetched(User)
     }
     
-    @Reducer
-    enum Destination {
-        case review(ReviewMakingFeature)
-    }
+    @Dependency(\.homeService) var homeService
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .makeReviewButtonTapped:
-                state.destination = .review(ReviewMakingFeature.State())
-                return .none
+            case .viewInit:
+                guard state.user == nil else {
+                    return .none
+                }
                 
-            case .destination:
+                return .run { send in
+                    let data = try await homeService.fetchUser()
+                    let user = data.toDomain()
+                    
+                    await send(.userFetched(user))
+                }
+                
+            case let .userFetched(user):
+                state.user = user
                 return .none
             }
         }
     }
 }
-
-extension HomeFeature.Destination.State: Equatable {}
 
 struct HomeView: View {
     enum ScrollPosition: Int, Identifiable {
@@ -52,6 +56,12 @@ struct HomeView: View {
     
     let store: StoreOf<HomeFeature>
     @State private var scrollPosition: ScrollPosition?
+    
+    init(store: StoreOf<HomeFeature>) {
+        self.store = store
+        
+        store.send(.viewInit)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -95,11 +105,17 @@ struct HomeView: View {
         }
     }
     
-    private var nicknameButton: some View { // 관련 화면 작업 후 NavigationLink로 래핑
-        HStack(spacing: 4) {
-            Text("건디님") // 계정 관련 작업 이후 계정 닉네임 받아 사용
-                .pretendard(.body1Bold, color: .orange40)
-            AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
+    private var nicknameButton: some View {
+        NavigationLink(
+            state: UpFeature.Path.State.activity(
+                MyActivityFeature.State(selectedTab: .activity)
+            )
+        ) {
+            HStack(spacing: 4) {
+                Text((store.user?.nickname ?? "사용자") + "님")
+                    .pretendard(.body1Bold, color: .orange40)
+                AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
+            }
         }
     }
     
