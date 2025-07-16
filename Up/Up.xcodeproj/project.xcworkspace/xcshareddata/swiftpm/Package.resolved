@@ -1,5 +1,5 @@
 {
-  "originHash" : "05d4702eca8ca83404faee9448d301d518b4ea1127093efdd7ce26060a4193ca",
+  "originHash" : "f75ac3210a7bbd372376afad042dd8049ceb3695ad4b5b4a3c136230ae0a3a89",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -20,21 +20,21 @@
       }
     },
     {
+      "identity" : "kakao-ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kakao/kakao-ios-sdk",
+      "state" : {
+        "revision" : "d329d3ab45819b731f0336499a31f41524d8e222",
+        "version" : "2.24.4"
+      }
+    },
+    {
       "identity" : "kakaomapssdk-spm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kakao-mapsSDK/KakaoMapsSDK-SPM.git",
       "state" : {
         "revision" : "d44bc7365bee88f66964a14168a42910ac092d38",
         "version" : "2.12.5"
-      }
-    },
-    {
-      "identity" : "lottie-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/airbnb/lottie-ios.git",
-      "state" : {
-        "revision" : "a004050748dc197c56256a14dca49a035d74726c",
-        "version" : "4.5.2"
       }
     },
     {

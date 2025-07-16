@@ -25,7 +25,7 @@ struct SignUpFeature {
         var isPreferredFull: Bool = false
         // TODO: - API나오면 약관 리스트에 대한 모델을 구현해야함 (ex: title(제목), url(보여줄 웹 뷰의 URL), isRequired(필수 동의 약관인지에 대한 여부), isAgree(변수; 사용자가 동의했는지에 대한 여부))
         /// 약관 리스트
-        var termList: [String] = ["[필수] 서비스 이용 약관 동의", "[필수] 개인정보 수집 및 이용 동의", "[필수] 위치 기반 서비스 이용 동의"]
+        var termList: [TermsData] = []
         /// 중복 검사 결과를 보여주는 값
         var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
         /// 사용자가 가입 가능한 상태인지 나타내는 값
@@ -38,22 +38,22 @@ struct SignUpFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case viewInit
+        case addTermsList([TermsData])
         case xButtonTapped
         case checkNicknameTapped
         case setMyAreaTapped
         case addPreferredAreaTapped
         case deletePreferredAreaTapped(Int)
         case agreeAllTermsTapped
-        case agreeTermTapped(Int)
-        case termDetailTapped(Int)
+        case agreeTermTapped(code: String)
+        case termDetailTapped(url: String)
         case handleCanSignUp
         case signUpTapped
         case handleError(Error)
     }
     
     @Dependency(\.mainQueue) var mainQueue
-    @Dependency(\.companyService) var companyService
-    @Dependency(\.searchService) var searchService
+    @Dependency(\.signUpService) var signUpService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -64,7 +64,19 @@ struct SignUpFeature {
                 // TODO: - ???
                 return .none
             case .viewInit:
-                // TODO: - 약관 가져오기
+                state.isLoading = true
+                
+                return .run { send in
+                    let data = try await signUpService.fetchTermsList()
+                    
+                    await send(.addTermsList(data))
+                }
+            case let .addTermsList(termsData):
+                print("addTermsList \(termsData)")
+                
+                state.termList = termsData
+                state.isLoading = false
+                
                 return .none
             case .xButtonTapped:
                 // TODO: - dismiss?
@@ -90,7 +102,7 @@ struct SignUpFeature {
                 // TODO: - 약관 모두 동의 선택
                 print("agreeAllTermsTapped")
                 return .none
-            case let .agreeTermTapped(index):
+            case let .agreeTermTapped(code):
                 // TODO: - 약관 동의 체크
                 print("agreeTermTapped \(index)")
                 return .none
@@ -276,7 +288,7 @@ struct SignUpView: View {
                 CheckBox(isSelected: .random())
                 
                 Text("약관 전체 동의")
-                    .pretendard(.body1Bold, color: .gray70)
+                    .pretendard(.body1SemiBold, color: .gray70)
                     .lineLimit(1)
                 
                 Spacer(minLength: 0)
@@ -292,19 +304,19 @@ struct SignUpView: View {
                 store.send(.agreeAllTermsTapped)
             }
             
-            ForEach(Array(store.termList.enumerated()), id: \.element) { index, title in
-                makeTermAgreeCell(isSelected: .random(), title: title, index: index)
+            ForEach(store.termList) { term in
+                makeTermAgreeCell(term: term)
             }
         }
         .padding(.horizontal, 20)
     }
     
-    func makeTermAgreeCell(isSelected: Bool, title: String, index: Int) -> some View {
+    func makeTermAgreeCell(term: TermsData) -> some View {
         HStack(spacing: 0) {
             HStack(spacing: 8) {
-                CheckBox(isSelected: isSelected)
+                CheckBox(isSelected: term.isAgree)
                 
-                Text(title)
+                Text(term.term)
                     .pretendard(.body1Regular, color: .gray70)
                     .lineLimit(1)
                 
@@ -313,7 +325,7 @@ struct SignUpView: View {
             .padding(.vertical, 16)
             .contentShape(Rectangle())
             .onTapGesture {
-                store.send(.agreeTermTapped(index))
+                store.send(.agreeTermTapped(code: term.code))
             }
             
             HStack(spacing: 4) {
@@ -329,7 +341,7 @@ struct SignUpView: View {
             .padding(.vertical, 16)
             .contentShape(Rectangle())
             .onTapGesture {
-                store.send(.termDetailTapped(index))
+                store.send(.termDetailTapped(url: term.url))
             }
         }
     }

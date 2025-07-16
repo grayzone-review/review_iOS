@@ -8,6 +8,8 @@
 import SwiftUI
 import ComposableArchitecture
 import KakaoMapsSDK
+import KakaoSDKCommon
+import KakaoSDKAuth
 
 @Reducer
 struct UpFeature {
@@ -162,9 +164,25 @@ struct UpApp: App {
         UpFeature()
     }
     
+    init() {
+        guard
+            let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String
+        else {
+          fatalError("Info.plist에서 Key 정보를 읽어오지 못했습니다.")
+        }
+        
+        SDKInitializer.InitSDK(appKey: kakaoAppKey)
+        KakaoSDK.initSDK(appKey: kakaoAppKey)
+    }
+    
     var body: some Scene {
         WindowGroup {
             UpView(store: Self.store)
+                .onOpenURL { url in
+                    if (AuthApi.isKakaoTalkLoginUrl(url)) {
+                        AuthController.handleOpenUrl(url: url)
+                    }
+                }
         }
     }
 }

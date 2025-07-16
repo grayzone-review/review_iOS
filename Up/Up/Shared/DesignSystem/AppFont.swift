@@ -14,6 +14,7 @@ enum Typography: String {
     case h3Bold
     case h3Regular
     case body1Bold
+    case body1SemiBold
     case body1Regular
     case body2Bold
     case body2Regular
@@ -28,7 +29,7 @@ enum Typography: String {
             return "Bold"
         case .h1Regular, .h3Regular, .body1Regular, .body2Regular, .captionRegular, .logo:
             return "Regular"
-        case .captionSemiBold:
+        case .body1SemiBold, .captionSemiBold:
             return "SemiBold"
         }
     }
@@ -41,7 +42,7 @@ enum Typography: String {
             return 20
         case .h3Bold, .h3Regular:
             return 18
-        case .body1Bold, .body1Regular:
+        case .body1Bold, .body1SemiBold, .body1Regular:
             return 16
         case .body2Bold, .body2Regular:
             return 14
@@ -79,6 +80,14 @@ extension View {
         self
             .font(typography.font)
             .foregroundStyle(color.color)
+            .padding(.vertical, typography.lineSpacing / 2)
+            .lineSpacing(typography.lineSpacing)
+    }
+    
+    func pretendard(_ typography: Typography, sysyemColor: Color) -> some View {
+        self
+            .font(typography.font)
+            .foregroundStyle(sysyemColor)
             .padding(.vertical, typography.lineSpacing / 2)
             .lineSpacing(typography.lineSpacing)
     }

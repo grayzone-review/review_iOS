@@ -1,0 +1,141 @@
+//
+//  SignUpService.swift
+//  Up
+//
+//  Created by Wonbi on 7/9/25.
+//
+
+import Dependencies
+
+protocol SignUpService {
+    func fetchTermsList() async throws -> [TermsData]
+    func verifyNickname(_ nickname: String) async throws -> VerifyResult
+    func signUp(
+        oauthToken: String,
+        oauthProvider: OAuthProvider,
+        mainRegionId: Int,
+        interestedRegionIds: [Int],
+        nickname: String,
+        agreements: [String]
+    ) async throws
+    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws
+}
+
+private enum SignUpServiceKey: DependencyKey {
+    static let liveValue: any SignUpService = DefaultSignUpService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let previewValue: any SignUpService = DefaultSignUpService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static var testValue: any SignUpService = MockSignUpService()
+}
+
+extension DependencyValues {
+    var signUpService: any SignUpService {
+        get { self[SignUpServiceKey.self] }
+        set { self[SignUpServiceKey.self] = newValue }
+    }
+}
+
+struct DefaultSignUpService: SignUpService {
+    private let session: NetworkSession
+    
+    init(session: NetworkSession) {
+        self.session = session
+    }
+    
+    func fetchTermsList() async throws -> [TermsData] {
+        let request = SignUpAPI.terms
+        
+        let response = try await session.request(request, as: TermsListResponse.self)
+        
+        return response.data.toDomain()
+    }
+    
+    func verifyNickname(_ nickname: String) async throws -> VerifyResult {
+        let requestBody = VerifyNicknameRequest(nickname: nickname)
+        let request = SignUpAPI.verifyNickname(requestBody)
+        do {
+            let response = try await session.request(request, as: NilResponse.self)
+            
+            return VerifyResult(isSuccess: true, message: response.message)
+        } catch {
+            if let apiError = error as? APIError,
+               case let .statusCodeError(message) = apiError {
+                return VerifyResult(isSuccess: false, message: message)
+            } else {
+                throw error
+            }
+        }
+    }
+    
+    func signUp(
+        oauthToken: String,
+        oauthProvider: OAuthProvider,
+        mainRegionId: Int,
+        interestedRegionIds: [Int],
+        nickname: String,
+        agreements: [String]
+    ) async throws {
+        let requestBody = SignUpRequest(
+            oauthToken: oauthToken,
+            oauthProvider: oauthProvider,
+            mainRegionId: mainRegionId,
+            interestedRegionIds: interestedRegionIds,
+            nickname: nickname,
+            agreements: agreements
+        )
+        let request = SignUpAPI.signUp(requestBody)
+        
+        _ = try await session.request(request, as: NilResponse.self)
+    }
+    
+    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws {
+        let requestBody = LoginRequset(
+            oauthToken: oauthToken,
+            oauthProvider: oauthProvider
+        )
+        let request = SignUpAPI.login(requestBody)
+        
+        let response = try await session.request(request, as: LoginResponse.self)
+        
+        /// 인증수단 저장
+        print(response.data.accessToken)
+        print(response.data.refreshToken)
+    }
+}
+
+struct MockSignUpService: SignUpService {
+    
+    func fetchTermsList() async throws -> [TermsData] {
+        return [
+            TermsData(
+                term: "[필수] 서비스 이용 약관",
+                url: "",
+                code: "serviceUse",
+                isRequired: true
+            ),
+            TermsData(
+                term: "[필수] 개인정보 수집 및 이용 동의",
+                url: "",
+                code: "privacy",
+                isRequired: true
+            ),
+            TermsData(
+                term: "[필수] 위치기반 서비스 동의",
+                url: "",
+                code: "location",
+                isRequired: true
+            )
+        ]
+    }
+    
+    func verifyNickname(_ nickname: String) async throws -> VerifyResult {
+        return VerifyResult(isSuccess: true, message: "성공")
+    }
+    
+    func signUp(oauthToken: String, oauthProvider: OAuthProvider, mainRegionId: Int, interestedRegionIds: [Int], nickname: String, agreements: [String]) async throws {
+        
+    }
+    
+    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws {
+        
+    }
+}
