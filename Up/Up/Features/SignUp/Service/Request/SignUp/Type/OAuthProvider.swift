@@ -9,4 +9,13 @@
 public enum OAuthProvider: String, Encodable, Sendable {
     case apple
     case kakao
+    case none
+    
+    public init(rawValue: String) {
+        switch rawValue {
+        case "apple": self = .apple
+        case "kakao": self = .kakao
+        default: self = .none
+        }
+    }
 }

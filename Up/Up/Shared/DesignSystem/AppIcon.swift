@@ -61,6 +61,7 @@ enum AppIcon: String {
     
     func image(width: CGFloat, height: CGFloat) -> some View {
         image
+            .renderingMode(.original)
             .scaledToFit()
             .frame(width: width, height: height)
     }
@@ -68,6 +69,7 @@ enum AppIcon: String {
     // 사이즈와 색상이 지정된 경우 사용
     func image(width: CGFloat, height: CGFloat, appColor: AppColor) -> some View {
         image
+            .renderingMode(.template)
             .scaledToFit()
             .frame(width: width, height: height)
             .foregroundStyle(appColor.color)

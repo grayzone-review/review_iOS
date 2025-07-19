@@ -18,7 +18,7 @@ protocol SignUpService {
         nickname: String,
         agreements: [String]
     ) async throws
-    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws
+    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData 
 }
 
 private enum SignUpServiceKey: DependencyKey {
@@ -87,7 +87,7 @@ struct DefaultSignUpService: SignUpService {
         _ = try await session.request(request, as: NilResponse.self)
     }
     
-    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws {
+    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData {
         let requestBody = LoginRequset(
             oauthToken: oauthToken,
             oauthProvider: oauthProvider
@@ -99,6 +99,8 @@ struct DefaultSignUpService: SignUpService {
         /// 인증수단 저장
         print(response.data.accessToken)
         print(response.data.refreshToken)
+        
+        return TokenData(from: response.data)
     }
 }
 
@@ -135,7 +137,7 @@ struct MockSignUpService: SignUpService {
         
     }
     
-    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws {
-        
+    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData {
+        return TokenData(accessToken: "", refreshToken: "")
     }
 }

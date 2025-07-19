@@ -70,6 +70,8 @@ struct SignUpFeature {
                     let data = try await signUpService.fetchTermsList()
                     
                     await send(.addTermsList(data))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
             case let .addTermsList(termsData):
                 print("addTermsList \(termsData)")
@@ -148,6 +150,7 @@ struct SignUpView: View {
                     .frame(height: 92)
             }
         }
+        .background(Color.white)
         .overlay(alignment: .bottom) {
             AppButton(
                 style: .fill,

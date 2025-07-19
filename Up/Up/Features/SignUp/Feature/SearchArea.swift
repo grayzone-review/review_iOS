@@ -27,6 +27,8 @@ struct SearchAreaFeature {
         case handleError(Error)
     }
     
+    @Dependency(\.signUpService) var signUpService
+    
     var body: some ReducerOf<Self> {
         BindingReducer()
         

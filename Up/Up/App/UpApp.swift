@@ -16,6 +16,7 @@ struct UpFeature {
     @ObservableState
     struct State: Equatable {
         var onboarding = OnboardingFeature.State()
+        var oauthLogin = OAuthLoginFeature.State()
         var path = StackState<Path.State>()
         var main = MainFeature.State()
         var isFirstLaunch = true
@@ -27,6 +28,7 @@ struct UpFeature {
         case initKakaoSDK
         case setIsFirstLaunch
         case endBootstrap
+        case oauthLogin(OAuthLoginFeature.Action)
         case onboarding(OnboardingFeature.Action)
         case path(StackActionOf<Path>)
         case main(MainFeature.Action)
@@ -34,6 +36,8 @@ struct UpFeature {
     
     @Reducer
     enum Path {
+        case signUp(SignUpFeature)
+        case searchArea(SearchAreaFeature)
         case activity(MyActivityFeature)
         case homeReview(HomeReviewFeature)
         case search(SearchCompanyFeature)
@@ -50,7 +54,11 @@ struct UpFeature {
         Scope(state: \.main, action: \.main) {
             MainFeature()
         }
-        
+
+        Scope(state: \.oauthLogin, action: \.oauthLogin) {
+            OAuthLoginFeature()
+        }
+
         Reduce { state, action in
             switch action {
             case .appLaunched:
@@ -85,10 +93,16 @@ struct UpFeature {
                 state.isFirstLaunch = false
                 
                 return .none
-                
             case .onboarding:
                 return .none
-                
+            case .oauthLogin(.delegate(.tokenReceived)):
+                state.path.append(.signUp(SignUpFeature.State()))
+//                return .run { send in
+//                    await send(.path(.element(id: <#T##StackElementID#>, action: <#T##Path.Action#>)))
+//                }
+                return .none
+            case .oauthLogin:
+                return .none
             case .path:
                 return .none
                 
@@ -125,12 +139,15 @@ struct UpView: View {
     }
     
     private var onboarding: some View {
-        OnboardingView(
-            store: store.scope(
-                state: \.onboarding,
-                action: \.onboarding
-            )
-        )
+            NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+                OAuthLoginView(store: store.scope(state: \.oauthLogin, action: \.oauthLogin))
+            } destination: { store in
+                switch store.case {
+                case let .signUp(store):
+                    SignUpView(store: store)
+                case let .searchArea(store):
+                    SearchAreaView(store: store)
+                }
     }
     
     private var main: some View {
