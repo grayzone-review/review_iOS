@@ -18,12 +18,13 @@ enum Typography: String {
     case captionBold
     case captionRegular
     case captionSemiBold
+    case logo
     
     var weight: String {
         switch self {
         case .h1, .h2, .h3, .body1Bold, .body2Bold, .captionBold:
             return "Bold"
-        case .body1Regular, .body2Regular, .captionRegular:
+        case .body1Regular, .body2Regular, .captionRegular, .logo:
             return "Regular"
         case .captionSemiBold:
             return "SemiBold"
@@ -32,7 +33,7 @@ enum Typography: String {
     
     var size: CGFloat {
         switch self {
-        case .h1:
+        case .h1, .logo:
             return 22
         case .h2:
             return 20
@@ -48,16 +49,22 @@ enum Typography: String {
     }
     
     private var uiFont: UIFont {
+        if self == .logo {
+            return .init(name: "ZenDots-Regular", size: size) ?? .systemFont(ofSize: size)
+        }
         return .init(name: "Pretendard-\(weight)", size: size) ?? .systemFont(ofSize: size)
     }
     
     var font: Font {
+        if self == .logo {
+            return .custom("ZenDots-Regular", fixedSize: size)
+        }
         return .custom("Pretendard-\(weight)", fixedSize: size)
     }
     
     var lineSpacing: CGFloat {
         switch self {
-        case .h1, .h2, .h3, .body1Bold, .body2Bold, .captionBold, .captionSemiBold:
+        case .h1, .h2, .h3, .body1Bold, .body2Bold, .captionBold, .captionSemiBold, .logo:
             return (uiFont.pointSize * 0.3) / 2
         case .body1Regular, .body2Regular, .captionRegular:
             return (uiFont.pointSize * 0.5) / 2

@@ -178,8 +178,8 @@ struct HomeView: View {
         Button {
             scrollPosition = .top
         } label: {
-            Text("Up") // 추후 아이콘 결정되면 변경
-                .pretendard(.h1, color: .orange40)
+            Text("Up")
+                .pretendard(.logo, color: .orange40)
         }
     }
     
