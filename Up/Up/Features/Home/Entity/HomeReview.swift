@@ -5,12 +5,12 @@
 //  Created by Jun Young Lee on 7/17/25.
 //
 
+import Foundation
+
 struct HomeReview: Equatable, Identifiable {
+    let id = UUID() // 응답으로 같은 리뷰를 받더라도 문제없이 보여주기 위한 UUID
     let company: SearchedCompany
     let review: Review
-    var id: Int {
-        review.id
-    }
 }
 
 struct HomeReviewDTO: Codable {

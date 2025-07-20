@@ -83,7 +83,7 @@ struct MyActivityView: View {
     var body: some View {
         VStack(spacing: 0) {
             activityCounts
-            seperator
+            separator
             tabBar
             TabView(selection: $store.selectedTab) {
                 reviewTab
@@ -142,7 +142,7 @@ struct MyActivityView: View {
         .padding(20)
     }
     
-    private var seperator: some View {
+    private var separator: some View {
         Rectangle()
             .foregroundStyle(AppColor.gray10.color)
             .frame(height: 8)

@@ -153,7 +153,7 @@ struct HomeView: View {
                     seperator
                     popularReviews
                     mainRegionReviews
-                    interestRegionReviews
+                    interestedRegionReviews
                 }
                 .padding(.bottom, 60)
                 .id(ScrollPosition.top)
@@ -333,22 +333,25 @@ struct HomeView: View {
         }
     }
     
-    private var selectInterestButton: some View {  // 관심 동네가 있을 경우에만 노출
-        HStack { // 관련 화면 작업 후 NavigationLink로 래핑
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 4) {
-                    Text("관심 동네 선택하러 가기 ")
-                        .pretendard(.body1Bold, color: .gray90)
-                    AppIcon.arrowRight.image(width: 20, height: 20, appColor: .gray90)
+    @ViewBuilder
+    private var selectInterestButton: some View {
+        if store.user?.interestedRegions.isEmpty != false { // 관심 동네가 없을 경우에만 노출
+            HStack { // 관련 화면 작업 후 NavigationLink로 래핑
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 4) {
+                        Text("관심 동네 선택하러 가기 ")
+                            .pretendard(.body1Bold, color: .gray90)
+                        AppIcon.arrowRight.image(width: 20, height: 20, appColor: .gray90)
+                    }
+                    Text("관심 동네 선택하고 리뷰 확인해보세요!")
+                        .pretendard(.captionRegular, color: .gray50)
                 }
-                Text("관심 동네 선택하고 리뷰 확인해보세요!")
-                    .pretendard(.captionRegular, color: .gray50)
+                Spacer()
+                AppImage.banner.image
+                    .frame(width: 123, height: 121.81)
             }
-            Spacer()
-            AppImage.banner.image
-                .frame(width: 123, height: 121.81)
+            .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20))
         }
-        .padding(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20))
     }
     
     private var seperator: some View {
@@ -364,10 +367,16 @@ struct HomeView: View {
                     .pretendard(.h3, color: .gray90)
                 AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                 Spacer()
-                HStack(spacing: 4) { // 이후 NavigationLink로 래핑
-                    Text("더보기")
-                        .pretendard(.captionRegular, color: .gray50)
-                    AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                NavigationLink(
+                    state: UpFeature.Path.State.homeReview(
+                        HomeReviewFeature.State(category: .popular)
+                    )
+                ) {
+                    HStack(spacing: 4) {
+                        Text("더보기")
+                            .pretendard(.captionRegular, color: .gray50)
+                        AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                    }
                 }
             }
             .padding(20)
@@ -389,10 +398,16 @@ struct HomeView: View {
                     .pretendard(.h3, color: .gray90)
                 AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                 Spacer()
-                HStack(spacing: 4) { // 이후 NavigationLink로 래핑
-                    Text("더보기")
-                        .pretendard(.captionRegular, color: .gray50)
-                    AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                NavigationLink(
+                    state: UpFeature.Path.State.homeReview(
+                        HomeReviewFeature.State(category: .mainRegion(store.user?.mainRegion.address))
+                    )
+                ) {
+                    HStack(spacing: 4) {
+                        Text("더보기")
+                            .pretendard(.captionRegular, color: .gray50)
+                        AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                    }
                 }
             }
             .padding(20)
@@ -407,27 +422,36 @@ struct HomeView: View {
         }
     }
     
-    private var interestRegionReviews: some View { // 관심 동네가 있을 경우에만 노출
-        VStack(spacing: 0) {
-            HStack(spacing: 4) {
-                Text("관심 동네 최근 리뷰")
-                    .pretendard(.h3, color: .gray90)
-                AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
-                Spacer()
-                HStack(spacing: 4) { // 이후 NavigationLink로 래핑
-                    Text("더보기")
-                        .pretendard(.captionRegular, color: .gray50)
-                    AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
-                }
-            }
-            .padding(20)
-            ScrollView(.horizontal) {
-                HStack(spacing: 12) {
-                    ForEach(store.interestedRegionReviews) { homeReview in
-                        reviewCard(homeReview)
+    @ViewBuilder
+    private var interestedRegionReviews: some View {
+        if store.user?.interestedRegions.isEmpty == false { // 관심 동네가 있을 경우에만 노출
+            VStack(spacing: 0) {
+                HStack(spacing: 4) {
+                    Text("관심 동네 최근 리뷰")
+                        .pretendard(.h3, color: .gray90)
+                    AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
+                    Spacer()
+                    NavigationLink(
+                        state: UpFeature.Path.State.homeReview(
+                            HomeReviewFeature.State(category: .interestedRegion)
+                        )
+                    ) {
+                        HStack(spacing: 4) {
+                            Text("더보기")
+                                .pretendard(.captionRegular, color: .gray50)
+                            AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                        }
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(20)
+                ScrollView(.horizontal) {
+                    HStack(spacing: 12) {
+                        ForEach(store.interestedRegionReviews) { homeReview in
+                            reviewCard(homeReview)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
             }
         }
     }

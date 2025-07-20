@@ -25,6 +25,7 @@ struct UpFeature {
     @Reducer
     enum Path {
         case activity(MyActivityFeature)
+        case homeReview(HomeReviewFeature)
         case search(SearchCompanyFeature)
         case detail(CompanyDetailFeature)
     }
@@ -59,6 +60,9 @@ struct UpView: View {
             switch store.case {
             case let .activity(activityStore):
                 MyActivityView(store: activityStore)
+                
+            case let .homeReview(homeReviewStore):
+                HomeReviewView(store: homeReviewStore)
                 
             case let .search(searchStore):
                 SearchCompanyView(store: searchStore)

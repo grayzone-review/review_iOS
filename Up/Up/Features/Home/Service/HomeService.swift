@@ -87,6 +87,38 @@ struct MockHomeService: HomeService {
                 ),
                 HomeReviewDTO(
                     company: SearchedCompanyDTO(
+                        id: 88599,
+                        name: "와우",
+                        address: "서울특별시 관악구 신림동 1536-14 승도 ",
+                        totalRating: 2.04,
+                        isFollowed: false,
+                        distance: 11.484579605217508,
+                        reviewTitle: "반복적인 테스트 진행\n"
+                    ),
+                    review: ReviewDTO(
+                        id: 13,
+                        rating: RatingDTO(
+                            workLifeBalance: 2.0,
+                            welfare: 3.0,
+                            salary: 1.0,
+                            companyCulture: 1.0,
+                            management: 2.0
+                        ),
+                        reviewer: "test@test.com",
+                        title: "반복적인 테스트 진행\n",
+                        advantagePoint: "이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요",
+                        disadvantagePoint: "이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요",
+                        managementFeedback: "이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요이건 테스트에요",
+                        job: "개발자",
+                        employmentPeriod: "1년미만",
+                        createdAt: "2025-07-09T15:45:03.782472",
+                        likeCount: 0,
+                        commentCount: 0,
+                        isLiked: false
+                    )
+                ),
+                HomeReviewDTO(
+                    company: SearchedCompanyDTO(
                         id: 17949,
                         name: "골목집 식당",
                         address: "서울특별시 성동구 마장동 510-20번지 ",
