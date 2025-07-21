@@ -128,17 +128,23 @@ struct MyPageView: View {
     }
     
     private var reportButton: some View { // 작업후 NavigationLink로 래핑
-        HStack(spacing: 8) {
-            AppIcon.bellLine.image(
-                width: 24,
-                height: 24,
-                appColor: .gray90
+        NavigationLink(
+            state: UpFeature.Path.State.report(
+                ReportFeature.State()
             )
-            Text("신고하기")
-                .pretendard(.body1Regular, color: .gray90)
-            Spacer()
+        ) {
+            HStack(spacing: 8) {
+                AppIcon.bellLine.image(
+                    width: 24,
+                    height: 24,
+                    appColor: .gray90
+                )
+                Text("신고하기")
+                    .pretendard(.body1Regular, color: .gray90)
+                Spacer()
+            }
+            .padding(20)
         }
-        .padding(20)
     }
     
     private var divider: some View {

@@ -268,6 +268,15 @@ struct MyActivityView: View {
 }
 
 #Preview {
+    @Shared(.user) var user = User(
+        nickname: "건디",
+        mainRegion: Region(
+            id: 0,
+            address: "서울시 노원구 상계동"
+        ),
+        interestedRegions: []
+    )
+    
     NavigationStack {
         MyActivityView(
             store: Store(

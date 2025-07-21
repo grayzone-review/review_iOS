@@ -28,6 +28,7 @@ struct UpFeature {
         case homeReview(HomeReviewFeature)
         case search(SearchCompanyFeature)
         case detail(CompanyDetailFeature)
+        case report(ReportFeature)
     }
     
     var body: some ReducerOf<Self> {
@@ -69,6 +70,9 @@ struct UpView: View {
                 
             case let .detail(detailStore):
                 CompanyDetailView(store: detailStore)
+                
+            case let .report(reportStore):
+                ReportView(store: reportStore)
             }
         }
     }

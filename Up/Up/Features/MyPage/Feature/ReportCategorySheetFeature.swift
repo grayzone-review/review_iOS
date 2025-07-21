@@ -1,28 +1,28 @@
 //
-//  EmploymentPeriodSheetFeature.swift
+//  ReportCategorySheetFeature.swift
 //  Up
 //
-//  Created by Jun Young Lee on 6/20/25.
+//  Created by Jun Young Lee on 7/21/25.
 //
 
 import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct EmploymentPeriodSheetFeature {
+struct ReportCategorySheetFeature {
     @ObservableState
     struct State: Equatable {
-        var selected: EmploymentPeriod?
+        var selected: ReportCategory?
     }
     
     enum Action {
-        case select(EmploymentPeriod)
+        case select(ReportCategory)
         case closeButtonTapped
         case close
         case delegate(Delegate)
         
         enum Delegate: Equatable {
-            case select(EmploymentPeriod?)
+            case select(ReportCategory?)
         }
     }
     
@@ -36,8 +36,8 @@ struct EmploymentPeriodSheetFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case let .select(period):
-                state.selected = period
+            case let .select(category):
+                state.selected = category
                 return .send(.close)
                     .debounce(
                         id: CancelID.debounce,
@@ -49,8 +49,8 @@ struct EmploymentPeriodSheetFeature {
                 return .send(.close)
                 
             case .close:
-                return .run { [period = state.selected] send in
-                    await send(.delegate(.select(period)))
+                return .run { [category = state.selected] send in
+                    await send(.delegate(.select(category)))
                     await dismiss()
                 }
             case .delegate:
@@ -60,17 +60,17 @@ struct EmploymentPeriodSheetFeature {
     }
 }
 
-struct EmploymentPeriodSheetView: View {
-    let store: StoreOf<EmploymentPeriodSheetFeature>
+struct ReportCategorySheetView: View {
+    let store: StoreOf<ReportCategorySheetFeature>
     
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
             handle
             title
-            periods
+            categories
             closeButton
         }
-        .presentationDetents([.height(490)])
+        .presentationDetents([.height(362)])
         .presentationCornerRadius(24)
         .presentationDragIndicator(.hidden)
     }
@@ -87,7 +87,7 @@ struct EmploymentPeriodSheetView: View {
     private var title: some View {
         HStack {
             Spacer()
-            Text("근무 기간")
+            Text("신고 사유")
                 .pretendard(.body1Bold, color: .gray90)
             Spacer()
         }
@@ -101,20 +101,20 @@ struct EmploymentPeriodSheetView: View {
         )
     }
     
-    private var periods: some View {
-        ForEach(EmploymentPeriod.allCases) { period in
-            periodButton(period)
+    private var categories: some View {
+        ForEach(ReportCategory.allCases) { category in
+            categoryButton(category)
         }
     }
     
-    private func periodButton(_ period: EmploymentPeriod) -> some View {
-        let isSelected = store.selected == period
+    private func categoryButton(_ category: ReportCategory) -> some View {
+        let isSelected = store.selected == category
         
         return Button {
-            store.send(.select(period))
+            store.send(.select(category))
         } label: {
             HStack {
-                Text(period.text)
+                Text(category.text)
                 Spacer()
                 if isSelected {
                     AppIcon.checkLine.image
@@ -146,11 +146,11 @@ struct EmploymentPeriodSheetView: View {
 }
 
 #Preview {
-    EmploymentPeriodSheetView(
+    ReportCategorySheetView(
         store: Store(
-            initialState: EmploymentPeriodSheetFeature.State()
+            initialState: ReportCategorySheetFeature.State()
         ) {
-            EmploymentPeriodSheetFeature()
+            ReportCategorySheetFeature()
         }
     )
 }
