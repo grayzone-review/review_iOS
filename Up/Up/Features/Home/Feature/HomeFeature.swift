@@ -243,7 +243,7 @@ struct HomeView: View {
                             .pretendard(.body1Bold, color: .white)
                             .multilineTextAlignment(.leading)
                         HStack(spacing: 4) {
-                            Text("지금 리뷰 작성하러 가기")
+                            Text("지금 리뷰 검색하러 가기")
                                 .pretendard(.captionSemiBold, color: .white)
                             AppIcon.arrowRight.image(width: 14, height: 14, appColor: .white)
                         }

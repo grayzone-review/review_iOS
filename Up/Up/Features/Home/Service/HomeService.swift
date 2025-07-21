@@ -12,6 +12,10 @@ protocol HomeService {
     func fetchPopularReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody
     func fetchMainRegionReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody
     func fetchInterestedRegionReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody
+    func fetchMyReviews(page: Int) async throws -> ActivityReviewsBody
+    func fetchInteractedReviews(page: Int) async throws -> ActivityReviewsBody
+    func fetchFollowedCompanies(page: Int) async throws -> FollowedCompaniesBody
+    func fetchInteractionCounts() async throws -> InteractionCountsDTO
 }
 
 private enum HomeServiceKey: DependencyKey {
@@ -233,6 +237,96 @@ struct MockHomeService: HomeService {
             ],
             hasNext: false,
             currentPage: 0
+        )
+    }
+    
+    func fetchMyReviews(page: Int) async throws -> ActivityReviewsBody {
+        ActivityReviewsBody(
+            reviews: [
+                ActivityReviewDTO(
+                    id: 1564,
+                    totalRating: 3.5,
+                    title: "예약이 많아 포트폴리오 쌓기엔 좋지만, 예약 사이 간격이 촘촘해 쉬는 시간이 부족해요",
+                    companyID: 4444,
+                    companyName: "네일샵 석촌점",
+                    companyAddress: "",
+                    job: "네일아티스트",
+                    createdAt: "2025-05-15T22:35:53.276281",
+                    likeCount: 8,
+                    commentCount: 13
+                ),
+                ActivityReviewDTO(
+                    id: 1563,
+                    totalRating: 4.0,
+                    title: "점심시간에 손님이 몰려도 동료들과 호흡이 잘 맞고 사장님이 잘 챙겨줘서 일하기 편해요",
+                    companyID: 4445,
+                    companyName: "분식집 석촌 김밥왕",
+                    companyAddress: "",
+                    job: "서빙",
+                    createdAt: "2025-03-15T22:35:53.276281",
+                    likeCount: 5,
+                    commentCount: 2
+                )
+            ],
+            hasNext: false,
+            currentPage: 0
+        )
+    }
+    
+    func fetchInteractedReviews(page: Int) async throws -> ActivityReviewsBody {
+        ActivityReviewsBody(
+            reviews: [
+                ActivityReviewDTO(
+                    id: 1564,
+                    totalRating: 3.5,
+                    title: "예약이 많아 포트폴리오 쌓기엔 좋지만, 예약 사이 간격이 촘촘해 쉬는 시간이 부족해요",
+                    companyID: 4444,
+                    companyName: "네일샵 석촌점",
+                    companyAddress: "",
+                    job: "네일아티스트",
+                    createdAt: "2025-05-15T22:35:53.276281",
+                    likeCount: 8,
+                    commentCount: 13
+                ),
+                ActivityReviewDTO(
+                    id: 1563,
+                    totalRating: 4.0,
+                    title: "점심시간에 손님이 몰려도 동료들과 호흡이 잘 맞고 사장님이 잘 챙겨줘서 일하기 편해요",
+                    companyID: 4445,
+                    companyName: "분식집 석촌 김밥왕",
+                    companyAddress: "",
+                    job: "서빙",
+                    createdAt: "2025-03-15T22:35:53.276281",
+                    likeCount: 5,
+                    commentCount: 2
+                )
+            ],
+            hasNext: false,
+            currentPage: 0
+        )
+    }
+    
+    func fetchFollowedCompanies(page: Int) async throws -> FollowedCompaniesBody {
+        FollowedCompaniesBody(
+            companies: [
+                FollowedCompanyDTO(
+                    id: 209,
+                    name: "정일正一 한우",
+                    address: "서울특별시 종로구 당주동 100 세종빌딩, 세종아파트 ",
+                    totalRating: 2.04,
+                    reviewTitle: "반복적인 테스트 진행\n"
+                )
+            ],
+            hasNext: false,
+            currentPage: 0
+        )
+    }
+    
+    func fetchInteractionCounts() async throws -> InteractionCountsDTO {
+        InteractionCountsDTO(
+            myReviewCount: 2,
+            interactedReviewCount: 2,
+            followedCompanyCount: 3
         )
     }
 }

@@ -13,15 +13,24 @@ struct MyActivityFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
+        var counts: InteractionCounts?
         var selectedTab: Tab
+        var myReview = MyReviewTabFeature.State()
+        var interactedReview = InteractedReviewTabFeature.State()
+        var followedCompany = FollowedCompanyTabFeature.State()
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
+        case viewInit
+        case countsFetched(InteractionCounts)
         case makeReviewButtonTapped
         case backButtonTapped
         case tabSelected(Tab)
+        case myReview(MyReviewTabFeature.Action)
+        case interactedReview(InteractedReviewTabFeature.Action)
+        case followedCompany(FollowedCompanyTabFeature.Action)
     }
     
     @Reducer
@@ -47,9 +56,20 @@ struct MyActivityFeature {
     }
     
     @Dependency(\.dismiss) var dismiss
+    @Dependency(\.homeService) var homeService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
+        
+        Scope(state: \.myReview, action: \.myReview) {
+            MyReviewTabFeature()
+        }
+        Scope(state: \.interactedReview, action: \.interactedReview) {
+            InteractedReviewTabFeature()
+        }
+        Scope(state: \.followedCompany, action: \.followedCompany) {
+            FollowedCompanyTabFeature()
+        }
         
         Reduce { state, action in
             switch action {
@@ -57,6 +77,22 @@ struct MyActivityFeature {
                 return .none
                 
             case .destination:
+                return .none
+                
+            case .viewInit:
+                guard state.counts == nil else {
+                    return .none
+                }
+                
+                return .run { send in
+                    let data = try await homeService.fetchInteractionCounts()
+                    let counts = data.toDomain()
+                    
+                    await send(.countsFetched(counts))
+                }
+                
+            case let .countsFetched(counts):
+                state.counts = counts
                 return .none
                 
             case .makeReviewButtonTapped:
@@ -69,6 +105,15 @@ struct MyActivityFeature {
             case let .tabSelected(tab):
                 state.selectedTab = tab
                 return .none
+                
+            case .myReview:
+                return .none
+                
+            case .interactedReview:
+                return .none
+                
+            case .followedCompany:
+                return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -79,6 +124,11 @@ extension MyActivityFeature.Destination.State: Equatable {}
 
 struct MyActivityView: View {
     @Bindable var store: StoreOf<MyActivityFeature>
+    
+    init(store: StoreOf<MyActivityFeature>) {
+        self.store = store
+        store.send(.viewInit)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -116,7 +166,7 @@ struct MyActivityView: View {
     private var activityCounts: some View {
         HStack {
             VStack(spacing: 4) {
-                Text("2")
+                Text(String(store.counts?.myReviewCount ?? 0))
                     .pretendard(.h3, color: .orange40)
                 Text("작성 리뷰 수")
                     .pretendard(.body1Bold, color: .gray90)
@@ -124,7 +174,7 @@ struct MyActivityView: View {
             .frame(width: 87)
             Spacer()
             VStack(spacing: 4) {
-                Text("2")
+                Text(String(store.counts?.interactedReviewCount ?? 0))
                     .pretendard(.h3, color: .orange40)
                 Text("도움이 됐어요")
                     .pretendard(.body1Bold, color: .gray90)
@@ -132,7 +182,7 @@ struct MyActivityView: View {
             .frame(width: 87)
             Spacer()
             VStack(spacing: 4) {
-                Text("3")
+                Text(String(store.counts?.followedCompanyCount ?? 0))
                     .pretendard(.h3, color: .orange40)
                 Text("즐겨찾기")
                     .pretendard(.body1Bold, color: .gray90)
@@ -181,58 +231,18 @@ struct MyActivityView: View {
     }
     
     private var reviewTab: some View {
-        emptyReview // API 확정되면 UI 추가하여 스크롤 뷰 작성
-    }
-    
-    private var emptyReview: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            AppIcon.chatSecondFill.image(
-                width: 48,
-                height: 48,
-                appColor: .gray30
-            )
-            Text("작성된 리뷰가 없습니다.")
-                .pretendard(.body1Regular, color: .gray50)
-            Spacer()
-        }
+        let myReviewStore = store.scope(state: \.myReview, action: \.myReview)
+        return MyReviewTabView(store: myReviewStore)
     }
     
     private var activityTab: some View {
-        emptyActivity // API 확정되면 UI 추가하여 스크롤 뷰 작성
-    }
-    
-    private var emptyActivity: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            AppIcon.chatSecondFill.image(
-                width: 48,
-                height: 48,
-                appColor: .gray30
-            )
-            Text("좋아요 또는 댓글을 남긴\n리뷰가 없습니다.")
-                .multilineTextAlignment(.center)
-                .pretendard(.body1Regular, color: .gray50)
-            Spacer()
-        }
+        let interactedReviewStore = store.scope(state: \.interactedReview, action: \.interactedReview)
+        return InteractedReviewTabView(store: interactedReviewStore)
     }
     
     private var followingTab: some View {
-        emptyFollowing // API 확정되면 UI 추가하여 스크롤 뷰 작성
-    }
-    
-    private var emptyFollowing: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            AppIcon.followingFill.image(
-                width: 48,
-                height: 48,
-                appColor: .gray30
-            )
-            Text("팔로우 한 업체가 없습니다.")
-                .pretendard(.body1Regular, color: .gray50)
-            Spacer()
-        }
+        let followedCompanyStore = store.scope(state: \.followedCompany, action: \.followedCompany)
+        return FollowedCompanyTabView(store: followedCompanyStore)
     }
     
     private var makeReviewButton: some View {
