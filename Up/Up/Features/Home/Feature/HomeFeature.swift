@@ -12,7 +12,7 @@ import SwiftUI
 struct HomeFeature {
     @ObservableState
     struct State: Equatable {
-        var user: User?
+        @Shared(.user) var user
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
         var interestedRegionReviews = [HomeReview]()
@@ -24,8 +24,6 @@ struct HomeFeature {
     
     enum Action {
         case viewInit
-        case fetchUser
-        case userFetched(User)
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
         case fetchMainRegionReviews
@@ -41,27 +39,10 @@ struct HomeFeature {
             switch action {
             case .viewInit:
                 return .run { send in
-                    await send(.fetchUser)
                     await send(.fetchPopularReviews)
                     await send(.fetchMainRegionReviews)
                     await send(.fetchInterestedRegionReviews)
                 }
-                
-            case .fetchUser:
-                guard state.user == nil else {
-                    return .none
-                }
-                
-                return .run { send in
-                    let data = try await homeService.fetchUser()
-                    let user = data.toDomain()
-                    
-                    await send(.userFetched(user))
-                }
-                
-            case let .userFetched(user):
-                state.user = user
-                return .none
                 
             case .fetchPopularReviews:
                 guard state.popularReviews.isEmpty else {
@@ -190,7 +171,7 @@ struct HomeView: View {
     private var nicknameButton: some View {
         NavigationLink(
             state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(userName: store.userName, selectedTab: .activity)
+                MyActivityFeature.State(selectedTab: .activity)
             )
         ) {
             HStack(spacing: 4) {
@@ -271,7 +252,7 @@ struct HomeView: View {
     private var myReviewsBanner: some View {
         NavigationLink(
             state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(userName: store.userName, selectedTab: .review)
+                MyActivityFeature.State(selectedTab: .review)
             )
         ) {
             ZStack(alignment: .bottomTrailing) {
@@ -305,7 +286,7 @@ struct HomeView: View {
     private var followingListBanner: some View {
         NavigationLink(
             state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(userName: store.userName, selectedTab: .following)
+                MyActivityFeature.State(selectedTab: .following)
             )
         ) {
             ZStack(alignment: .bottomTrailing) {
@@ -368,7 +349,7 @@ struct HomeView: View {
         VStack(spacing: 0) {
             HStack(spacing: 4) {
                 Text("지금 인기 있는 리뷰")
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                 Spacer()
                 NavigationLink(
@@ -399,7 +380,7 @@ struct HomeView: View {
         VStack(spacing: 0) {
             HStack(spacing: 4) {
                 Text("우리 동네 최근 리뷰")
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                 Spacer()
                 NavigationLink(
@@ -432,7 +413,7 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 HStack(spacing: 4) {
                     Text("관심 동네 최근 리뷰")
-                        .pretendard(.h3, color: .gray90)
+                        .pretendard(.h3Bold, color: .gray90)
                     AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                     Spacer()
                     NavigationLink(
@@ -506,6 +487,15 @@ struct HomeView: View {
 }
 
 #Preview {
+    @Shared(.user) var user = User(
+        nickname: "건디",
+        mainRegion: Region(
+            id: 0,
+            address: "서울시 노원구 상계동"
+        ),
+        interestedRegions: []
+    )
+    
     NavigationStack {
         HomeView(
             store: Store(

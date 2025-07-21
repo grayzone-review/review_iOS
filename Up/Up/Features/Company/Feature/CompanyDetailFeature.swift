@@ -215,7 +215,7 @@ struct CompanyDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(store.company?.name ?? "")
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 
                 Text(store.company?.address.displayText ?? "")
                     .pretendard(.captionRegular, color: .gray50)

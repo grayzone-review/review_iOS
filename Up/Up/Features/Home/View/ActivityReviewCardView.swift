@@ -51,7 +51,7 @@ struct ActivityReviewCardView: View {
     private var rating: some View {
         HStack(spacing: 4) {
             Text(String(review.totalRating.rounded(to: 1)))
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             StarRatingView(rating: review.totalRating)
         }
     }

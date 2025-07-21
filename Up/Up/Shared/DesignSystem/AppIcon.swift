@@ -36,6 +36,7 @@ enum AppIcon: String {
     case mapFill = "ic_map_fill"
     case mapPinFill = "ic_map_pin_fill"
     case officeFill = "ic_office_fill"
+    case penLine = "ic_pen_line"
     case penFill = "ic_pen_fill"
     case reviewFill = "ic_review_fill"
     case searchLine = "ic_search_line"
@@ -45,6 +46,11 @@ enum AppIcon: String {
     case unlockLine = "ic_unlock_line"
     case userFill = "ic_user_fill"
     case userLine = "ic_user_line"
+    case userMinusLine = "ic_user_minus_line"
+    case bellFill = "ic_bell_fill"
+    case bellLine = "ic_bell_line"
+    case smileFill = "ic_smlie_fill"
+    case signOutLine = "ic_sign_out_line"
     
     var image: Image {
         Image(rawValue)

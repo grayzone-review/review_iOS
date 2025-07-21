@@ -160,7 +160,7 @@ struct ReviewCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
                 Text(store.review.rating.displayText)
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 StarRatingView(rating: store.review.rating.totalRating)
             }
             
@@ -173,7 +173,7 @@ struct ReviewCardView: View {
     private var totalRating: some View {
         HStack(spacing: 4) {
             Text(store.review.rating.displayText)
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             StarRatingView(rating: store.review.rating.totalRating)
         }
     }
@@ -216,7 +216,7 @@ struct ReviewCardView: View {
     
     private var title: some View {
         Text(store.review.title.withZeroWidthSpaces)
-            .pretendard(.h3, color: .gray90)
+            .pretendard(.h3Bold, color: .gray90)
     }
     
     private var content: some View {

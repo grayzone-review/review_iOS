@@ -277,9 +277,9 @@ struct SearchSubmittedView: View {
     private var resultCount: some View {
         HStack(spacing: 8) {
             Text("검색 결과")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             Text("\(store.totalCount ?? 0)")
-                .pretendard(.h3, color: .gray50)
+                .pretendard(.h3Bold, color: .gray50)
             Spacer()
         }
         .padding(

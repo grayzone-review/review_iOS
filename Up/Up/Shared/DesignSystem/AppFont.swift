@@ -10,7 +10,8 @@ import SwiftUI
 enum Typography: String {
     case h1
     case h2
-    case h3
+    case h3Bold
+    case h3Regular
     case body1Bold
     case body1Regular
     case body2Bold
@@ -22,9 +23,9 @@ enum Typography: String {
     
     var weight: String {
         switch self {
-        case .h1, .h2, .h3, .body1Bold, .body2Bold, .captionBold:
+        case .h1, .h2, .h3Bold, .body1Bold, .body2Bold, .captionBold:
             return "Bold"
-        case .body1Regular, .body2Regular, .captionRegular, .logo:
+        case .h3Regular, .body1Regular, .body2Regular, .captionRegular, .logo:
             return "Regular"
         case .captionSemiBold:
             return "SemiBold"
@@ -37,7 +38,7 @@ enum Typography: String {
             return 22
         case .h2:
             return 20
-        case .h3:
+        case .h3Bold, .h3Regular:
             return 18
         case .body1Bold, .body1Regular:
             return 16
@@ -64,7 +65,7 @@ enum Typography: String {
     
     var lineSpacing: CGFloat {
         switch self {
-        case .h1, .h2, .h3, .body1Bold, .body2Bold, .captionBold, .captionSemiBold, .logo:
+        case .h1, .h2, .h3Bold, .h3Regular, .body1Bold, .body2Bold, .captionBold, .captionSemiBold, .logo:
             return (uiFont.pointSize * 0.3) / 2
         case .body1Regular, .body2Regular, .captionRegular:
             return (uiFont.pointSize * 0.5) / 2

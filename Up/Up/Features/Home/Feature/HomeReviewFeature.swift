@@ -275,7 +275,7 @@ struct HomeReviewView: View {
                     }
                     HStack(spacing: 4) {
                         Text(String(company.totalRating.rounded(to: 1)))
-                            .pretendard(.h3, color: .gray90)
+                            .pretendard(.h3Bold, color: .gray90)
                         StarRatingView(rating: company.totalRating)
                     }
                 }
@@ -381,7 +381,7 @@ struct HomeReviewView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
                 Text(review.rating.displayText)
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 StarRatingView(rating: review.rating.totalRating)
             }
             ratings(review)
@@ -423,7 +423,7 @@ struct HomeReviewView: View {
     
     private func title(_ review: Review) -> some View {
         Text(review.title.withZeroWidthSpaces)
-            .pretendard(.h3, color: .gray90)
+            .pretendard(.h3Bold, color: .gray90)
     }
     
     private func content(_ review: Review) -> some View {

@@ -5,10 +5,16 @@
 //  Created by Jun Young Lee on 7/17/25.
 //
 
-struct User: Equatable {
+struct User: Equatable, Codable {
     let nickname: String
     let mainRegion: Region
     let interestedRegions: [Region]
+    
+    enum CodingKeys: String, CodingKey {
+        case nickname
+        case mainRegion
+        case interestedRegions
+    }
 }
 
 struct UserDTO: Codable {

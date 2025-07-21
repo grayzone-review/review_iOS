@@ -13,12 +13,16 @@ struct MyActivityFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
-        let userName: String
+        @Shared(.user) var user
         var counts: InteractionCounts?
         var selectedTab: Tab
         var myReview = MyReviewTabFeature.State()
         var interactedReview = InteractedReviewTabFeature.State()
         var followedCompany = FollowedCompanyTabFeature.State()
+        
+        var userName: String {
+            user?.nickname ?? "사용자"
+        }
     }
     
     enum Action: BindableAction {
@@ -168,7 +172,7 @@ struct MyActivityView: View {
         HStack {
             VStack(spacing: 4) {
                 Text(String(store.counts?.myReviewCount ?? 0))
-                    .pretendard(.h3, color: .orange40)
+                    .pretendard(.h3Bold, color: .orange40)
                 Text("작성 리뷰 수")
                     .pretendard(.body1Bold, color: .gray90)
             }
@@ -176,7 +180,7 @@ struct MyActivityView: View {
             Spacer()
             VStack(spacing: 4) {
                 Text(String(store.counts?.interactedReviewCount ?? 0))
-                    .pretendard(.h3, color: .orange40)
+                    .pretendard(.h3Bold, color: .orange40)
                 Text("도움이 됐어요")
                     .pretendard(.body1Bold, color: .gray90)
             }
@@ -184,7 +188,7 @@ struct MyActivityView: View {
             Spacer()
             VStack(spacing: 4) {
                 Text(String(store.counts?.followedCompanyCount ?? 0))
-                    .pretendard(.h3, color: .orange40)
+                    .pretendard(.h3Bold, color: .orange40)
                 Text("즐겨찾기")
                     .pretendard(.body1Bold, color: .gray90)
             }
@@ -267,10 +271,7 @@ struct MyActivityView: View {
     NavigationStack {
         MyActivityView(
             store: Store(
-                initialState: MyActivityFeature.State(
-                    userName: "건디",
-                    selectedTab: .review
-                )
+                initialState: MyActivityFeature.State(selectedTab: .review)
             ) {
                 MyActivityFeature()
             }

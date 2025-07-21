@@ -5,9 +5,14 @@
 //  Created by Jun Young Lee on 7/17/25.
 //
 
-struct Region: Equatable {
+struct Region: Equatable, Codable {
     let id: Int
     let address: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case address
+    }
 }
 
 struct RegionDTO: Codable {

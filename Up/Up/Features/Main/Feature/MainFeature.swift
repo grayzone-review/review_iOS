@@ -13,16 +13,22 @@ struct MainFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
+        @Shared(.user) var user
         var selectedTab: Tab = .home
         var home = HomeFeature.State()
+        var myPage = MyPageFeature.State()
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
+        case viewInit
+        case fetchUser
+        case userFetched(User)
         case makeReviewButtonTapped
         case tabSelected(Tab)
         case home(HomeFeature.Action)
+        case myPage(MyPageFeature.Action)
     }
     
     @Reducer
@@ -35,11 +41,16 @@ struct MainFeature {
         case myPage
     }
     
+    @Dependency(\.homeService) var homeService
+    
     var body: some ReducerOf<Self> {
         BindingReducer()
         
         Scope(state: \.home, action: \.home) {
             HomeFeature()
+        }
+        Scope(state: \.myPage, action: \.myPage) {
+            MyPageFeature()
         }
         
         Reduce { state, action in
@@ -48,6 +59,29 @@ struct MainFeature {
                 return .none
                 
             case .destination:
+                return .none
+                
+            case .viewInit:
+                return .run { send in
+                    await send(.fetchUser)
+                }
+                
+            case .fetchUser:
+                guard state.user == nil else {
+                    return .none
+                }
+                
+                return .run { send in
+                    let data = try await homeService.fetchUser()
+                    let user = data.toDomain()
+                    
+                    await send(.userFetched(user))
+                }
+                
+            case let .userFetched(user):
+                state.$user.withLock {
+                    $0 = user
+                }
                 return .none
                 
             case .makeReviewButtonTapped:
@@ -60,6 +94,9 @@ struct MainFeature {
                 
             case .home:
                 return .none
+                
+            case .myPage:
+                return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -68,8 +105,19 @@ struct MainFeature {
 
 extension MainFeature.Destination.State: Equatable {}
 
+extension SharedKey where Self == FileStorageKey<User?>.Default {
+    static var user: Self {
+        Self[.fileStorage(.documentsDirectory.appending(component: "user.json")), default: nil]
+    }
+}
+
 struct MainView: View {
     @Bindable var store: StoreOf<MainFeature>
+    
+    init(store: StoreOf<MainFeature>) {
+        self.store = store
+        store.send(.viewInit)
+    }
     
     var body: some View {
         ZStack {
@@ -94,7 +142,9 @@ struct MainView: View {
     }
     
     private var myPage: some View {
-        Text("마이페이지") // 마이페이지 생성 후 교체
+        let myPageStore = store.scope(state: \.myPage, action: \.myPage)
+        
+        return MyPageView(store: myPageStore)
     }
     
     private var tabBar: some View {

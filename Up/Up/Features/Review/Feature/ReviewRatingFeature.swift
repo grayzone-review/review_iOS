@@ -137,7 +137,7 @@ struct ReviewRatingView: View {
             store.send(.companyButtonTapped)
         } label: {
             Text(store.company.name)
-                .pretendard(.h3, color: .orange40)
+                .pretendard(.h3Bold, color: .orange40)
         }
         .sheet(
             item: $store.scope(state: \.destination?.company, action: \.destination.company)
