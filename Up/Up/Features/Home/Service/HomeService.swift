@@ -19,8 +19,8 @@ protocol HomeService {
 }
 
 private enum HomeServiceKey: DependencyKey {
-    static let liveValue: any HomeService = MockHomeService()
-    static let previewValue: any HomeService = MockHomeService()
+    static let liveValue: any HomeService = DefaultHomeService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let previewValue: any HomeService = DefaultHomeService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
     static var testValue: any HomeService = MockHomeService()
 }
 
@@ -28,6 +28,70 @@ extension DependencyValues {
     var homeService: any HomeService {
         get { self[HomeServiceKey.self] }
         set { self[HomeServiceKey.self] = newValue }
+    }
+}
+
+struct DefaultHomeService: HomeService {
+    private let session: NetworkSession
+    
+    init(session: NetworkSession) {
+        self.session = session
+    }
+    
+    func fetchUser() async throws -> UserDTO {
+        let request = HomeAPI.user
+        let response = try await session.request(request, as: UserDTO.self)
+        
+        return response.data
+    }
+    
+    func fetchPopularReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody {
+        let request = HomeAPI.popularReviews(latitude: latitude, longitude: longitude, page: page)
+        let response = try await session.request(request, as: HomeReviewsBody.self)
+        
+        return response.data
+    }
+    
+    func fetchMainRegionReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody {
+        let request = HomeAPI.mainRegionReviews(latitude: latitude, longitude: longitude, page: page)
+        let response = try await session.request(request, as: HomeReviewsBody.self)
+        
+        return response.data
+    }
+    
+    func fetchInterestedRegionReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody {
+        let request = HomeAPI.interestedRegionReviews(latitude: latitude, longitude: longitude, page: page)
+        let response = try await session.request(request, as: HomeReviewsBody.self)
+        
+        return response.data
+    }
+    
+    func fetchMyReviews(page: Int) async throws -> ActivityReviewsBody {
+        let request = HomeAPI.myReviews(page: page)
+        let response = try await session.request(request, as: ActivityReviewsBody.self)
+        
+        return response.data
+    }
+    
+    func fetchInteractedReviews(page: Int) async throws -> ActivityReviewsBody {
+        let request = HomeAPI.interactedReviews(page: page)
+        let response = try await session.request(request, as: ActivityReviewsBody.self)
+        
+        return response.data
+    }
+    
+    func fetchFollowedCompanies(page: Int) async throws -> FollowedCompaniesBody {
+        let request = HomeAPI.followedCompanies(page: page)
+        let response = try await session.request(request, as: FollowedCompaniesBody.self)
+        
+        return response.data
+    }
+    
+    func fetchInteractionCounts() async throws -> InteractionCountsDTO {
+        let request = HomeAPI.interactionCounts
+        let response = try await session.request(request, as: InteractionCountsDTO.self)
+        
+        return response.data
     }
 }
 

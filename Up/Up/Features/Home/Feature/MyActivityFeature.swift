@@ -13,6 +13,7 @@ struct MyActivityFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
+        let userName: String
         var counts: InteractionCounts?
         var selectedTab: Tab
         var myReview = MyReviewTabFeature.State()
@@ -157,7 +158,7 @@ struct MyActivityView: View {
                 }
             }
             ToolbarItem(placement: .principal) {
-                Text("건디") // 계정 정보 받아 사용
+                Text(store.userName)
                     .pretendard(.h2, color: .gray90)
             }
         }
@@ -267,6 +268,7 @@ struct MyActivityView: View {
         MyActivityView(
             store: Store(
                 initialState: MyActivityFeature.State(
+                    userName: "건디",
                     selectedTab: .review
                 )
             ) {

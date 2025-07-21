@@ -16,6 +16,10 @@ struct HomeFeature {
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
         var interestedRegionReviews = [HomeReview]()
+        
+        var userName: String {
+            user?.nickname ?? "사용자"
+        }
     }
     
     enum Action {
@@ -186,11 +190,11 @@ struct HomeView: View {
     private var nicknameButton: some View {
         NavigationLink(
             state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(selectedTab: .activity)
+                MyActivityFeature.State(userName: store.userName, selectedTab: .activity)
             )
         ) {
             HStack(spacing: 4) {
-                Text((store.user?.nickname ?? "사용자") + "님")
+                Text(store.userName + "님")
                     .pretendard(.body1Bold, color: .orange40)
                 AppIcon.arrowRight.image(width: 18, height: 18, appColor: .orange40)
             }
@@ -267,7 +271,7 @@ struct HomeView: View {
     private var myReviewsBanner: some View {
         NavigationLink(
             state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(selectedTab: .review)
+                MyActivityFeature.State(userName: store.userName, selectedTab: .review)
             )
         ) {
             ZStack(alignment: .bottomTrailing) {
@@ -301,7 +305,7 @@ struct HomeView: View {
     private var followingListBanner: some View {
         NavigationLink(
             state: UpFeature.Path.State.activity(
-                MyActivityFeature.State(selectedTab: .following)
+                MyActivityFeature.State(userName: store.userName, selectedTab: .following)
             )
         ) {
             ZStack(alignment: .bottomTrailing) {
