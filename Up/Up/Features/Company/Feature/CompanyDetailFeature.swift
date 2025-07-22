@@ -39,8 +39,6 @@ struct CompanyDetailFeature {
         case followButtonTapped
         case follow
         case makeReviewButtonTapped
-        case likeButtonTapped(Review)
-        case like(id: Int, Bool)
         case destination(PresentationAction<Destination.Action>)
     }
     
@@ -51,7 +49,6 @@ struct CompanyDetailFeature {
     
     enum CancelID: Hashable {
         case follow
-        case like(id: Int)
     }
     
     @Dependency(\.dismiss) var dismiss
@@ -161,28 +158,6 @@ struct CompanyDetailFeature {
                 state.destination = .review(ReviewMakingFeature.State(company: state.company))
                 return .none
                 
-            case let .likeButtonTapped(review):
-                guard let index = state.reviews.firstIndex(of: review) else {
-                    return .none
-                }
-                state.reviews[index].likeCount += state.reviews[index].isLiked ? -1 : 1
-                state.reviews[index].isLiked.toggle()
-                return .send(.like(id: review.id, state.reviews[index].isLiked))
-                    .debounce(
-                        id: CancelID.like(id: review.id),
-                        for: 1,
-                        scheduler: mainQueue
-                    )
-                
-            case let .like(id, isLiked):
-                return .run { _ in
-                    if isLiked {
-                        try await reviewService.createReviewLike(of: id)
-                    } else {
-                        try await reviewService.deleteReviewLike(of: id)
-                    }
-                }
-                
             case let .destination(.presented(.review(.delegate(.created(review))))):
                 state.reviews.insert(review, at: 0)
                 return .none
@@ -237,7 +212,7 @@ struct CompanyDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(store.company?.name ?? "")
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 
                 Text(store.company?.address.displayText ?? "")
                     .pretendard(.captionRegular, color: .gray50)

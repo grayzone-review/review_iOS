@@ -277,9 +277,9 @@ struct SearchSubmittedView: View {
     private var resultCount: some View {
         HStack(spacing: 8) {
             Text("검색 결과")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             Text("\(store.totalCount ?? 0)")
-                .pretendard(.h3, color: .gray50)
+                .pretendard(.h3Bold, color: .gray50)
             Spacer()
         }
         .padding(
@@ -341,7 +341,7 @@ struct SearchSubmittedView: View {
     }
     
     private func searchedCompany(_ company: SearchedCompany) -> some View {
-        return VStack(spacing: 40) {
+        VStack(spacing: 40) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(company.name)
@@ -368,7 +368,7 @@ struct SearchSubmittedView: View {
                 followButton(company)
             }
             
-            HStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
                 Text("한줄평")
                     .pretendard(.captionBold, color: .gray50)
                     .padding(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
@@ -377,6 +377,7 @@ struct SearchSubmittedView: View {
                 if let title = company.reviewTitle {
                     Text(title)
                         .pretendard(.captionRegular, color: .gray70)
+                        .padding(.top, 4)
                 }
                 Spacer()
             }

@@ -11,16 +11,11 @@ import KakaoMapsSDK
 
 @Reducer
 struct UpFeature {
-    @Reducer
-    enum Path {
-        case detail(CompanyDetailFeature)
-    }
-    
     @ObservableState
     struct State: Equatable {
         var onboarding = OnboardingFeature.State()
         var path = StackState<Path.State>()
-        var search = SearchCompanyFeature.State()
+        var main = MainFeature.State()
         var isFirstLaunch = true
         var isBootstrapping = true
     }
@@ -32,7 +27,16 @@ struct UpFeature {
         case endBootstrap
         case onboarding(OnboardingFeature.Action)
         case path(StackActionOf<Path>)
-        case search(SearchCompanyFeature.Action)
+        case main(MainFeature.Action)
+    }
+    
+    @Reducer
+    enum Path {
+        case activity(MyActivityFeature)
+        case homeReview(HomeReviewFeature)
+        case search(SearchCompanyFeature)
+        case detail(CompanyDetailFeature)
+        case report(ReportFeature)
     }
     
     @Dependency(\.userDefaultsService) var userDefaultsService
@@ -41,9 +45,8 @@ struct UpFeature {
         Scope(state: \.onboarding, action: \.onboarding) {
             OnboardingFeature()
         }
-        
-        Scope(state: \.search, action: \.search) {
-            SearchCompanyFeature()
+        Scope(state: \.main, action: \.main) {
+            MainFeature()
         }
         
         Reduce { state, action in
@@ -87,7 +90,7 @@ struct UpFeature {
             case .path:
                 return .none
                 
-            case .search:
+            case .main:
                 return .none
             }
         }
@@ -130,13 +133,23 @@ struct UpView: View {
     
     private var main: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            SearchCompanyView(
-                store: store.scope(state: \.search, action: \.search)
-            )
+            MainView(store: store.scope(state: \.main, action: \.main))
         } destination: { store in
             switch store.case {
+            case let .activity(activityStore):
+                MyActivityView(store: activityStore)
+                
+            case let .homeReview(homeReviewStore):
+                HomeReviewView(store: homeReviewStore)
+                
+            case let .search(searchStore):
+                SearchCompanyView(store: searchStore)
+                
             case let .detail(detailStore):
                 CompanyDetailView(store: detailStore)
+                
+            case let .report(reportStore):
+                ReportView(store: reportStore)
             }
         }
     }

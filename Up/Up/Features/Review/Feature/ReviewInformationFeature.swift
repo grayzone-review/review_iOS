@@ -141,7 +141,7 @@ struct ReviewInformationView: View {
     private var companyField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("상호명")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             
             Button {
                 store.send(.inputCompanyFieldTapped)
@@ -179,7 +179,7 @@ struct ReviewInformationView: View {
     private var jobRoleField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("업무 내용")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             
             Button {
                 store.send(.inputJobRoleFieldTapped)
@@ -212,7 +212,7 @@ struct ReviewInformationView: View {
     private var employmentPeriodField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("근무 기간")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             
             Button {
                 store.send(.selectEmploymentPeriodFieldTapped)

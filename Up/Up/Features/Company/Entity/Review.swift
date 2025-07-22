@@ -21,7 +21,6 @@ struct Review: Equatable, Identifiable {
     var likeCount: Int
     var commentCount: Int
     var isLiked: Bool
-    var isExpanded: Bool = false
 }
 
 extension Review {

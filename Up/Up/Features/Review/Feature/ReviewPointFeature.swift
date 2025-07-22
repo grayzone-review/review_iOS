@@ -152,7 +152,7 @@ struct ReviewPointView: View {
     private func reviewPointField(point: Review.Point) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(point.title)
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             
             Button {
                 store.send(.inputReviewPointFieldTapped(point))

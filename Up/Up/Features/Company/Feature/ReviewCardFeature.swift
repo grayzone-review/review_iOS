@@ -14,6 +14,19 @@ struct ReviewCardFeature {
     struct State: Equatable {
         @Presents var comments: CommentsWindowFeature.State?
         var review: Review
+        var isExpanded: Bool
+        var isExpandedOnly: Bool
+        
+        init(
+            comments: CommentsWindowFeature.State? = nil,
+            review: Review,
+            isExpandedOnly: Bool = false
+        ) {
+            self.comments = comments
+            self.review = review
+            self.isExpandedOnly = isExpandedOnly
+            isExpanded = isExpandedOnly
+        }
         
         var creationDateText: String {
             DateFormatter.reviewCardFormat.string(from: review.creationDate)
@@ -56,11 +69,14 @@ struct ReviewCardFeature {
                 return .none
                 
             case .reviewCardTapped:
-                state.review.isExpanded.toggle()
+                guard state.isExpandedOnly == false else {
+                    return .none
+                }
+                state.isExpanded.toggle()
                 return .none
                 
             case .seeMoreButtonTapped:
-                state.review.isExpanded = true
+                state.isExpanded = true
                 return .none
                 
             case .likeButtonTapped:
@@ -144,11 +160,11 @@ struct ReviewCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
                 Text(store.review.rating.displayText)
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 StarRatingView(rating: store.review.rating.totalRating)
             }
             
-            if store.review.isExpanded {
+            if store.isExpanded {
                 ratings
             }
         }
@@ -157,14 +173,14 @@ struct ReviewCardView: View {
     private var totalRating: some View {
         HStack(spacing: 4) {
             Text(store.review.rating.displayText)
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             StarRatingView(rating: store.review.rating.totalRating)
         }
     }
     
     @ViewBuilder
     private var ratings: some View {
-        if store.review.isExpanded {
+        if store.isExpanded {
             HStack(alignment: .top) {
                 VStack(spacing: 20) {
                     rating("급여", store.review.rating.salary)
@@ -189,7 +205,6 @@ struct ReviewCardView: View {
         }
     }
     
-    @ViewBuilder
     private func rating(_ item: String, _ rating: Double) -> some View {
         HStack {
             Text(item)
@@ -201,7 +216,7 @@ struct ReviewCardView: View {
     
     private var title: some View {
         Text(store.review.title.withZeroWidthSpaces)
-            .pretendard(.h3, color: .gray90)
+            .pretendard(.h3Bold, color: .gray90)
     }
     
     private var content: some View {
@@ -215,7 +230,7 @@ struct ReviewCardView: View {
     
     @ViewBuilder
     private func reviewPoint(_ point: Review.Point) -> some View {
-        if store.review.isExpanded || point == .advantage {
+        if store.isExpanded || point == .advantage {
             let text = switch point {
             case .advantage:
                 store.review.advantagePoint
@@ -235,14 +250,13 @@ struct ReviewCardView: View {
                 Text(text.withZeroWidthSpaces)
                     .pretendard(.body1Regular, color: .gray80)
             }
-            .padding(EdgeInsets(top: 16, leading: 0, bottom: 16, trailing: 0)
-            )
+            .padding(EdgeInsets(top: 16, leading: 0, bottom: 16, trailing: 0))
         }
     }
     
     @ViewBuilder
     private var seeMoreButton: some View {
-        if store.review.isExpanded == false {
+        if store.isExpanded == false {
             Button {
                 store.send(.seeMoreButtonTapped)
             } label: {
