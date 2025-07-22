@@ -155,7 +155,7 @@ struct OnboardingView: View {
                 .foregroundStyle(AppColor.orange40.color)
                 .overlay {
                     Text(store.page == 3 ? "시작하기" : "다음")
-                        .pretendard(.h3, color: .white)
+                        .pretendard(.h3Bold, color: .white)
                 }
         }
         .frame(height: 75)
