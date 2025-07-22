@@ -19,11 +19,15 @@ struct SearchAreaFeature {
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
         var isFocused: Bool = false
+        var shouldShowNeedLoaction: Bool = true
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case viewInit
+        case searchMyAreaTapped
+        case needLocationCancelTapped
+        case needLocationGoToSettingTapped
         case handleError(Error)
     }
     
@@ -38,8 +42,38 @@ struct SearchAreaFeature {
                 return .none
             case .viewInit:
                 return .none
-            case let .handleError(_):
-                // TODO: - 에러 핸들링
+            case .searchMyAreaTapped:
+                return .run { send in
+                    let location = try await LocationService.shared.requestCurrentLocation()
+                    
+                    UserDefaults.standard.set(location, forKey: "UserLocation")
+                } catch: { error, send in
+                    await send(.handleError(error))
+                }
+            case .needLocationCancelTapped:
+                state.shouldShowNeedLoaction = false
+                return .none
+                
+            case .needLocationGoToSettingTapped:
+                return .run { send in
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    
+                    await UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    
+                    await send(.needLocationCancelTapped)
+                }
+            case let .handleError(error):
+                if let locationError = error as? LocationError {
+                    switch locationError {
+                    case .authorizationDenied:
+                        state.shouldShowNeedLoaction = true
+                    case .authorizationRestricted:
+                        /// 자녀 보호 기능 등으로 제한됨
+                        break
+                    case .locationUnavailable:
+                        break
+                    }
+                }
                 return .none
             }
         }
@@ -74,6 +108,14 @@ struct SearchAreaView: View {
         }
         .toolbar(.hidden)
         .navigationBarBackButtonHidden(true)
+        .overlay {
+            VStack(spacing: 0) {
+                Spacer()
+                requestLocationPopup
+                Spacer()
+            }
+            .background(Color.black.opacity(0.5).ignoresSafeArea())
+        }
     }
     
     
@@ -118,7 +160,7 @@ struct SearchAreaView: View {
             mode: .fill,
             text: "내 위치 찾기"
         ) {
-            
+            store.send(.searchMyAreaTapped)
         }
         .padding(.vertical, 20)
         .padding(.horizontal, 20)
@@ -148,6 +190,53 @@ struct SearchAreaView: View {
         .padding(.vertical, 16)
         .padding(.horizontal, 20)
         .background(AppColor.gray10.color)
+    }
+    
+    var requestLocationPopup: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                AppImage.mappinFill.image
+                    .scaledToFit()
+                    .frame(width: 48, height: 48)
+                
+                Text("위치 권한 필요")
+                    .pretendard(.h3, color: .gray90)
+                
+                Text("기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.")
+                    .pretendard(.body2Regular, color: .gray70)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 52)
+            
+            HStack(spacing: 0) {
+                Button {
+                    
+                } label: {
+                    Text("취소")
+                        .pretendard(.body1Regular, color: .gray50)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .background(AppColor.gray10.color)
+                        .overlay(alignment: .top) {
+                            Rectangle()
+                                .fill(AppColor.gray20.color)
+                                .frame(height: 1)
+                        }
+                }
+                
+                Button {
+                    
+                } label: {
+                    Text("설정으로 이동")
+                        .pretendard(.body1Regular, color: .white)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .background(AppColor.orange40.color)
+                }
+            }
+        }
+        .frame(width: 280)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

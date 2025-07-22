@@ -20,6 +20,7 @@ enum AppImage: String {
     case onboarding2 = "im_onboarding_2"
     case onboarding3 = "im_onboarding_3"
     case logo = "im_logo"
+    case mappinFill = "im_mappin_fill"
     
     var image: Image {
         Image(rawValue)
