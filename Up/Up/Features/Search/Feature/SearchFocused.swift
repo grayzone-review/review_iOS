@@ -25,6 +25,8 @@ struct SearchFocusedFeature {
         case deleteButtonTapped(SavedCompany)
     }
     
+    @Dependency(\.userDefaultsService) var userDefaultsService
+    
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
@@ -43,8 +45,7 @@ struct SearchFocusedFeature {
                 return .send(.loadSavedCompanies)
                 
             case .loadSavedCompanies:
-                if let data = UserDefaults.standard.data(forKey: "savedCompanies"),
-                   let savedCompanies = try? JSONDecoder().decode([SavedCompany].self, from: data) {
+                if let savedCompanies = try? userDefaultsService.fetch(key: "savedCompanies", type: [SavedCompany].self) {
                     state.savedCompanies = savedCompanies
                 }
                 return .none
@@ -54,9 +55,7 @@ struct SearchFocusedFeature {
                     state.savedCompanies.remove(at: index)
                 }
                 
-                if let data = try? JSONEncoder().encode(state.savedCompanies) {
-                    UserDefaults.standard.set(data, forKey: "savedCompanies")
-                }
+                try? userDefaultsService.save(key: "savedCompanies", value: state.savedCompanies)
                 
                 
                 return .none

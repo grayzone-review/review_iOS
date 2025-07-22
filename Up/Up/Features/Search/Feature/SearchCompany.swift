@@ -47,6 +47,7 @@ struct SearchCompanyFeature {
     
     @Dependency(\.dismiss) var dismiss
     @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.userDefaultsService) var userDefaultsService
     @Dependency(\.searchService) var searchService
     
     var body: some ReducerOf<Self> {
@@ -76,8 +77,7 @@ struct SearchCompanyFeature {
                 let searchTerm = RecentSearchTerm(searchTerm: state.searchTerm)
                 var searchTerms = [RecentSearchTerm]()
                 
-                if let data = UserDefaults.standard.data(forKey: "recentSearchTerms"),
-                   let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
+                if let recentSearchTerms = try? userDefaultsService.fetch(key: "recentSearchTerms", type: [RecentSearchTerm].self) {
                     searchTerms = recentSearchTerms
                 }
                 
@@ -90,10 +90,7 @@ struct SearchCompanyFeature {
                 }
                 
                 searchTerms.insert(searchTerm, at: 0)
-                
-                if let data = try? JSONEncoder().encode(searchTerms) {
-                    UserDefaults.standard.set(data, forKey: "recentSearchTerms")
-                }
+                try? userDefaultsService.save(key: "recentSearchTerms", value: searchTerms)
                 
                 state.searchTheme = .keyword
                 return .send(.setSearchState(.submitted))

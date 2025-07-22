@@ -28,6 +28,8 @@ struct SearchIdleFeature {
         }
     }
     
+    @Dependency(\.userDefaultsService) var userDefaultsService
+    
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
@@ -36,8 +38,7 @@ struct SearchIdleFeature {
                     return .none
                 }
                 
-                if let data = UserDefaults.standard.data(forKey: "recentSearchTerms"),
-                   let recentSearchTerms = try? JSONDecoder().decode([RecentSearchTerm].self, from: data) {
+                if let recentSearchTerms = try? userDefaultsService.fetch(key: "recentSearchTerms", type: [RecentSearchTerm].self) {
                     state.recentSearchTerms = recentSearchTerms
                 }
                 
@@ -55,9 +56,7 @@ struct SearchIdleFeature {
                     state.recentSearchTerms.remove(at: index)
                 }
                 
-                if let data = try? JSONEncoder().encode(state.recentSearchTerms) {
-                    UserDefaults.standard.set(data, forKey: "recentSearchTerms")
-                }
+                try? userDefaultsService.save(key: "recentSearchTerms", value: state.recentSearchTerms)
                 
                 return .none
                 

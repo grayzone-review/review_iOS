@@ -56,6 +56,7 @@ struct CompanyDetailFeature {
     
     @Dependency(\.dismiss) var dismiss
     @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.userDefaultsService) var userDefaultsService
     @Dependency(\.companyService) var companyService
     @Dependency(\.reviewService) var reviewService
     
@@ -94,8 +95,7 @@ struct CompanyDetailFeature {
                 )
                 var savedCompanies = [SavedCompany]()
                 
-                if let data = UserDefaults.standard.data(forKey: "savedCompanies"),
-                   let recentSavedCompanies = try? JSONDecoder().decode([SavedCompany].self, from: data) {
+                if let recentSavedCompanies = try? userDefaultsService.fetch(key: "savedCompanies", type: [SavedCompany].self) {
                     savedCompanies = recentSavedCompanies
                 }
                 
@@ -104,10 +104,7 @@ struct CompanyDetailFeature {
                 }
                 
                 savedCompanies.insert(savedCompany, at: 0)
-                
-                if let data = try? JSONEncoder().encode(savedCompanies) {
-                    UserDefaults.standard.set(data, forKey: "savedCompanies")
-                }
+                try? userDefaultsService.save(key: "savedCompanies", value: savedCompanies)
                 
                 return .none
                 

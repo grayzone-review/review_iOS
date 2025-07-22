@@ -22,19 +22,20 @@ struct UpFeature {
         var path = StackState<Path.State>()
         var search = SearchCompanyFeature.State()
         var isFirstLaunch = true
-        
-        init() {
-            let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
-            
-            isFirstLaunch = hasLaunchedBefore != true
-        }
+        var isBootstrapping = true
     }
     
     enum Action {
+        case appLaunched
+        case initKakaoSDK
+        case setIsFirstLaunch
+        case endBootstrap
         case onboarding(OnboardingFeature.Action)
         case path(StackActionOf<Path>)
         case search(SearchCompanyFeature.Action)
     }
+    
+    @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
         Scope(state: \.onboarding, action: \.onboarding) {
@@ -47,8 +48,35 @@ struct UpFeature {
         
         Reduce { state, action in
             switch action {
+            case .appLaunched:
+                return .run { send in
+                    await send(.initKakaoSDK)
+                    await send(.setIsFirstLaunch)
+                    await send(.endBootstrap)
+                }
+                
+            case .initKakaoSDK:
+                guard
+                    let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String
+                else {
+                  fatalError("Info.plist에서 Key 정보를 읽어오지 못했습니다.")
+                }
+                
+                SDKInitializer.InitSDK(appKey: kakaoAppKey)
+                return .none
+                
+            case .setIsFirstLaunch:
+                let hasLaunchedBefore = try? userDefaultsService.fetch(key: "hasLaunchedBefore", type: Bool.self)
+                
+                state.isFirstLaunch = hasLaunchedBefore != true
+                return .none
+                
+            case .endBootstrap:
+                state.isBootstrapping = false
+                return .none
+                
             case .onboarding(.delegate(.startButtonTapped)):
-                UserDefaults.standard.setValue(true, forKey: "hasLaunchedBefore")
+                try? userDefaultsService.save(key: "hasLaunchedBefore", value: true)
                 state.isFirstLaunch = false
                 
                 return .none
@@ -72,21 +100,43 @@ extension UpFeature.Path.State: Equatable {}
 struct UpView: View {
     @Bindable var store: StoreOf<UpFeature>
     
+    init(store: StoreOf<UpFeature>) {
+        self.store = store
+        store.send(.appLaunched)
+    }
+    
     var body: some View {
-        if store.isFirstLaunch {
-            OnboardingView(
-                store: store.scope(state: \.onboarding, action: \.onboarding)
-            )
+        if store.isBootstrapping {
+            launchScreen
+        } else if store.isFirstLaunch {
+            onboarding
         } else {
-            NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-                SearchCompanyView(
-                    store: store.scope(state: \.search, action: \.search)
-                )
-            } destination: { store in
-                switch store.case {
-                case let .detail(detailStore):
-                    CompanyDetailView(store: detailStore)
-                }
+            main
+        }
+    }
+    
+    private var launchScreen: some View {
+        Text("Launch Screen")
+    }
+    
+    private var onboarding: some View {
+        OnboardingView(
+            store: store.scope(
+                state: \.onboarding,
+                action: \.onboarding
+            )
+        )
+    }
+    
+    private var main: some View {
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+            SearchCompanyView(
+                store: store.scope(state: \.search, action: \.search)
+            )
+        } destination: { store in
+            switch store.case {
+            case let .detail(detailStore):
+                CompanyDetailView(store: detailStore)
             }
         }
     }
@@ -95,20 +145,8 @@ struct UpView: View {
 @main
 struct UpApp: App {
     @MainActor
-    static let store = Store(
-        initialState: UpFeature.State()
-    ) {
+    static let store = Store(initialState: UpFeature.State()) {
         UpFeature()
-    }
-    
-    init() {
-        guard
-            let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String
-        else {
-          fatalError("Info.plist에서 Key 정보를 읽어오지 못했습니다.")
-        }
-        
-        SDKInitializer.InitSDK(appKey: kakaoAppKey)
     }
     
     var body: some Scene {

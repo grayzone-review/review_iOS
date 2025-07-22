@@ -6,12 +6,12 @@
 //
 
 import Foundation
+import Dependencies
 
 /// JWT 액세스 토큰 및 리프레시 토큰을 UserDefaults에 저장/조회하는 싱글톤 매니저
 /// - 로그인 시 토큰을 저장하고, 로그아웃 시 clearTokens()를 호출해 값을 제거
 actor TokenManager {
     static let shared = TokenManager()
-    private let userDefaults = UserDefaults.standard
 
     private enum Keys {
         static let accessToken = "JWT_AccessToken"
@@ -19,17 +19,19 @@ actor TokenManager {
     }
 
     private init() {}
+    
+    @Dependency(\.userDefaultsService) var userDefaultsService
 
     /// 현재 저장된 액세스 토큰 (Bearer 토큰)
     private var accessToken: String? {
         get {
-            userDefaults.string(forKey: Keys.accessToken)
+            try? userDefaultsService.fetch(key: Keys.accessToken, type: String.self)
         }
         set {
             if let new = newValue {
-                userDefaults.set(new, forKey: Keys.accessToken)
+                try? userDefaultsService.save(key: Keys.accessToken, value: new)
             } else {
-                userDefaults.removeObject(forKey: Keys.accessToken)
+                userDefaultsService.remove(key: Keys.accessToken)
             }
         }
     }
@@ -37,13 +39,13 @@ actor TokenManager {
     /// 현재 저장된 리프레시 토큰
     private var refreshToken: String? {
         get {
-            userDefaults.string(forKey: Keys.refreshToken)
+            try? userDefaultsService.fetch(key: Keys.refreshToken, type: String.self)
         }
         set {
             if let new = newValue {
-                userDefaults.set(new, forKey: Keys.refreshToken)
+                try? userDefaultsService.save(key: Keys.refreshToken, value: new)
             } else {
-                userDefaults.removeObject(forKey: Keys.refreshToken)
+                userDefaultsService.remove(key: Keys.refreshToken)
             }
         }
     }
