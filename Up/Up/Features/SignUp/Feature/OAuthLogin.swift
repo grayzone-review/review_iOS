@@ -51,6 +51,8 @@ struct OAuthLoginFeature {
                     let data = OAuthResult(token: result.idToken, provider: "apple")
                     
                     await send(.login(data))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
             case .kakaoButtonTapped:
                 return .run { send in
@@ -59,6 +61,8 @@ struct OAuthLoginFeature {
                     let data = OAuthResult(token: result, provider: "kakao")
                     
                     await send(.login(data))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
             case let .login(data):
                 return .run { send in
@@ -94,8 +98,10 @@ struct OAuthLoginView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 64, height: 64)
+                .padding(.bottom, 16)
             
             Text("현직자들이 말하는\n소규모 사업장 리뷰")
+                .multilineTextAlignment(.center)
                 .pretendard(.h1Bold, color: .white)
             
             Spacer()

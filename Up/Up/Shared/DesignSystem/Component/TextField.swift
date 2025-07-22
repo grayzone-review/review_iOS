@@ -21,7 +21,7 @@ struct DupCheckTextField: View {
             .union(digits)
     }()
     
-    enum FieldState {
+    enum FieldState: Equatable {
         case `default`
         case focused
         case invalid
@@ -58,27 +58,31 @@ struct DupCheckTextField: View {
         }
     }
     
-    @State private var state: FieldState = .default
+    var isFocused: FocusState<Bool>.Binding
+    
     @State private var isCheckable: Bool = false
     
-    @FocusState private var focused: Bool
+    @Binding var state: FieldState
     @Binding var text: String
-    @Binding var isFocused: Bool
     @Binding var noti: String
     
+    let defaultNoti: String
     let placeholder: String
     let checkDupTapped: () -> Void
     
     init(
         text: Binding<String>,
-        isFocused: Binding<Bool>,
+        state: Binding<FieldState>,
+        isFocused: FocusState<Bool>.Binding,
         noti: Binding<String>,
         placeholder: String,
         checkDupTapped: @escaping () -> Void
     ) {
         self._text = text
-        self._isFocused = isFocused
+        self._state = state
         self._noti = noti
+        self.defaultNoti = noti.wrappedValue
+        self.isFocused = isFocused
         self.placeholder = placeholder
         self.checkDupTapped = checkDupTapped
     }
@@ -97,26 +101,37 @@ struct DupCheckTextField: View {
                     .stroke(state.strokeColor.color)
             }
             .onSubmit {
-                focused = false
+                isFocused.wrappedValue = false
             }
             
             Text("※ \(noti)")
                 .pretendard(.captionRegular, color: state.notiColor)
         }
-        .onChange(of: focused) { old, new in
+        .onChange(of: isFocused.wrappedValue) { old, new in
+            guard state != .valid else { return }
             state = new ? .focused : .default
         }
         .onChange(of: text) { old, new in
+            // 중복 체크 성공 후, 다시 내용을 수정한 경우
+            if state == .valid, old != new {
+                state = isFocused.wrappedValue ? .focused : .default
+                noti = defaultNoti
+                return
+            }
+            
+            // 입력값이 비었을 때
             if new.isEmpty {
-                state = focused ? .focused : .default
+                state = isFocused.wrappedValue ? .focused : .default
+                noti = defaultNoti
                 isCheckable = false
                 return
             }
             
+            // 일반적인 입력 상황
             let text = getValidText(new)
             let isVaild = (2...12).contains(text.count) && !text.isEmpty
             
-            state = isVaild ? (focused ? .focused : .default) : .invalid
+            state = isVaild ? (isFocused.wrappedValue ? .focused : .default) : .invalid
             self.isCheckable = isVaild
             self.text = text
         }
@@ -127,8 +142,7 @@ struct DupCheckTextField: View {
             placeholder,
             text: $text
         )
-        .focused($focused)
-        .bind($isFocused, to: $focused)
+        .focused(isFocused)
         .lineLimit(1)
         .pretendard(.body1Regular, color: state.textColor)
     }
@@ -164,6 +178,7 @@ struct DupCheckTextField: View {
 
 #Preview {
     @Previewable @State var text: String = ""
+    @Previewable @FocusState var isFocused: Bool
     
-    DupCheckTextField(text: $text, isFocused: .constant(false), noti: .constant("asdkwdaoowrf"), placeholder: ":qwe") { }
+    DupCheckTextField(text: $text, state: .constant(.default), isFocused: $isFocused, noti: .constant("asdkwdaoowrf"), placeholder: ":qwe") { }
 }

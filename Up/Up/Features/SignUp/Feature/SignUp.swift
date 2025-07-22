@@ -16,6 +16,7 @@ struct SignUpFeature {
     struct State: Equatable {
         /// 사용자에게 입력받은 nickname
         var nickname: String = ""
+        var dupCheckFieldState: DupCheckTextField.FieldState = .default
         // TODO: - API나오면 요청하는 값에 맞게 모델(엔티티)을 구현해야함
         /// 사용자가 설정한 우리동네
         var myArea: String = ""
@@ -28,11 +29,11 @@ struct SignUpFeature {
         var termList: [TermsData] = []
         /// 중복 검사 결과를 보여주는 값
         var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
+        var isAvailableName: Bool = false
         /// 사용자가 가입 가능한 상태인지 나타내는 값
         var canSignUp: Bool = false
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
-        var isFocused: Bool = false
     }
     
     enum Action: BindableAction {
@@ -41,6 +42,7 @@ struct SignUpFeature {
         case addTermsList([TermsData])
         case xButtonTapped
         case checkNicknameTapped
+        case updateNotice(isSuccess: Bool, message: String)
         case setMyAreaTapped
         case addPreferredAreaTapped
         case deletePreferredAreaTapped(Int)
@@ -87,6 +89,25 @@ struct SignUpFeature {
             case .checkNicknameTapped:
                 // TODO: - 닉네임 중복 검사
                 print("checkNicknameTapped \(state.nickname)")
+                
+                let text = state.nickname
+                
+                return .run { send in
+                    let result = try await signUpService.verifyNickname(text)
+                    
+                    await send(.updateNotice(isSuccess: result.isSuccess, message: result.message))
+                } catch: { error, send in
+                    await send(.handleError(error))
+                }
+            case let .updateNotice(isSuccess, message):
+                if isSuccess {
+                    state.dupCheckFieldState = .valid
+                    state.notice = "사용가능한 닉네임입니다."
+                } else {
+                    state.dupCheckFieldState = .invalid
+                    state.notice = message
+                }
+                
                 return .none
             case .setMyAreaTapped:
                 // TODO: - 우리동네 설정 화면으로 이동
@@ -128,6 +149,9 @@ struct SignUpFeature {
 }
 
 struct SignUpView: View {
+    @FocusState var isFocused: Bool
+//    @State var isFocused: Bool = false
+    
     @Bindable var store: StoreOf<SignUpFeature>
     
     init(store: StoreOf<SignUpFeature>) {
@@ -136,19 +160,11 @@ struct SignUpView: View {
     }
     
     var body: some View {
-        ViewThatFits(in: .vertical) {
-            VStack(spacing: 0) {
-                mainView
-                
-                Spacer()
-            }
+        ScrollView {
+            mainView
             
-            ScrollView {
-                mainView
-                
-                Spacer()
-                    .frame(height: 92)
-            }
+            Spacer()
+                .frame(height: 92)
         }
         .background(Color.white)
         .overlay(alignment: .bottom) {
@@ -164,6 +180,10 @@ struct SignUpView: View {
             .padding(.horizontal, 20)
             .background {
                 AppColor.white.color.ignoresSafeArea()
+                    .onTapGesture {
+                        print("mainView onTapGesture \(isFocused)")
+                        isFocused = false
+                    }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -178,6 +198,11 @@ struct SignUpView: View {
             ToolbarItem(placement: .principal) {
                 Text("회원 가입")
                     .pretendard(.h2, color: .gray90)
+            }
+        }
+        .onChange(of: store.dupCheckFieldState) { old, new in
+            if old != new, new == .valid {
+                isFocused = false
             }
         }
     }
@@ -201,7 +226,8 @@ struct SignUpView: View {
             
             DupCheckTextField(
                 text: $store.nickname,
-                isFocused: $store.isFocused,
+                state: $store.dupCheckFieldState,
+                isFocused: $isFocused,
                 noti: $store.notice,
                 placeholder: "닉네임"
             ) {

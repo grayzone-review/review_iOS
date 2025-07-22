@@ -16,6 +16,7 @@ enum SignUpAPI: Sendable, URLRequestConvertible {
     case terms
     case signUp(SignUpRequest)
     case login(LoginRequset)
+    case reissue(ReissueRequest)
 
     // 기본 서버 URL
     private var baseURL: URL {
@@ -25,9 +26,9 @@ enum SignUpAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 HTTP method
     private var method: HTTPMethod {
         switch self {
-        case .verifyNickname, .terms:
+        case .terms:
             return .get
-        case .signUp, .login:
+        case .verifyNickname, .signUp, .login, .reissue:
             return .post
         }
     }
@@ -43,6 +44,8 @@ enum SignUpAPI: Sendable, URLRequestConvertible {
             return "/api/auth/signup"
         case .login:
             return "/api/auth/login"
+        case .reissue:
+            return "/api/auth/reissue"
         }
     }
 
@@ -60,6 +63,8 @@ enum SignUpAPI: Sendable, URLRequestConvertible {
             try request.setJSONBody(signUpRequest)
         case let .login(loginRequest):
             try request.setJSONBody(loginRequest)
+        case let .reissue(reissueRequest):
+            try request.setJSONBody(reissueRequest)
         }
         
         return request
