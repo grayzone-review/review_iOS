@@ -21,6 +21,19 @@ struct UpFeature {
         var main = MainFeature.State()
         var isFirstLaunch = true
         var isBootstrapping = true
+        
+        init() {
+            let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+            
+            // 앱 설치 후 첫 실행이면 키체인을 초기화합니다.
+            if !hasLaunchedBefore {
+                Task {
+                    await SecureTokenManager.shared.clearTokens()
+                }
+            }
+            
+            isFirstLaunch = hasLaunchedBefore != true
+        }
     }
     
     enum Action {
@@ -97,9 +110,7 @@ struct UpFeature {
                 return .none
             case .oauthLogin(.delegate(.tokenReceived)):
                 state.path.append(.signUp(SignUpFeature.State()))
-//                return .run { send in
-//                    await send(.path(.element(id: <#T##StackElementID#>, action: <#T##Path.Action#>)))
-//                }
+                
                 return .none
             case .oauthLogin:
                 return .none

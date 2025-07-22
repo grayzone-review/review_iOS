@@ -28,8 +28,8 @@ protocol CompanyService {
 }
 
 private enum CompanyServiceKey: DependencyKey {
-    static let liveValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static let previewValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let liveValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession())
+    static let previewValue: any CompanyService = DefaultCompanyService(session: AlamofireNetworkSession())
     static var testValue: any CompanyService = MockCompanyService()
 }
 

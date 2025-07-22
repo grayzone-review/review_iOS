@@ -8,5 +8,6 @@
 enum APIError: Error {
     case statusCodeError(message: String)
     case successError(message: String)
+    case decodeError(Error)
     case unknown(Error)
 }

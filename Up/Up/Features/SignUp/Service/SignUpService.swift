@@ -22,8 +22,8 @@ protocol SignUpService {
 }
 
 private enum SignUpServiceKey: DependencyKey {
-    static let liveValue: any SignUpService = DefaultSignUpService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static let previewValue: any SignUpService = DefaultSignUpService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let liveValue: any SignUpService = DefaultSignUpService(session: AlamofireNetworkSession(interceptor: nil))
+    static let previewValue: any SignUpService = DefaultSignUpService(session: AlamofireNetworkSession(interceptor: nil))
     static var testValue: any SignUpService = MockSignUpService()
 }
 

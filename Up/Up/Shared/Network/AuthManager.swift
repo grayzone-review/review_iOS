@@ -15,12 +15,8 @@ private struct RefreshResponse: Decodable {
 }
 
 actor AuthManager: RequestInterceptor {
-    private let tokenManager = TokenManager.shared
-    
-    private let refreshSession: Session = {
-        let configuration = URLSessionConfiguration.default
-        return Session(configuration: configuration)
-    }()
+    private let tokenManager = SecureTokenManager.shared
+    private let refreshSession: NetworkSession = AlamofireNetworkSession()
     
     private var isRefreshing: Bool = false
     private var requestsToRetry: [(RetryResult) -> Void] = []
@@ -99,35 +95,16 @@ actor AuthManager: RequestInterceptor {
         guard let currentRefresh = await tokenManager.getRefreshToken() else {
             return false
         }
-
-        // 2) 리프레시 엔드포인트 URL (실제 서버 URL로 수정하세요)
-        let url = "https://api.example.com/auth/refresh"
-        let parameters: [String: Any] = [
-            "refreshToken": currentRefresh
-        ]
-
+        let requestBody = ReissueRequest(refreshToken: currentRefresh)
+        let request = SignUpAPI.reissue(requestBody)
         do {
-            // 3) async/await Alamofire 요청으로 토큰 갱신 시도
-            let response = try await refreshSession
-                .request(
-                    url,
-                    method: .post,
-                    parameters: parameters,
-                    encoding: JSONEncoding.default
-                )
-                .validate(statusCode: 200..<300)
-                .serializingDecodable(RefreshResponse.self)
-                .value
-
-            // 4) actor에 새로운 토큰을 비동기적으로 저장
-            await tokenManager.setAccessToken(response.accessToken)
-            if let newRefresh = response.refreshToken {
-                await tokenManager.setRefreshToken(newRefresh)
-            }
+            let response = try await refreshSession.request(request, as: LoginResponse.self)
+            
+            await tokenManager.setAccessToken(response.data.accessToken)
+            await tokenManager.setRefreshToken(response.data.refreshToken)
+            
             return true
-
         } catch {
-            // 5) 갱신 실패 시 모든 토큰을 삭제 (로그아웃 상태로 전환)
             await tokenManager.clearTokens()
             return false
         }

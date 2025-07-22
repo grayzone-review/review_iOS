@@ -13,8 +13,8 @@ protocol SearchService {
 }
 
 private enum SearchServiceKey: DependencyKey {
-    static let liveValue: any SearchService = DefaultSearchService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static let previewValue: any SearchService = DefaultSearchService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let liveValue: any SearchService = DefaultSearchService(session: AlamofireNetworkSession())
+    static let previewValue: any SearchService = DefaultSearchService(session: AlamofireNetworkSession())
     static var testValue: any SearchService = MockSearchService()
 }
 

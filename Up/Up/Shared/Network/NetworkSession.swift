@@ -40,7 +40,7 @@ final class AlamofireNetworkSession: NetworkSession {
 
     /// 기본 생성자: 기본 Session 설정 사용
     init(
-        interceptor: RequestInterceptor = AuthManager(),
+        interceptor: RequestInterceptor? = AuthManager(),
         eventLogger: EventMonitor = NetworkLogger(apiName: "Up Default")
     ) {
         // URLSessionConfiguration 커스터마이징 예시 (타임아웃 등)
