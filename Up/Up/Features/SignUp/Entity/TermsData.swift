@@ -19,6 +19,10 @@ struct TermsData: Equatable, Identifiable {
     /// 사용자가 약관에 동의 하였는지 여부
     var isAgree: Bool = false
     
+    var title: String {
+        (self.isRequired ? "[필수] " : "[선택] ") + self.term
+    }
+    
     init(term: String, url: String, code: String, isRequired: Bool) {
         self.term = term
         self.url = url

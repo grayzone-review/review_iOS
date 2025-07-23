@@ -9,11 +9,18 @@ import SwiftUI
 
 import ComposableArchitecture
 
-
 @Reducer
 struct SignUpFeature {
+    @Reducer
+    enum Path {
+        case searchArea(SearchAreaFeature)
+        case termDetail(TermDetailFeature)
+    }
+    
     @ObservableState
     struct State: Equatable {
+        var path = StackState<Path.State>()
+        
         /// 사용자에게 입력받은 nickname
         var nickname: String = ""
         var dupCheckFieldState: DupCheckTextField.FieldState = .default
@@ -37,6 +44,7 @@ struct SignUpFeature {
     }
     
     enum Action: BindableAction {
+        case path(StackActionOf<Path>)
         case binding(BindingAction<State>)
         case viewInit
         case addTermsList([TermsData])
@@ -54,6 +62,7 @@ struct SignUpFeature {
         case handleError(Error)
     }
     
+    @Dependency(\.dismiss) var dismiss
     @Dependency(\.mainQueue) var mainQueue
     @Dependency(\.signUpService) var signUpService
     
@@ -63,7 +72,8 @@ struct SignUpFeature {
         Reduce { state, action in
             switch action {
             case .binding:
-                // TODO: - ???
+                return .none
+            case .path:
                 return .none
             case .viewInit:
                 state.isLoading = true
@@ -83,9 +93,9 @@ struct SignUpFeature {
                 
                 return .none
             case .xButtonTapped:
-                // TODO: - dismiss?
-                print("xButtonTapped")
-                return .none
+                return .run { _ in
+                    await dismiss()
+                }
             case .checkNicknameTapped:
                 // TODO: - 닉네임 중복 검사
                 print("checkNicknameTapped \(state.nickname)")
@@ -145,8 +155,11 @@ struct SignUpFeature {
                 return .none
             }
         }
+        .forEach(\.path, action: \.path) { Path.body }
     }
 }
+
+extension SignUpFeature.Path.State: Equatable {}
 
 struct SignUpView: View {
     @FocusState var isFocused: Bool
@@ -160,49 +173,58 @@ struct SignUpView: View {
     }
     
     var body: some View {
-        ScrollView {
-            mainView
-            
-            Spacer()
-                .frame(height: 92)
-        }
-        .background(Color.white)
-        .overlay(alignment: .bottom) {
-            AppButton(
-                style: .fill,
-                size: .large,
-                text: "가입하기",
-                isEnabled: store.canSignUp
-            ) {
-                store.send(.signUpTapped)
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+            ScrollView {
+                mainView
+                
+                Spacer()
+                    .frame(height: 92)
             }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 20)
-            .background {
-                AppColor.white.color.ignoresSafeArea()
-                    .onTapGesture {
-                        print("mainView onTapGesture \(isFocused)")
-                        isFocused = false
-                    }
+            .background(Color.white)
+            .overlay(alignment: .bottom) {
+                AppButton(
+                    style: .fill,
+                    size: .large,
+                    text: "가입하기",
+                    isEnabled: store.canSignUp
+                ) {
+                    store.send(.signUpTapped)
+                }
+                .padding(.vertical, 20)
+                .padding(.horizontal, 20)
+                .background {
+                    AppColor.white.color.ignoresSafeArea()
+                        .onTapGesture {
+                            print("mainView onTapGesture \(isFocused)")
+                            isFocused = false
+                        }
+                }
             }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                IconButton(
-                    icon: .closeLine) {
-                        store.send(.xButtonTapped)
-                    }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    IconButton(
+                        icon: .closeLine) {
+                            store.send(.xButtonTapped)
+                        }
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("회원 가입")
+                        .pretendard(.h2, color: .gray90)
+                }
             }
-            ToolbarItem(placement: .principal) {
-                Text("회원 가입")
-                    .pretendard(.h2, color: .gray90)
+            .onChange(of: store.dupCheckFieldState) { old, new in
+                if old != new, new == .valid {
+                    isFocused = false
+                }
             }
-        }
-        .onChange(of: store.dupCheckFieldState) { old, new in
-            if old != new, new == .valid {
-                isFocused = false
+        } destination: { store in
+            switch store.case {
+            case let .searchArea(store):
+                SearchAreaView(store: store)
+            case let .termDetail(store):
+                TermDetailView(store: store)
             }
         }
     }
@@ -243,19 +265,18 @@ struct SignUpView: View {
             Text("우리 동네 설정")
                 .pretendard(.h3, color: .gray90)
             
-            Text(store.myArea.isEmpty ? "동 검색하기" : store.myArea)
-                .pretendard(.body1Regular, color: store.myArea.isEmpty ? .gray50 : .gray90)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 14)
-                .padding(.horizontal, 16)
-                .background {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(AppColor.gray20.color, lineWidth: 1)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    store.send(.setMyAreaTapped)
-                }
+            NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State())) {
+                Text(store.myArea.isEmpty ? "동 검색하기" : store.myArea)
+                    .pretendard(.body1Regular, color: store.myArea.isEmpty ? .gray50 : .gray90)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 16)
+                    .background {
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(AppColor.gray20.color, lineWidth: 1)
+                    }
+                    .contentShape(Rectangle())
+            }
         }
         .padding(.vertical, 20)
         .padding(.horizontal, 20)
@@ -345,7 +366,7 @@ struct SignUpView: View {
             HStack(spacing: 8) {
                 CheckBox(isSelected: term.isAgree)
                 
-                Text(term.term)
+                Text(term.title)
                     .pretendard(.body1Regular, color: .gray70)
                     .lineLimit(1)
                 
@@ -357,20 +378,19 @@ struct SignUpView: View {
                 store.send(.agreeTermTapped(code: term.code))
             }
             
-            HStack(spacing: 4) {
-                Text("자세히")
-                    .pretendard(.captionRegular, color: .gray50)
-                
-                AppIcon.arrowRight.image(
-                    width: 14,
-                    height: 14,
-                    appColor: .gray50
-                )
-            }
-            .padding(.vertical, 16)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                store.send(.termDetailTapped(url: term.url))
+            NavigationLink(state: SignUpFeature.Path.State.termDetail(.init(term: term))) {
+                HStack(spacing: 4) {
+                    Text("자세히")
+                        .pretendard(.captionRegular, color: .gray50)
+                    
+                    AppIcon.arrowRight.image(
+                        width: 14,
+                        height: 14,
+                        appColor: .gray50
+                    )
+                }
+                .padding(.vertical, 16)
+                .contentShape(Rectangle())
             }
         }
     }

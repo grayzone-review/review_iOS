@@ -13,23 +13,24 @@ import KakaoSDKUser
 
 @Reducer
 struct OAuthLoginFeature {
+    @Reducer
+    enum Destination {
+        case signUp(SignUpFeature)
+    }
     
     @ObservableState
     struct State: Equatable {
-        
+        @Presents var destination: Destination.State?
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case appleButtonTapped
         case kakaoButtonTapped
+        case goToSignUp
         case login(OAuthResult)
         case handleError(Error)
-        case delegate(Delegate)
-        
-        enum Delegate: Equatable {
-            case tokenReceived
-        }
+        case destination(PresentationAction<Destination.Action>)
     }
     
     @Dependency(\.signUpService) var signUpService
@@ -64,27 +65,34 @@ struct OAuthLoginFeature {
                 } catch: { error, send in
                     await send(.handleError(error))
                 }
+            case .goToSignUp:
+                state.destination = .signUp(SignUpFeature.State())
+                
+                return .none
             case let .login(data):
                 return .run { send in
-//                    let response = try await signUpService.login(oauthToken: data.token, oauthProvider: OAuthProvider(rawValue: data.provider))
-//                    
-//                    await SecureTokenManager.shared.setAccessToken(response.accessToken)
-//                    await SecureTokenManager.shared.setRefreshToken(response.refreshToken)
+                    let response = try await signUpService.login(oauthToken: data.token, oauthProvider: OAuthProvider(rawValue: data.provider))
                     
-                    await send(.delegate(.tokenReceived))
+                    await SecureTokenManager.shared.setAccessToken(response.accessToken)
+                    await SecureTokenManager.shared.setRefreshToken(response.refreshToken)
+                    
+                    // TODO: - 메인으로 이동
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.goToSignUp)
                 }
                 
             case let .handleError(error):
                 print(error)
                 return .none
-            case .delegate(_):
+            case .destination:
                 return .none
             }
         }
+        .ifLet(\.$destination, action: \.destination)
     }
 }
+
+extension OAuthLoginFeature.Destination.State: Equatable {}
 
 struct OAuthLoginView: View {
     @Bindable var store: StoreOf<OAuthLoginFeature>
@@ -110,6 +118,11 @@ struct OAuthLoginView: View {
                 kakaoSignUpButton
                 
                 appleSignUpButton
+            }
+            .fullScreenCover(
+                item: $store.scope(state: \.destination?.signUp, action: \.destination.signUp)
+            ) { store in
+                SignUpView(store: store)
             }
         }
         .padding(.horizontal, 20)

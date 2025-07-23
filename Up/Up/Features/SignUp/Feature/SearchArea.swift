@@ -25,12 +25,14 @@ struct SearchAreaFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case viewInit
+        case dismiss
         case searchMyAreaTapped
         case needLocationCancelTapped
         case needLocationGoToSettingTapped
         case handleError(Error)
     }
     
+    @Dependency(\.dismiss) var dismiss
     @Dependency(\.signUpService) var signUpService
     
     var body: some ReducerOf<Self> {
@@ -42,6 +44,10 @@ struct SearchAreaFeature {
                 return .none
             case .viewInit:
                 return .none
+            case .dismiss:
+                return .run { _ in
+                    await dismiss()
+                }
             case .searchMyAreaTapped:
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
@@ -125,6 +131,9 @@ struct SearchAreaView: View {
                 .image(width: 24, height: 24)
                 .padding(10)
                 .padding(.trailing, 4)
+                .onTapGesture {
+                    store.send(.dismiss)
+                }
             
             UPTextField(
                 style: .fill,

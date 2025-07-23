@@ -108,10 +108,6 @@ struct UpFeature {
                 return .none
             case .onboarding:
                 return .none
-            case .oauthLogin(.delegate(.tokenReceived)):
-                state.path.append(.signUp(SignUpFeature.State()))
-                
-                return .none
             case .oauthLogin:
                 return .none
             case .path:
@@ -223,4 +219,15 @@ struct UpApp: App {
             UpFeature()
         }
     )
+}
+
+extension UINavigationController: ObservableObject, UIGestureRecognizerDelegate {
+    override open func viewDidLoad() {
+        super.viewDidLoad()
+        interactivePopGestureRecognizer?.delegate = self
+    }
+
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        return viewControllers.count > 1
+    }
 }
