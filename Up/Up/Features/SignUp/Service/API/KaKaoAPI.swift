@@ -1,8 +1,8 @@
 //
-//  LegalDistrictsAPI.swift
+//  KaKaoAPI.swift
 //  Up
 //
-//  Created by Wonbi on 7/14/25.
+//  Created by Wonbi on 7/23/25.
 //
 
 import Foundation
@@ -10,8 +10,8 @@ import Foundation
 import Alamofire
 
 /// CompanyAPI 엔드포인트 정의
-enum LegalDistrictsAPI: Sendable, URLRequestConvertible {
-    case legalDistricts(keyword: String, page: Int)
+enum KaKaoAPI: Sendable, URLRequestConvertible {
+    case getLegalDistrict(lat: Double, lng: Double)
 
     // 기본 서버 URL
     private var baseURL: URL {
@@ -21,7 +21,7 @@ enum LegalDistrictsAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 HTTP method
     private var method: HTTPMethod {
         switch self {
-        case .legalDistricts:
+        case .getLegalDistrict:
             return .get
         }
     }
@@ -29,25 +29,23 @@ enum LegalDistrictsAPI: Sendable, URLRequestConvertible {
     // 각 케이스별 경로(Path)
     private var path: String {
         switch self {
-        case .legalDistricts:
-            return "/api/legal-districts"
+        case .getLegalDistrict:
+            return "/local/geo/coord2regioncode.json"
         }
     }
 
     // `URLRequestConvertible` 프로토콜 요구사항 구현
     func asURLRequest() throws -> URLRequest {
-        var components = URLComponents(string: AppConfig.Network.host + path)!
+        var components = URLComponents(string: AppConfig.Network.kakaoMapHost + path)!
         
         switch self {
-        case let .legalDistricts(keyword, page):
+        case let .getLegalDistrict(lat, lng):
             components.queryItems = [
-                URLQueryItem(name: "keyword", value: "\(keyword)"),
-                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "x", value: "\(lng)"),
+                URLQueryItem(name: "y", value: "\(lat)"),
             ]
         }
         
-        var request = try URLRequest(url: components, method: method)
-        
-        return request
+        return try URLRequest(url: components, method: method)
     }
 }

@@ -8,6 +8,10 @@
 struct District: Equatable, Identifiable {
     let id: Int
     let name: String
+    
+    var buttonName: String {
+        name.components(separatedBy: " ").last ?? name
+    }
 }
 
 struct LegalDistrictsData: Equatable {

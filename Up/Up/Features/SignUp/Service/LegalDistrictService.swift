@@ -18,7 +18,7 @@ private enum LegalDistrictServiceKey: DependencyKey {
 }
 
 extension DependencyValues {
-    var LegalDistrictService: any LegalDistrictService {
+    var legalDistrictService: any LegalDistrictService {
         get { self[LegalDistrictServiceKey.self] }
         set { self[LegalDistrictServiceKey.self] = newValue }
     }

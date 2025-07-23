@@ -26,19 +26,23 @@ struct SignUpFeature {
         var dupCheckFieldState: DupCheckTextField.FieldState = .default
         // TODO: - API나오면 요청하는 값에 맞게 모델(엔티티)을 구현해야함
         /// 사용자가 설정한 우리동네
-        var myArea: String = ""
+        var myArea: District?
         /// 사용자가 설정한 관심동네 리스트
-        var preferredAreaList: [String] = ["수유 3동", "미아동", "국토정중앙면"]
+        var preferredAreaList: [District] = [.init(id: 0, name: "수유동")]
         /// 사용자가 관심동네를 3개 설정했는지 나타내는 값
         var isPreferredFull: Bool = false
         // TODO: - API나오면 약관 리스트에 대한 모델을 구현해야함 (ex: title(제목), url(보여줄 웹 뷰의 URL), isRequired(필수 동의 약관인지에 대한 여부), isAgree(변수; 사용자가 동의했는지에 대한 여부))
         /// 약관 리스트
         var termList: [TermsData] = []
+        var requiredTermCodes: [String] = []
         /// 중복 검사 결과를 보여주는 값
         var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
         var isAvailableName: Bool = false
         /// 사용자가 가입 가능한 상태인지 나타내는 값
-        var canSignUp: Bool = false
+        var canSignUp: Bool {
+            self.dupCheckFieldState == .valid &&
+            self.myArea != nil
+        }
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
     }
@@ -51,8 +55,6 @@ struct SignUpFeature {
         case xButtonTapped
         case checkNicknameTapped
         case updateNotice(isSuccess: Bool, message: String)
-        case setMyAreaTapped
-        case addPreferredAreaTapped
         case deletePreferredAreaTapped(Int)
         case agreeAllTermsTapped
         case agreeTermTapped(code: String)
@@ -73,9 +75,21 @@ struct SignUpFeature {
             switch action {
             case .binding:
                 return .none
+            case let .path(.element(id: state.path.ids.first!, action: .searchArea(.delegate(.selectedArea(context, area))))):
+                switch context {
+                case .myArea:
+                    state.myArea = area
+                case .preferedArea:
+                    guard !state.isPreferredFull else { return .none }
+                    
+                    state.preferredAreaList.append(area)
+                    state.isPreferredFull = state.preferredAreaList.count >= 3
+                }
+                return .none
             case .path:
                 return .none
             case .viewInit:
+                guard state.termList.isEmpty, !state.isLoading else { return .none }
                 state.isLoading = true
                 
                 return .run { send in
@@ -86,9 +100,12 @@ struct SignUpFeature {
                     await send(.handleError(error))
                 }
             case let .addTermsList(termsData):
-                print("addTermsList \(termsData)")
-                
-                state.termList = termsData
+                termsData.forEach { data in
+                    if data.isRequired {
+                        state.requiredTermCodes.append(data.code)
+                    }
+                    state.termList.append(data)
+                }
                 state.isLoading = false
                 
                 return .none
@@ -97,9 +114,6 @@ struct SignUpFeature {
                     await dismiss()
                 }
             case .checkNicknameTapped:
-                // TODO: - 닉네임 중복 검사
-                print("checkNicknameTapped \(state.nickname)")
-                
                 let text = state.nickname
                 
                 return .run { send in
@@ -110,22 +124,9 @@ struct SignUpFeature {
                     await send(.handleError(error))
                 }
             case let .updateNotice(isSuccess, message):
-                if isSuccess {
-                    state.dupCheckFieldState = .valid
-                    state.notice = "사용가능한 닉네임입니다."
-                } else {
-                    state.dupCheckFieldState = .invalid
-                    state.notice = message
-                }
+                state.dupCheckFieldState = isSuccess ? .valid : .invalid
+                state.notice = message
                 
-                return .none
-            case .setMyAreaTapped:
-                // TODO: - 우리동네 설정 화면으로 이동
-                print("setMyAreaTapped")
-                return .none
-            case .addPreferredAreaTapped:
-                // TODO: - 관심 동네 설정 화면으로 이동
-                print("addPreferredAreaTapped")
                 return .none
             case let .deletePreferredAreaTapped(index):
                 // TODO: - 관심 동네 제거
@@ -265,9 +266,9 @@ struct SignUpView: View {
             Text("우리 동네 설정")
                 .pretendard(.h3, color: .gray90)
             
-            NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State())) {
-                Text(store.myArea.isEmpty ? "동 검색하기" : store.myArea)
-                    .pretendard(.body1Regular, color: store.myArea.isEmpty ? .gray50 : .gray90)
+            NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .myArea))) {
+                Text(store.myArea?.name ?? "동 검색하기")
+                    .pretendard(.body1Regular, color: store.myArea == nil ? .gray50 : .gray90)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 14)
                     .padding(.horizontal, 16)
@@ -293,20 +294,19 @@ struct SignUpView: View {
                 HStack(spacing: 10) {
                     Spacer(minLength: 10)
                     
-                    ForEach(Array(store.preferredAreaList.enumerated()), id: \.element) { index, title in
-                        makePreferredAreaButton(title: title, index: index)
+                    ForEach(Array(store.preferredAreaList.enumerated()), id: \.element.id) { index, area in
+                        makePreferredAreaButton(title: area.buttonName, index: index)
                     }
                     
-                    AppButton(
-                        style: .fill,
-                        size: .regular,
-                        mode: .intrinsic,
-                        text: "추가하기"
-                    ) {
-                        store.send(.addPreferredAreaTapped)
+                    NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea))) {
+                        AppButton(
+                            style: .fill,
+                            size: .regular,
+                            mode: .intrinsic,
+                            text: "추가하기"
+                        )
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 8)
-                    
                     Spacer(minLength: 10)
                 }
             }

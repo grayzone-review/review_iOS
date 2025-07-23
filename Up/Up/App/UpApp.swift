@@ -190,13 +190,15 @@ struct UpApp: App {
     
     init() {
         guard
-            let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String
+            let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String,
+            let kakaoRestApiKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_REST_API_KEY") as? String
         else {
           fatalError("Info.plist에서 Key 정보를 읽어오지 못했습니다.")
         }
         
         SDKInitializer.InitSDK(appKey: kakaoAppKey)
         KakaoSDK.initSDK(appKey: kakaoAppKey)
+        AppConfig.kakaoRestApiKey = kakaoRestApiKey
     }
     
     var body: some Scene {
