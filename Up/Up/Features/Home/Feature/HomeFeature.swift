@@ -345,71 +345,77 @@ struct HomeView: View {
             .frame(height: 8)
     }
     
+    @ViewBuilder
     private var popularReviews: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 4) {
-                Text("지금 인기 있는 리뷰")
-                    .pretendard(.h3Bold, color: .gray90)
-                AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
-                Spacer()
-                NavigationLink(
-                    state: UpFeature.Path.State.homeReview(
-                        HomeReviewFeature.State(category: .popular)
-                    )
-                ) {
-                    HStack(spacing: 4) {
-                        Text("더보기")
-                            .pretendard(.captionRegular, color: .gray50)
-                        AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+        if store.popularReviews.isEmpty == false {
+            VStack(spacing: 0) {
+                HStack(spacing: 4) {
+                    Text("지금 인기 있는 리뷰")
+                        .pretendard(.h3Bold, color: .gray90)
+                    AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
+                    Spacer()
+                    NavigationLink(
+                        state: UpFeature.Path.State.homeReview(
+                            HomeReviewFeature.State(category: .popular)
+                        )
+                    ) {
+                        HStack(spacing: 4) {
+                            Text("더보기")
+                                .pretendard(.captionRegular, color: .gray50)
+                            AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                        }
                     }
                 }
-            }
-            .padding(20)
-            ScrollView(.horizontal) {
-                HStack(spacing: 12) {
-                    ForEach(store.popularReviews) { homeReview in
-                        reviewCard(homeReview)
+                .padding(20)
+                ScrollView(.horizontal) {
+                    HStack(spacing: 12) {
+                        ForEach(store.popularReviews) { homeReview in
+                            reviewCard(homeReview)
+                        }
                     }
+                    .padding(.horizontal, 20)
                 }
-                .padding(.horizontal, 20)
             }
         }
     }
     
+    @ViewBuilder
     private var mainRegionReviews: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 4) {
-                Text("우리 동네 최근 리뷰")
-                    .pretendard(.h3Bold, color: .gray90)
-                AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
-                Spacer()
-                NavigationLink(
-                    state: UpFeature.Path.State.homeReview(
-                        HomeReviewFeature.State(category: .mainRegion(store.user?.mainRegion.address))
-                    )
-                ) {
-                    HStack(spacing: 4) {
-                        Text("더보기")
-                            .pretendard(.captionRegular, color: .gray50)
-                        AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+        if store.mainRegionReviews.isEmpty == false {
+            VStack(spacing: 0) {
+                HStack(spacing: 4) {
+                    Text("우리 동네 최근 리뷰")
+                        .pretendard(.h3Bold, color: .gray90)
+                    AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
+                    Spacer()
+                    NavigationLink(
+                        state: UpFeature.Path.State.homeReview(
+                            HomeReviewFeature.State(category: .mainRegion(store.user?.mainRegion.address))
+                        )
+                    ) {
+                        HStack(spacing: 4) {
+                            Text("더보기")
+                                .pretendard(.captionRegular, color: .gray50)
+                            AppIcon.arrowRight.image(width: 14, height: 14, appColor: .gray50)
+                        }
                     }
                 }
-            }
-            .padding(20)
-            ScrollView(.horizontal) {
-                HStack(spacing: 12) {
-                    ForEach(store.mainRegionReviews) { homeReview in
-                        reviewCard(homeReview)
+                .padding(20)
+                ScrollView(.horizontal) {
+                    HStack(spacing: 12) {
+                        ForEach(store.mainRegionReviews) { homeReview in
+                            reviewCard(homeReview)
+                        }
                     }
+                    .padding(.horizontal, 20)
                 }
-                .padding(.horizontal, 20)
             }
         }
     }
     
     @ViewBuilder
     private var interestedRegionReviews: some View {
-        if store.user?.interestedRegions.isEmpty == false { // 관심 동네가 있을 경우에만 노출
+        if store.interestedRegionReviews.isEmpty == false { // 관심 동네가 있을 경우에만 노출
             VStack(spacing: 0) {
                 HStack(spacing: 4) {
                     Text("관심 동네 최근 리뷰")

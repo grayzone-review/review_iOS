@@ -105,7 +105,7 @@ struct ReportView: View {
             reportButton
         }
         .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.immediately)
+        .scrollDismissesKeyboard(.interactively)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
