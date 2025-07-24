@@ -23,12 +23,15 @@ struct SearchAreaFeature {
         /// 사용자에게 입력받은 검색어
         var searchText: String = ""
         var selectedDistrict: District?
+        
         var page: Int = 0
         var hasNext: Bool = true
         var districtList: [District] = []
+        
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
         var isFocused: Bool = false
+        var shouldShowIndicator: Bool = false
         var shouldShowNeedLoaction: Bool = false
         
         func isSelected(_ district: District) -> Bool {
@@ -42,17 +45,22 @@ struct SearchAreaFeature {
         case viewInit
         case dismiss
         
+        /// Focus
+        case becomeFirstResponder
+        case resignFirstResponder
+        
         /// Location
         case needLocationCancelTapped
         case needLocationGoToSettingTapped
         case searchMyAreaTapped
         case getMyAreaDistrict(lat: Double, lng: Double)
+        case loadMyAreaDistrict(text: String)
         
         /// search Area
-        case loadMyAreaDistrict(district: String)
+        case caculateNeedLoadNext(Int)
         case loadDistrict
+        case loadNextDistrict
         case setDistrictList(LegalDistrictsData)
-        case resetSearchText
         case resetDistrictList
         case selectArea(District)
         
@@ -65,6 +73,10 @@ struct SearchAreaFeature {
         }
     }
     
+    enum ID: Hashable {
+        case debounce
+    }
+    
     @Dependency(\.dismiss) var dismiss
     @Dependency(\.signUpService) var signUpService
     @Dependency(\.kakaoAPIService) var kakaoAPIService
@@ -72,6 +84,15 @@ struct SearchAreaFeature {
     
     var body: some ReducerOf<Self> {
         BindingReducer()
+            .onChange(of: \.searchText) { oldValue, newValue in
+                Reduce { state, action in
+                    guard !newValue.isEmpty else { return .none }
+                    return .run { send in
+                        await send(.loadDistrict)
+                    }
+                    .debounce(id: ID.debounce, for: 0.7, scheduler: DispatchQueue.main)
+                }
+            }
         
         Reduce { state, action in
             switch action {
@@ -93,6 +114,15 @@ struct SearchAreaFeature {
                     await dismiss()
                 }
                 
+            // MARK: - Focus
+            case .becomeFirstResponder:
+                state.isFocused = true
+                
+                return .none
+            case .resignFirstResponder:
+                state.isFocused = false
+                
+                return .none
             // MARK: - Location
             case .needLocationCancelTapped:
                 state.shouldShowNeedLoaction = false
@@ -109,6 +139,8 @@ struct SearchAreaFeature {
                 }
                 
             case .searchMyAreaTapped:
+                state.shouldShowIndicator = true
+                
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
                     
@@ -120,25 +152,48 @@ struct SearchAreaFeature {
             case let .getMyAreaDistrict(lat, lng):
                 return .run { send in
                     let district = try await kakaoAPIService.getCurrentDistrict(lat: lat, lng: lng)
-                    print("🚧 현재 위치 조회: \(district)")
-                    await send(.loadMyAreaDistrict(district: district))
+                    await send(.loadMyAreaDistrict(text: district))
                 } catch: { error, send in
                     await send(.handleError(error))
                 }
                 
+            case let .loadMyAreaDistrict(text):
+                state.districtList.removeAll()
+                state.hasNext = true
+                state.page = 0
+                state.searchText = text
+                
+                return .none
+                
             // MARK: - Search Area
-            case let .loadMyAreaDistrict(district):
-                state.searchText = district
+            case .loadDistrict:
+                guard !state.searchText.isEmpty else { return .none }
+                
                 state.districtList.removeAll()
                 state.hasNext = true
                 state.page = 0
                 
-                print("🚧 상태 정리 완료: \(district)")
+                return .send(.loadNextDistrict)
                 
-                return .send(.loadDistrict)
+            case let .caculateNeedLoadNext(id):
+                let index = state.districtList.count - 5
                 
-            case .loadDistrict:
-                guard state.hasNext else { return .none }
+                guard index >= 0,
+                      !state.isLoading,
+                      state.districtList[index].id == id
+                else {
+                    return .none
+                }
+                
+                return .send(.loadNextDistrict)
+            case .loadNextDistrict:
+                guard state.hasNext,
+                      !state.isLoading
+                else {
+                    return .none
+                }
+                
+                state.isLoading = true
                 let page = state.page
                 let keyword = state.searchText
                 
@@ -156,12 +211,8 @@ struct SearchAreaFeature {
                 state.districtList.append(contentsOf: result.legalDistricts)
                 state.hasNext = result.hasNext
                 state.page += 1
-                
-                return .none
-                
-            case .resetSearchText:
-                state.searchText = ""
-                
+                state.isLoading = false
+                state.shouldShowIndicator = false
                 return .none
                 
             case .resetDistrictList:
@@ -184,7 +235,10 @@ struct SearchAreaFeature {
                 }
                 
             case let .handleError(error):
-                if let locationError = error as? LocationError {
+                state.isLoading = false
+                state.shouldShowIndicator = false
+                
+                if let _ = error as? LocationError {
                     state.shouldShowNeedLoaction = true
                 }
                 return .none
@@ -196,31 +250,46 @@ struct SearchAreaFeature {
 }
 
 struct SearchAreaView: View {
-    @State var isFoucused: Bool = false
-    
     @Environment(\.dismiss) var dismiss
     
+    @State private var scrollId: District.ID?
     @Bindable var store: StoreOf<SearchAreaFeature>
     
     init(store: StoreOf<SearchAreaFeature>) {
         self.store = store
-        store.send(.viewInit)
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                inputAreaNameView
-                
-                Rectangle()
-                    .fill(AppColor.gray10.color)
-                    .frame(height: 8)
-                
-                searchMyAreaView
-                
-                ForEach(store.districtList) { district in
-                    areaNameCell(district)
+        VStack(spacing: 0) {
+            inputAreaNameView
+            
+            Rectangle()
+                .fill(AppColor.gray10.color)
+                .frame(height: 8)
+            
+            searchMyAreaView
+            
+            ScrollView {
+                LazyVStack{
+                    ForEach(store.districtList) { district in
+                        areaNameCell(district)
+                    }
+                    
+                    Color.clear
+                        .frame(height: 1)
+                        .onAppear {
+                            print("clear onAppear")
+                            store.send(.loadNextDistrict)
+                        }
                 }
+                .scrollTargetLayout()
+            }
+            .scrollPosition(id: $scrollId, anchor: .bottom)
+            .onChange(of: scrollId) {
+                guard let id = scrollId else { return }
+                
+                
+                store.send(.caculateNeedLoadNext(id))
             }
         }
         .toolbar(.hidden)
@@ -245,7 +314,7 @@ struct SearchAreaView: View {
     
     var inputAreaNameView: some View {
         HStack(spacing: 0) {
-            if !isFoucused {
+            if !store.isFocused {
                 AppIcon.arrowLeft
                     .image(width: 24, height: 24)
                     .padding(10)
@@ -261,22 +330,19 @@ struct SearchAreaView: View {
                 isFocused: $store.isFocused,
                 placeholder: "동명 (읍, 면)으로 검색 (ex. 서초동)",
                 rightComponent: .clear(),
-                onFocusedChange: { old, new in
-                    isFoucused = new
-                },
                 onTextChange: { old, new in
-                    if new.isEmpty {
-                        
-                    }
+                    
                 }
             )
             .padding(.trailing, 16)
             
-            Button {
-                store.send(.resetDistrictList)
-            } label: {
-                Text("취소")
-                    .pretendard(.body1Regular, color: .gray90)
+            if store.isFocused {
+                Button {
+                    store.send(.resignFirstResponder)
+                } label: {
+                    Text("취소")
+                        .pretendard(.body1Regular, color: .gray90)
+                }
             }
         }
         .padding(.vertical, 16)

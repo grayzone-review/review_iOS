@@ -104,15 +104,6 @@ public final class NetworkLogger: EventMonitor {
     public func request(_ request: DataRequest, didParseResponse response: DataResponse<Data?, AFError>) {
         switch response.result {
         case .success:
-//            print("🛰 \(apiName) NETWORK Event LOG\n"
-//                  + "✅ Response parsed successfully\n"
-//                  + "-------------------------------\n"
-//                  + "URL: \(request.request?.url?.absoluteString ?? "")\n"
-//                  + "Result: \(response.result)\n"
-//                  + "StatusCode: \(response.response?.statusCode ?? 0)\n"
-//                  + "Data: \(response.data?.toPrettyPrintedString ?? "")\n"
-//            )
-//
             let url = request.request?.url?.absoluteString ?? ""
             let statusCode = response.response?.statusCode ?? 0
             let dataString = response.data?.toPrettyPrintedString ?? ""

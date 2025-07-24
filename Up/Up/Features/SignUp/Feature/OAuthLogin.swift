@@ -38,18 +38,29 @@ struct OAuthLoginFeature {
     var body: some ReducerOf<Self> {
         BindingReducer()
         
-        Reduce { state, action in
+        Reduce {
+            state,
+            action in
             switch action {
             case .binding(_):
                 return .none
             case .appleButtonTapped:
                 return .run { send in
                     let result = try await AppleSignInManager.shared.signIn()
-                    print("ID Token:", result.idToken)
-                    print("User ID:", result.userID)
-                    print("Email:", result.email ?? "nil")
                     
-                    let data = OAuthResult(token: result.idToken, provider: "apple")
+                    guard let tokenData = result.credential.identityToken,
+                          let codeData = result.credential.authorizationCode,
+                          let idToken = String(data: tokenData, encoding: .utf8),
+                          let authorizationCode = String(data: codeData, encoding: .utf8)
+                    else {
+                        throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "ID 토큰을 변환할 수 없습니다."])
+                    }
+                    
+                    let data = OAuthResult(
+                        token: idToken,
+                        authorizationCode: authorizationCode,
+                        provider: "apple"
+                    )
                     
                     await send(.login(data))
                 } catch: { error, send in

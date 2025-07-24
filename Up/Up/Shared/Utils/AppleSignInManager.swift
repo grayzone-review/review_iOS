@@ -16,7 +16,7 @@ final class AppleSignInManager: NSObject {
     private var continuation: CheckedContinuation<ASAuthorizationAppleIDCredential, Error>?
 
     /// Apple로 로그인: ID 토큰, 사용자ID, (최초 로그인 시) 이메일을 리턴
-    func signIn() async throws -> (idToken: String, userID: String, email: String?) {
+    func signIn() async throws -> (idToken: String, credential: ASAuthorizationAppleIDCredential) {
         let credential = try await withCheckedThrowingContinuation { cont in
             self.continuation = cont
             
@@ -37,7 +37,7 @@ final class AppleSignInManager: NSObject {
         else {
             throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "ID 토큰을 변환할 수 없습니다."])
         }
-        return (idToken: idToken, userID: credential.user, email: credential.email)
+        return (idToken: idToken, credential: credential)
     }
 }
 

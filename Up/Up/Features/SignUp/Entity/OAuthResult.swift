@@ -7,5 +7,12 @@
 
 struct OAuthResult: Sendable, Equatable {
     let token: String
+    let authorizationCode: String?
     let provider: String
+    
+    init(token: String, authorizationCode: String? = nil, provider: String) {
+        self.token = token
+        self.authorizationCode = authorizationCode
+        self.provider = provider
+    }
 }

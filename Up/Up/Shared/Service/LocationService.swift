@@ -33,7 +33,7 @@ final class LocationService: NSObject {
         super.init()
         print("✅ DefaultLocationService init")
         manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters 
     }
     
     deinit {
