@@ -20,6 +20,7 @@ extension View {
                 self
                 Rectangle()
                     .foregroundStyle(AppColor.black.color.opacity(0.5))
+                    .ignoresSafeArea()
                 AppAlert(
                     isSuccess: isSuccess,
                     message: message,
@@ -29,7 +30,6 @@ extension View {
                     }
                 )
             }
-            .ignoresSafeArea()
         } else {
             self
         }

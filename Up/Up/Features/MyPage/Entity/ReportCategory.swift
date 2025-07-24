@@ -27,7 +27,7 @@ enum ReportCategory: Int, Identifiable, CaseIterable {
         case .personal:
             "개인정보노출"
         case .bug:
-            "버그 발견"
+            "앱 사용 중 버그 발생"
         }
     }
 }

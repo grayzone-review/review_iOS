@@ -16,10 +16,10 @@ extension View {
                 self
                 Rectangle()
                     .foregroundStyle(AppColor.black.color.opacity(0.5))
+                    .ignoresSafeArea()
                 LottieView(animation: .named("Insider-loading"))
                     .playing(loopMode: .loop)
             }
-            .ignoresSafeArea()
         } else {
             self
         }

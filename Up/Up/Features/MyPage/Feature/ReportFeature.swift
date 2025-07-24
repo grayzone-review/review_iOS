@@ -17,8 +17,11 @@ struct ReportFeature {
         var category: ReportCategory?
         var targetName = ""
         var reportReason = ""
-        var isIndicatorOn = false
+        var isLoadingIndicatorShowing = false
         var isRequestSucceeded: Bool?
+        var isAlertShowing = false
+        var isSuccess = true
+        var message = ""
         
         var information: String {
             """
@@ -34,7 +37,7 @@ struct ReportFeature {
         }
         
         var isReportButtonEnable: Bool {
-            category != nil && targetName.isEmpty == false && reportReason.isEmpty == false
+            category != nil && (category == .bug || targetName.isEmpty == false) && reportReason.isEmpty == false
         }
     }
     
@@ -44,7 +47,10 @@ struct ReportFeature {
         case backButtonTapped
         case reportCategoryButtonTapped
         case reportButtonTapped
-        case turnIsIndicatorOn(isOn: Bool)
+        case turnIsLoadingIndicatorShowing(Bool)
+        case alertDoneButtonTapped
+        case requestSucceeded
+        case requestFailed
     }
     
     @Reducer
@@ -88,21 +94,40 @@ struct ReportFeature {
                     category = state.category,
                     reason = state.reportReason
                 ] send in
-                    await send(.turnIsIndicatorOn(isOn: true))
+                    await send(.turnIsLoadingIndicatorShowing(true))
                     try await myPageService.report(
                         reporter: name,
                         target: category == .bug ? "" : target,
                         type: category?.text ?? "",
                         description: reason
                     )
-                    await send(.turnIsIndicatorOn(isOn: false))
-                    // 성공 얼럿 표시
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    await send(.requestSucceeded)
                 } catch: { error, send in
-                    // 실패 얼럿 표시
+                    await send(.requestFailed)
                 }
                 
-            case let .turnIsIndicatorOn(isOn):
-                state.isIndicatorOn = isOn
+            case let .turnIsLoadingIndicatorShowing(isShowing):
+                state.isLoadingIndicatorShowing = isShowing
+                return .none
+                
+            case .alertDoneButtonTapped:
+                if state.isSuccess {
+                    return .run { _ in await dismiss() }
+                }
+                
+                return .none
+                
+            case .requestSucceeded:
+                state.isSuccess = true
+                state.message = "신고 완료"
+                state.isAlertShowing = true
+                return .none
+                
+            case .requestFailed:
+                state.isSuccess = false
+                state.message = "신고 실패"
+                state.isAlertShowing = true
                 return .none
             }
         }
@@ -145,6 +170,14 @@ struct ReportView: View {
                 Text("신고하기")
                     .pretendard(.h2, color: .gray90)
             }
+        }
+        .loadingIndicator(store.isLoadingIndicatorShowing)
+        .appAlert(
+            $store.isAlertShowing,
+            isSuccess: store.isSuccess,
+            message: store.message
+        ) {
+            store.send(.alertDoneButtonTapped)
         }
     }
     
