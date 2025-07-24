@@ -46,7 +46,6 @@ enum HomeAPI: Sendable, URLRequestConvertible {
         }
     }
     
-//        return "/api/companies/\(id)/follows"
     // 각 케이스별 경로(Path)
     private var path: String {
         switch self {

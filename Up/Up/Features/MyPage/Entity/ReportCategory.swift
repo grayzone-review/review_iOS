@@ -10,6 +10,7 @@ enum ReportCategory: Int, Identifiable, CaseIterable {
     case promotional
     case critical
     case personal
+    case bug
     
     var id: Int {
         rawValue
@@ -25,6 +26,8 @@ enum ReportCategory: Int, Identifiable, CaseIterable {
             "비방/비하/욕설"
         case .personal:
             "개인정보노출"
+        case .bug:
+            "버그 발견"
         }
     }
 }

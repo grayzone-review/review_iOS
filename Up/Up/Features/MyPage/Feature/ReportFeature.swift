@@ -17,6 +17,8 @@ struct ReportFeature {
         var category: ReportCategory?
         var targetName = ""
         var reportReason = ""
+        var isIndicatorOn = false
+        var isRequestSucceeded: Bool?
         
         var information: String {
             """
@@ -42,6 +44,7 @@ struct ReportFeature {
         case backButtonTapped
         case reportCategoryButtonTapped
         case reportButtonTapped
+        case turnIsIndicatorOn(isOn: Bool)
     }
     
     @Reducer
@@ -50,6 +53,7 @@ struct ReportFeature {
     }
     
     @Dependency(\.dismiss) var dismiss
+    @Dependency(\.myPageService) var myPageService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -78,7 +82,28 @@ struct ReportFeature {
                 return .none
                 
             case .reportButtonTapped:
-                return .run { _ in await dismiss() }
+                return .run { [
+                    name = state.userName,
+                    target = state.targetName,
+                    category = state.category,
+                    reason = state.reportReason
+                ] send in
+                    await send(.turnIsIndicatorOn(isOn: true))
+                    try await myPageService.report(
+                        reporter: name,
+                        target: category == .bug ? "" : target,
+                        type: category?.text ?? "",
+                        description: reason
+                    )
+                    await send(.turnIsIndicatorOn(isOn: false))
+                    // 성공 얼럿 표시
+                } catch: { error, send in
+                    // 실패 얼럿 표시
+                }
+                
+            case let .turnIsIndicatorOn(isOn):
+                state.isIndicatorOn = isOn
+                return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -179,17 +204,20 @@ struct ReportView: View {
             .padding(.vertical, 12)
     }
     
+    @ViewBuilder
     private var target: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("신고 대상 닉네임")
-                .pretendard(.h3Bold, color: .gray90)
-            VStack(alignment: .leading, spacing: 0) {
-                targetTextField
-                    .padding(.vertical, 12)
-                Divider()
+        if store.category != .bug {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("신고 대상 닉네임")
+                    .pretendard(.h3Bold, color: .gray90)
+                VStack(alignment: .leading, spacing: 0) {
+                    targetTextField
+                        .padding(.vertical, 12)
+                    Divider()
+                }
             }
+            .padding(20)
         }
-        .padding(20)
     }
     
     private var targetTextField: some View {

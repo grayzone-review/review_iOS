@@ -41,6 +41,7 @@ struct MyPageFeature {
     enum Destination {} // 로그인 기능 병합 후 탈퇴, 로그아웃 얼럿 추가
     
     @Dependency(\.homeService) var homeService
+    @Dependency(\.myPageService) var myPageService
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in

@@ -70,7 +70,7 @@ struct ReportCategorySheetView: View {
             categories
             closeButton
         }
-        .presentationDetents([.height(362)])
+        .presentationDetents([.height(426)])
         .presentationCornerRadius(24)
         .presentationDragIndicator(.hidden)
     }
