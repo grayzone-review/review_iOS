@@ -51,6 +51,7 @@ enum AppIcon: String {
     case bellLine = "ic_bell_line"
     case smileFill = "ic_smlie_fill"
     case signOutLine = "ic_sign_out_line"
+    case warningCircleFill = "ic_warning_circle_fill"
     
     var image: Image {
         Image(rawValue)

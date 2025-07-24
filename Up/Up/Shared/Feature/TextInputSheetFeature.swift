@@ -110,7 +110,7 @@ private enum TextInputSheetValidatorKey: DependencyKey {
             }
         }
         
-        return result.filter { $0.isEmoji == false }
+        return result.filter { $0.unicodeScalars.contains(where: \.properties.isEmojiPresentation) == false }
     }
 }
 

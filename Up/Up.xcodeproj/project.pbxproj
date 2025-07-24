@@ -11,6 +11,7 @@
 		93146C612DE1E95C00DC8106 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 93146C602DE1E95C00DC8106 /* Alamofire */; };
 		93146C6B2DE1EA2200DC8106 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = 93146C6A2DE1EA2200DC8106 /* PopupView */; };
 		93146C6E2DE1F09E00DC8106 /* KakaoMapsSDK-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 93146C6D2DE1F09E00DC8106 /* KakaoMapsSDK-SPM */; };
+		93AECA392E321CD700F2FA62 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 93AECA382E321CD700F2FA62 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93AECA392E321CD700F2FA62 /* Lottie in Frameworks */,
 				93146C6B2DE1EA2200DC8106 /* PopupView in Frameworks */,
 				93146C5E2DE1E89F00DC8106 /* ComposableArchitecture in Frameworks */,
 				93146C612DE1E95C00DC8106 /* Alamofire in Frameworks */,
@@ -103,6 +105,7 @@
 				93146C602DE1E95C00DC8106 /* Alamofire */,
 				93146C6A2DE1EA2200DC8106 /* PopupView */,
 				93146C6D2DE1F09E00DC8106 /* KakaoMapsSDK-SPM */,
+				93AECA382E321CD700F2FA62 /* Lottie */,
 			);
 			productName = Grayzone;
 			productReference = 93146C4A2DE1E67C00DC8106 /* Up.app */;
@@ -137,6 +140,7 @@
 				93146C5F2DE1E95C00DC8106 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				93146C692DE1EA2200DC8106 /* XCRemoteSwiftPackageReference "PopupView" */,
 				93146C6C2DE1F09E00DC8106 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */,
+				93AECA372E321CD700F2FA62 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 93146C4B2DE1E67C00DC8106 /* Products */;
@@ -426,6 +430,14 @@
 				minimumVersion = 2.12.5;
 			};
 		};
+		93AECA372E321CD700F2FA62 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -448,6 +460,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 93146C6C2DE1F09E00DC8106 /* XCRemoteSwiftPackageReference "KakaoMapsSDK-SPM" */;
 			productName = "KakaoMapsSDK-SPM";
+		};
+		93AECA382E321CD700F2FA62 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 93AECA372E321CD700F2FA62 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

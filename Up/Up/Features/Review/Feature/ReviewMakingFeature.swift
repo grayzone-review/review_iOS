@@ -22,6 +22,10 @@ struct ReviewMakingFeature {
         var management: Double?
         var jobRole: String?
         var employmentPeriod: EmploymentPeriod?
+        var isLoadingIndicatorShowing = false
+        var isAlertShowing = false
+        var isSuccess = true
+        var message = ""
         
         init(company: Company? = nil) {
             var injectedCompany: ProposedCompany?
@@ -58,10 +62,15 @@ struct ReviewMakingFeature {
         }
     }
     
-    enum Action {
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case closeButtonTapped
         case review(ReviewMaking.Action)
         case delegate(Delegate)
+        case turnIsLoadingIndicatorShowing(Bool)
+        case alertDoneButtonTapped
+        case requestSucceeded
+        case requestFailed
         
         enum Delegate: Equatable {
             case created(Review)
@@ -79,8 +88,13 @@ struct ReviewMakingFeature {
     @Dependency(\.companyService) var companyService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
+            case .binding:
+                return .none
+                
             case .closeButtonTapped:
                 return .run { _ in await dismiss() }
                 
@@ -145,7 +159,7 @@ struct ReviewMakingFeature {
                           let employmentPeriod = state.employmentPeriod else {
                         return
                     }
-                    
+                    await send(.turnIsLoadingIndicatorShowing(true))
                     let data = try await companyService.createReview(
                         of: id,
                         workLifeBalance: workLifeBalance,
@@ -162,13 +176,39 @@ struct ReviewMakingFeature {
                     let review = data.toDomain()
                     
                     await send(.delegate(.created(review)))
-                    await dismiss()
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    await send(.requestSucceeded)
+                } catch: { error, send in
+                    await send(.requestFailed)
                 }
                 
             case .review:
                 return .none
                 
             case .delegate:
+                return .none
+                
+            case let .turnIsLoadingIndicatorShowing(isShowing):
+                state.isLoadingIndicatorShowing = isShowing
+                return .none
+                
+            case .alertDoneButtonTapped:
+                if state.isSuccess {
+                    return .run { _ in await dismiss() }
+                }
+                
+                return .none
+                
+            case .requestSucceeded:
+                state.isSuccess = true
+                state.message = "리뷰 작성 완료"
+                state.isAlertShowing = true
+                return .none
+                
+            case .requestFailed:
+                state.isSuccess = false
+                state.message = "리뷰 작성 실패"
+                state.isAlertShowing = true
                 return .none
             }
         }
@@ -181,7 +221,7 @@ struct ReviewMakingFeature {
 extension ReviewMakingFeature.ReviewMaking.State: Equatable {}
 
 struct ReviewMakingView: View {
-    let store: StoreOf<ReviewMakingFeature>
+    @Bindable var store: StoreOf<ReviewMakingFeature>
     
     var body: some View {
         NavigationStack {
@@ -202,6 +242,14 @@ struct ReviewMakingView: View {
                         .pretendard(.h2, color: .gray90)
                 }
             }
+        }
+        .loadingIndicator(store.isLoadingIndicatorShowing)
+        .appAlert(
+            $store.isAlertShowing,
+            isSuccess: store.isSuccess,
+            message: store.message
+        ) {
+            store.send(.alertDoneButtonTapped)
         }
     }
     
