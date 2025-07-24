@@ -48,7 +48,7 @@ enum MyPageAPI: Sendable, URLRequestConvertible {
 
     // `URLRequestConvertible` 프로토콜 요구사항 구현
     func asURLRequest() throws -> URLRequest {
-        var components = URLComponents(string: AppConfig.Network.host + path)!
+        let components = URLComponents(string: AppConfig.Network.host + path)!
 
         switch self {
         case let .editUser(body):
