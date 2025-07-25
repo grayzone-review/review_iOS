@@ -12,8 +12,9 @@ import SwiftUI
 struct MyPageFeature {
     @ObservableState
     struct State: Equatable {
-        @Presents var destination: Destination.State?
         @Shared(.user) var user
+        var isResignAlertShowing = false
+        var isSignOutAlertShowing = false
         
         var headerText: AttributedString {
             let userName = "\(user?.nickname ?? "사용자")님"
@@ -31,39 +32,45 @@ struct MyPageFeature {
         }
     }
     
-    enum Action {
-        case destination(PresentationAction<Destination.Action>)
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case resignButtonTapped
+        case resign
         case signOutButtonTapped
+        case signOut
     }
-    
-    @Reducer
-    enum Destination {} // 로그인 기능 병합 후 탈퇴, 로그아웃 얼럿 추가
     
     @Dependency(\.homeService) var homeService
     @Dependency(\.myPageService) var myPageService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
-            case .destination:
+            case .binding:
                 return .none
                 
             case .resignButtonTapped:
+                state.isResignAlertShowing = true
+                return .none
+                
+            case .resign:
                 return .none
                 
             case .signOutButtonTapped:
+                state.isSignOutAlertShowing = true
+                return .none
+                
+            case .signOut:
                 return .none
             }
         }
-        .ifLet(\.$destination, action: \.destination)
     }
 }
 
-extension MyPageFeature.Destination.State: Equatable {}
-
 struct MyPageView: View {
-    let store: StoreOf<MyPageFeature>
+    @Bindable var store: StoreOf<MyPageFeature>
     
     var body: some View {
         VStack(spacing: 0) {
@@ -72,6 +79,23 @@ struct MyPageView: View {
             separator
             menu
             Spacer()
+        }
+        .actionAlert(
+            $store.isResignAlertShowing,
+            icon: .infoFill,
+            title: "회원 탈퇴",
+            message: "탈퇴 후, 현재 계정으로 작성한 글, 댓글등을 수정하거나 삭제할 수 없습니다. 지금 탈퇴하시겠습니까?",
+            preferredText: "탈퇴하기"
+        ) {
+            store.send(.resign)
+        }
+        .actionAlert(
+            $store.isSignOutAlertShowing,
+            title: "로그 아웃",
+            message: "로그아웃 하시겠습니까?",
+            preferredText: "로그아웃"
+        ) {
+            store.send(.signOut)
         }
     }
     
