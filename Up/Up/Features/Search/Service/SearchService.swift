@@ -44,18 +44,26 @@ struct DefaultSearchService: SearchService {
         case .interest:
             request = .interestedRegionCompanies(latitude: latitude, longitude: longitude, page: page)
         }
-        
         let response = try await session.request(request, as: SearchedCompaniesBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchProposedCompanies(keyword: String, latitude: Double, longitude: Double) async throws -> ProposedCompaniesBody {
         let request = SearchAPI.proposedCompanies(keyword: keyword, latitude: latitude, longitude: longitude)
-        
         let response = try await session.request(request, as: ProposedCompaniesBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
 }
 

@@ -56,11 +56,12 @@ actor AuthManager: RequestInterceptor {
         error: Error,
         completion: @escaping (RetryResult) -> Void
     ) async {
-        // 1) HTTP 상태 코드가 401인지 검사
-        if let response = request.task?.response as? HTTPURLResponse,
-           response.statusCode == 401 {
-            // 401인 경우에만 토큰 갱신 로직으로 넘어감
-        } else {
+        // 1) error가 ResponseError.invalidAccessToken인지 검사
+        guard let afError = error.asAFError,
+              case let .responseValidationFailed(reason) = afError,
+              case let .customValidationFailed(innerError) = reason,
+              let responseError = innerError as? ResponseError,
+              responseError == .invalidAccessToken else {
             completion(.doNotRetry)
             return
         }

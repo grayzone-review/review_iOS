@@ -49,30 +49,44 @@ struct DefaultCompanyService: CompanyService {
     
     func fetchCompany(of id: Int) async throws -> CompanyDTO {
         let request = CompanyAPI.companyDetail(id: id)
-        
         let response = try await session.request(request, as: CompanyDTO.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchReviews(of companyID: Int, page: Int) async throws -> ReviewsBody {
         let request = CompanyAPI.companyReviews(id: companyID, page: page)
-        
         let response = try await session.request(request, as: ReviewsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func createCompanyFollowing(of companyID: Int) async throws {
         let request = CompanyAPI.companyFollow(id: companyID)
+        let error = try await session.execute(request)
         
-        try await session.execute(request)
+        if let error {
+            throw error
+        }
     }
     
     func deleteCompanyFollowing(of companyID: Int) async throws {
         let request = CompanyAPI.companyUnfollow(id: companyID)
+        let error = try await session.execute(request)
         
-        try await session.execute(request)
+        if let error {
+            throw error
+        }
     }
     
     func createReview(
@@ -102,12 +116,15 @@ struct DefaultCompanyService: CompanyService {
             jobRole: jobRole,
             employmentPeriod: employmentPeriod
         )
-        
         let request = CompanyAPI.companyReview(id: companyID, requestBody: body)
-        
         let response = try await session.request(request, as: ReviewDTO.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
 }
 

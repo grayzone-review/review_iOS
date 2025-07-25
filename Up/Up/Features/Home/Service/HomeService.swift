@@ -42,56 +42,96 @@ struct DefaultHomeService: HomeService {
         let request = HomeAPI.user
         let response = try await session.request(request, as: UserDTO.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchPopularReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody {
         let request = HomeAPI.popularReviews(latitude: latitude, longitude: longitude, page: page)
         let response = try await session.request(request, as: HomeReviewsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchMainRegionReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody {
         let request = HomeAPI.mainRegionReviews(latitude: latitude, longitude: longitude, page: page)
         let response = try await session.request(request, as: HomeReviewsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchInterestedRegionReviews(latitude: Double, longitude: Double, page: Int) async throws -> HomeReviewsBody {
         let request = HomeAPI.interestedRegionReviews(latitude: latitude, longitude: longitude, page: page)
         let response = try await session.request(request, as: HomeReviewsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchMyReviews(page: Int) async throws -> ActivityReviewsBody {
         let request = HomeAPI.myReviews(page: page)
         let response = try await session.request(request, as: ActivityReviewsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchInteractedReviews(page: Int) async throws -> ActivityReviewsBody {
         let request = HomeAPI.interactedReviews(page: page)
         let response = try await session.request(request, as: ActivityReviewsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchFollowedCompanies(page: Int) async throws -> FollowedCompaniesBody {
         let request = HomeAPI.followedCompanies(page: page)
         let response = try await session.request(request, as: FollowedCompaniesBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchInteractionCounts() async throws -> InteractionCountsDTO {
         let request = HomeAPI.interactionCounts
         let response = try await session.request(request, as: InteractionCountsDTO.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
 }
 

@@ -38,50 +38,71 @@ struct DefaultReviewService: ReviewService {
     
     func fetchComments(of reviewID: Int, page: Int) async throws -> CommentsBody {
         let request = ReviewAPI.getReviewComments(id: reviewID, page: page)
-        
         let response = try await session.request(request, as: CommentsBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func fetchReplies(of commentID: Int, page: Int) async throws -> RepliesBody {
         let request = ReviewAPI.getReviewCommentReplies(id: commentID, page: page)
-        
         let response = try await session.request(request, as: RepliesBody.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func createComment(of reviewID: Int, content: String, isSecret: Bool) async throws -> CommentDTO {
         let body = ReviewCommentRequest(comment: content, secret: isSecret)
         let request = ReviewAPI.postReviewComment(id: reviewID, requestBody: body)
-        
         let response = try await session.request(request, as: CommentDTO.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func createReply(of commentID: Int, content: String, isSecret: Bool) async throws -> ReplyDTO {
         let body = ReviewCommentRequest(comment: content, secret: isSecret)
-        
         let request = ReviewAPI.postReviewCommentReply(id: commentID, requestBody: body)
-        
         let response = try await session.request(request, as: ReplyDTO.self)
         
-        return response.data
+        switch response {
+        case .success(let response):
+            return response.data
+        case .failure(let error):
+            throw error
+        }
     }
     
     func createReviewLike(of reviewID: Int) async throws {
         let request = ReviewAPI.reviewLike(id: reviewID)
+        let error = try await session.execute(request)
         
-        try await session.execute(request)
-        
+        if let error {
+            throw error
+        }
     }
     
     func deleteReviewLike(of reviewID: Int) async throws {
         let request = ReviewAPI.reviewUnlike(id: reviewID)
+        let error = try await session.execute(request)
         
-        try await session.execute(request)}
+        if let error {
+            throw error
+        }
+    }
 }
 
 struct MockReviewService: ReviewService {

@@ -18,3 +18,15 @@ struct NetworkResponse<T: Codable>: Codable {
         case message
     }
 }
+
+struct FailResponse: Error, Codable {
+    let code: Int
+    let success: Bool
+    let message: String
+    
+    enum CodingKeys: String, CodingKey {
+        case code
+        case success
+        case message
+    }
+}

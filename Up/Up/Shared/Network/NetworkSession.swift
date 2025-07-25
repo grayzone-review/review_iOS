@@ -13,24 +13,24 @@ protocol NetworkSession {
     /// 서버에 요청만 보내고, 응답 데이터는 필요 없을 경우 호출
     func execute(
         _ convertible: URLRequestConvertible
-    ) async throws
+    ) async throws -> FailResponse?
     
     /// URLRequestConvertible 또는 URLRequest를 받아서, 지정된 Decodable 타입을 반환
     func request<T: Decodable>(
         _ convertible: URLRequestConvertible,
         as type: T.Type
-    ) async throws -> NetworkResponse<T>
+    ) async throws -> Result<NetworkResponse<T>, FailResponse>
 
     /// 단순 Data만 받을 때
     func requestData(
         _ convertible: URLRequestConvertible
-    ) async throws -> Data
+    ) async throws -> Result<Data, FailResponse>
 
     /// 서버로부터 String 응답을 받을 때
     func requestString(
         _ convertible: URLRequestConvertible,
         encoding: String.Encoding
-    ) async throws -> String
+    ) async throws -> Result<String, FailResponse>
 }
 
 /// Alamofire를 통해 실제 네트워크 요청을 수행하는 클래스
@@ -60,49 +60,140 @@ final class AlamofireNetworkSession: NetworkSession {
     /// 서버에 요청만 보내고, 응답 데이터는 필요 없을 경우 호출
     func execute(
         _ convertible: URLRequestConvertible
-    ) async throws {
+    ) async throws -> FailResponse? {
+        var failResponse: FailResponse?
         let dataRequest = session.request(convertible)
-            .validate(statusCode: 200..<300)
+            .validate { _, _, data in
+                guard let data else { return .success(()) }
+                
+                failResponse = try? JSONDecoder().decode(FailResponse.self, from: data)
+                
+                if let failResponse,
+                   let responseError = ResponseError(rawValue: failResponse.code),
+                   responseError == .invalidAccessToken {
+                    return .failure(responseError)
+                }
+                
+                return .success(())
+            }
+        let response = await dataRequest.serializingData().response
         
-        _ = try await dataRequest
-            .serializingData()
-            .value
-        // Data는 무시하고, 에러가 발생하면 throw
+        switch response.result {
+            // 성공은 무시
+        case .success:
+            return nil
+            
+        case let .failure(error):
+            if let failResponse {
+                return failResponse
+            }
+            throw error
+        }
     }
 
     /// JSON을 Decodable 타입으로 디코딩하여 반환
     func request<T: Decodable>(
         _ convertible: URLRequestConvertible,
         as type: T.Type
-    ) async throws -> NetworkResponse<T> {
+    ) async throws -> Result<NetworkResponse<T>, FailResponse> {
         // 1) DataRequest 만들기
+        var failResponse: FailResponse?
         let dataRequest = session.request(convertible)
-
-        // 2) 응답을 Decodable 타입으로 직렬화하고 .value로 꺼내오기
-        return try await dataRequest
-            .serializingDecodable(NetworkResponse<T>.self)
-            .value
+            .validate { _, _, data in
+                guard let data else { return .success(()) }
+                
+                failResponse = try? JSONDecoder().decode(FailResponse.self, from: data)
+                
+                if let failResponse,
+                   let responseError = ResponseError(rawValue: failResponse.code),
+                   responseError == .invalidAccessToken {
+                    return .failure(responseError)
+                }
+                
+                return .success(())
+            }
+        let response = await dataRequest.serializingData().response
+        
+        switch response.result {
+        case let .success(data):
+            return .success(try JSONDecoder().decode(NetworkResponse<T>.self, from: data))
+            
+        case let .failure(error):
+            if let failResponse {
+                return .failure(failResponse)
+            }
+            throw error
+        }
     }
 
     /// 단순 Data 형태로 반환
     func requestData(
         _ convertible: URLRequestConvertible
-    ) async throws -> Data {
+    ) async throws -> Result<Data, FailResponse> {
+        var failResponse: FailResponse?
         let dataRequest = session.request(convertible)
-        return try await dataRequest
-            .serializingData()
-            .value
+            .validate { _, _, data in
+                guard let data else { return .success(()) }
+                
+                failResponse = try? JSONDecoder().decode(FailResponse.self, from: data)
+                
+                if let failResponse,
+                   let responseError = ResponseError(rawValue: failResponse.code),
+                   responseError == .invalidAccessToken {
+                    return .failure(responseError)
+                }
+                
+                return .success(())
+            }
+        let response = await dataRequest.serializingData().response
+        
+        switch response.result {
+        case let .success(data):
+            return .success(data)
+            
+        case let .failure(error):
+            if let failResponse {
+                return .failure(failResponse)
+            }
+            throw error
+        }
     }
 
     /// 단순 String 형태로 반환
     func requestString(
         _ convertible: URLRequestConvertible,
         encoding: String.Encoding = .utf8
-    ) async throws -> String {
+    ) async throws -> Result<String, FailResponse> {
+        var failResponse: FailResponse?
         let dataRequest = session.request(convertible)
-        return try await dataRequest
-            .serializingString(encoding: encoding)
-            .value
+            .validate { _, _, data in
+                guard let data else { return .success(()) }
+                
+                failResponse = try? JSONDecoder().decode(FailResponse.self, from: data)
+                
+                if let failResponse,
+                   let responseError = ResponseError(rawValue: failResponse.code),
+                   responseError == .invalidAccessToken {
+                    return .failure(responseError)
+                }
+                
+                return .success(())
+            }
+        let response = await dataRequest.serializingData().response
+        
+        switch response.result {
+        case let .success(data):
+            if let string = String(data: data, encoding: encoding) {
+                return .success(string)
+            }
+            throw NSError(domain: "Invalid Data", code: -1)
+            
+        case let .failure(error):
+            if let failResponse {
+                return .failure(failResponse)
+            }
+            throw error
+        }
     }
 }
 
