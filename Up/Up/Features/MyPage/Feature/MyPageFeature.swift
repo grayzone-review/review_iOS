@@ -13,6 +13,8 @@ struct MyPageFeature {
     @ObservableState
     struct State: Equatable {
         @Shared(.user) var user
+        var isResignAlertShowing = false
+        var isSignOutAlertShowing = false
         var isAlertShowing = false
         var error: FailResponse?
         
@@ -35,7 +37,9 @@ struct MyPageFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case resignButtonTapped
+        case resign
         case signOutButtonTapped
+        case signOut
         case handleError(Error)
     }
     
@@ -51,9 +55,17 @@ struct MyPageFeature {
                 return .none
                 
             case .resignButtonTapped:
+                state.isResignAlertShowing = true
+                return .none
+                
+            case .resign:
                 return .none
                 
             case .signOutButtonTapped:
+                state.isSignOutAlertShowing = true
+                return .none
+                
+            case .signOut:
                 return .none
                 
             case let .handleError(error):
@@ -71,7 +83,7 @@ struct MyPageFeature {
 }
 
 struct MyPageView: View {
-    @Bindable var  store: StoreOf<MyPageFeature>
+    @Bindable var store: StoreOf<MyPageFeature>
     
     var body: some View {
         VStack(spacing: 0) {
@@ -80,6 +92,23 @@ struct MyPageView: View {
             separator
             menu
             Spacer()
+        }
+        .actionAlert(
+            $store.isResignAlertShowing,
+            icon: .infoFill,
+            title: "회원 탈퇴",
+            message: "탈퇴 후, 현재 계정으로 작성한 글, 댓글등을 수정하거나 삭제할 수 없습니다. 지금 탈퇴하시겠습니까?",
+            preferredText: "탈퇴하기"
+        ) {
+            store.send(.resign)
+        }
+        .actionAlert(
+            $store.isSignOutAlertShowing,
+            title: "로그 아웃",
+            message: "로그아웃 하시겠습니까?",
+            preferredText: "로그아웃"
+        ) {
+            store.send(.signOut)
         }
         .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
