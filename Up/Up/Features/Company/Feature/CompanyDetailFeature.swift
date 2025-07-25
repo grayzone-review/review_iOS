@@ -18,6 +18,8 @@ struct CompanyDetailFeature {
         var reviews: [Review] = []
         var hasNextPage: Bool = true
         var isLoading: Bool = false
+        var isAlertShowing = false
+        var error: FailResponse?
         
         var loadPoint: Review? {
             guard reviews.count > 3 else {
@@ -40,6 +42,7 @@ struct CompanyDetailFeature {
         case follow
         case makeReviewButtonTapped
         case destination(PresentationAction<Destination.Action>)
+        case handleError(Error)
     }
     
     @Reducer
@@ -78,6 +81,8 @@ struct CompanyDetailFeature {
                     
                     await send(.companyInformationFetched(company))
                     await send(.saveCompany)
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case .saveCompany:
@@ -121,6 +126,8 @@ struct CompanyDetailFeature {
                 return .run { [companyID = state.companyID, page = state.reviews.count / 10] send in
                     let data = try await companyService.fetchReviews(of: companyID, page: page)
                     await send(.companyReviewsFetched(data))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .companyReviewsFetched(body):
@@ -152,6 +159,8 @@ struct CompanyDetailFeature {
                     } else {
                         try await companyService.deleteCompanyFollowing(of: company.id)
                     }
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case .makeReviewButtonTapped:
@@ -164,6 +173,16 @@ struct CompanyDetailFeature {
                 
             case .destination:
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -206,6 +225,7 @@ struct CompanyDetailView: View {
                     .pretendard(.h2, color: .gray90)
             }
         }
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var information: some View {

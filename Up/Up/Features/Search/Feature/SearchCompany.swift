@@ -18,6 +18,8 @@ struct SearchCompanyFeature {
         var searchTheme: SearchTheme = .keyword
         var isFocused: Bool = false
         var proposedCompanies: [ProposedCompany] = []
+        var isAlertShowing = false
+        var error: FailResponse?
     }
     
     enum Action: BindableAction {
@@ -32,6 +34,7 @@ struct SearchCompanyFeature {
         case fetchProposedCompanies
         case setProposedCompanies([ProposedCompany])
         case setSearchState(SearchState)
+        case handleError(Error)
     }
     
     @Reducer
@@ -139,6 +142,8 @@ struct SearchCompanyFeature {
                     }
                     
                     await send(.setProposedCompanies(companies))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .setProposedCompanies(companies):
@@ -168,6 +173,16 @@ struct SearchCompanyFeature {
                 }
                 state.searchState = searchState
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.search, action: \.search) {
@@ -202,6 +217,7 @@ struct SearchCompanyView: View {
                     .pretendard(.h2, color: .gray90)
             }
         }
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var enterSearchTermArea: some View {

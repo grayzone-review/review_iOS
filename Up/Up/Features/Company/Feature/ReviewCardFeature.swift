@@ -16,6 +16,8 @@ struct ReviewCardFeature {
         var review: Review
         var isExpanded: Bool
         var isExpandedOnly: Bool
+        var isAlertShowing = false
+        var error: FailResponse?
         
         init(
             comments: CommentsWindowFeature.State? = nil,
@@ -41,6 +43,7 @@ struct ReviewCardFeature {
         case likeButtonTapped
         case like
         case commentButtonTapped
+        case handleError(Error)
     }
     
     enum CancelID {
@@ -96,11 +99,23 @@ struct ReviewCardFeature {
                     } else {
                         try await reviewService.deleteReviewLike(of: review.id)
                     }
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case .commentButtonTapped:
                 state.comments = CommentsWindowFeature.State(review: state.review)
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.$comments, action: \.comments) {
@@ -134,6 +149,7 @@ struct ReviewCardView: View {
             CommentsWindowView(store: commentsWindowStore)
         }
         .bind($review, to: $store.review)
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var header: some View {

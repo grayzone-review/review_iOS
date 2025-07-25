@@ -17,6 +17,8 @@ struct MainFeature {
         var selectedTab: Tab = .home
         var home = HomeFeature.State()
         var myPage = MyPageFeature.State()
+        var isAlertShowing = false
+        var error: FailResponse?
     }
     
     enum Action: BindableAction {
@@ -29,6 +31,7 @@ struct MainFeature {
         case tabSelected(Tab)
         case home(HomeFeature.Action)
         case myPage(MyPageFeature.Action)
+        case handleError(Error)
     }
     
     @Reducer
@@ -76,6 +79,8 @@ struct MainFeature {
                     let user = data.toDomain()
                     
                     await send(.userFetched(user))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .userFetched(user):
@@ -97,6 +102,16 @@ struct MainFeature {
                 
             case .myPage:
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -133,6 +148,7 @@ struct MainView: View {
                 tabBar
             }
         }
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var home: some View {

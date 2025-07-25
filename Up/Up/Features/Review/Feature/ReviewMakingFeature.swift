@@ -24,8 +24,7 @@ struct ReviewMakingFeature {
         var employmentPeriod: EmploymentPeriod?
         var isLoadingIndicatorShowing = false
         var isAlertShowing = false
-        var isSuccess = true
-        var message = ""
+        var error: FailResponse?
         
         init(company: Company? = nil) {
             var injectedCompany: ProposedCompany?
@@ -60,17 +59,21 @@ struct ReviewMakingFeature {
         var progressBarScale: Double {
             Double(reviewStates.count + 1) / 3
         }
+        
+        var message: String {
+            "리뷰가 정상적으로 등록되었습니다!"
+        }
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case closeButtonTapped
         case review(ReviewMaking.Action)
+        case requestFinished
         case delegate(Delegate)
         case turnIsLoadingIndicatorShowing(Bool)
         case alertDoneButtonTapped
-        case requestSucceeded
-        case requestFailed
+        case handleError(Error)
         
         enum Delegate: Equatable {
             case created(Review)
@@ -177,12 +180,17 @@ struct ReviewMakingFeature {
                     
                     await send(.delegate(.created(review)))
                     await send(.turnIsLoadingIndicatorShowing(false))
-                    await send(.requestSucceeded)
+                    await send(.requestFinished)
                 } catch: { error, send in
-                    await send(.requestFailed)
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    await send(.handleError(error))
                 }
                 
             case .review:
+                return .none
+                
+            case .requestFinished:
+                state.isAlertShowing = true
                 return .none
                 
             case .delegate:
@@ -193,23 +201,23 @@ struct ReviewMakingFeature {
                 return .none
                 
             case .alertDoneButtonTapped:
-                if state.isSuccess {
+                if state.error == nil {
                     return .run { _ in await dismiss() }
+                } else {
+                    state.error = nil
                 }
                 
                 return .none
                 
-            case .requestSucceeded:
-                state.isSuccess = true
-                state.message = "리뷰 작성 완료"
-                state.isAlertShowing = true
-                return .none
-                
-            case .requestFailed:
-                state.isSuccess = false
-                state.message = "리뷰 작성 실패"
-                state.isAlertShowing = true
-                return .none
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.review, action: \.review) {
@@ -246,8 +254,8 @@ struct ReviewMakingView: View {
         .loadingIndicator(store.isLoadingIndicatorShowing)
         .appAlert(
             $store.isAlertShowing,
-            isSuccess: store.isSuccess,
-            message: store.message
+            isSuccess: store.error == nil,
+            message: store.error?.message ?? store.message
         ) {
             store.send(.alertDoneButtonTapped)
         }

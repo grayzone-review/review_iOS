@@ -19,6 +19,8 @@ struct MyActivityFeature {
         var myReview = MyReviewTabFeature.State()
         var interactedReview = InteractedReviewTabFeature.State()
         var followedCompany = FollowedCompanyTabFeature.State()
+        var isAlertShowing = false
+        var error: FailResponse?
         
         var userName: String {
             user?.nickname ?? "사용자"
@@ -36,6 +38,7 @@ struct MyActivityFeature {
         case myReview(MyReviewTabFeature.Action)
         case interactedReview(InteractedReviewTabFeature.Action)
         case followedCompany(FollowedCompanyTabFeature.Action)
+        case handleError(Error)
     }
     
     @Reducer
@@ -94,6 +97,8 @@ struct MyActivityFeature {
                     let counts = data.toDomain()
                     
                     await send(.countsFetched(counts))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .countsFetched(counts):
@@ -119,6 +124,16 @@ struct MyActivityFeature {
                 
             case .followedCompany:
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -166,6 +181,7 @@ struct MyActivityView: View {
                     .pretendard(.h2, color: .gray90)
             }
         }
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var activityCounts: some View {

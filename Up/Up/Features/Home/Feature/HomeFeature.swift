@@ -16,13 +16,16 @@ struct HomeFeature {
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
         var interestedRegionReviews = [HomeReview]()
+        var isAlertShowing = false
+        var error: FailResponse?
         
         var userName: String {
             user?.nickname ?? "사용자"
         }
     }
     
-    enum Action {
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case viewInit
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
@@ -30,13 +33,19 @@ struct HomeFeature {
         case mainRegionReviewsFetched([HomeReview])
         case fetchInterestedRegionReviews
         case interestedRegionReviewsFetched([HomeReview])
+        case handleError(Error)
     }
     
     @Dependency(\.homeService) var homeService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
+            case .binding:
+                return.none
+                
             case .viewInit:
                 return .run { send in
                     await send(.fetchPopularReviews)
@@ -58,6 +67,8 @@ struct HomeFeature {
                     let reviews = data.reviews.map { $0.toDomain() }
                     
                     await send(.popularReviewsFetched(reviews))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .popularReviewsFetched(reviews):
@@ -78,6 +89,8 @@ struct HomeFeature {
                     let reviews = data.reviews.map { $0.toDomain() }
                     
                     await send(.mainRegionReviewsFetched(reviews))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .mainRegionReviewsFetched(reviews):
@@ -98,11 +111,23 @@ struct HomeFeature {
                     let reviews = data.reviews.map { $0.toDomain() }
                     
                     await send(.interestedRegionReviewsFetched(reviews))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .interestedRegionReviewsFetched(reviews):
                 state.interestedRegionReviews = reviews
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
     }
@@ -117,7 +142,7 @@ struct HomeView: View {
         }
     }
     
-    let store: StoreOf<HomeFeature>
+    @Bindable var store: StoreOf<HomeFeature>
     @State private var scrollPosition: ScrollPosition?
     
     init(store: StoreOf<HomeFeature>) {
@@ -148,6 +173,7 @@ struct HomeView: View {
             .padding(.bottom, 0.5) // 탭바 아래로 반투명 비쳐보임 방지
         }
         .toolbar(.hidden, for: .navigationBar)
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var navigationBar: some View {

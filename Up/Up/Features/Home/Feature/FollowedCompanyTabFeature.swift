@@ -17,9 +17,12 @@ struct FollowedCompanyTabFeature {
         var isLoading = false
         var hasNext = true
         var currentPage = 0
+        var isAlertShowing = false
+        var error: FailResponse?
     }
     
-    enum Action {
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case viewInit
         case loadNext
         case setIsLoading(Bool)
@@ -27,14 +30,19 @@ struct FollowedCompanyTabFeature {
         case setCurrentPage
         case setCompanies([FollowedCompany])
         case checkNeedToLoadNext(FollowedCompany)
-        case handleError(any Error)
+        case handleError(Error)
     }
     
     @Dependency(\.homeService) var homeService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
+            case .binding:
+                return.none
+                
             case .viewInit:
                 guard state.needInitialLoad else { return .none }
                 state.needInitialLoad = false
@@ -55,16 +63,14 @@ struct FollowedCompanyTabFeature {
                         return
                     }
                     
-                    do {
-                        let data = try await homeService.fetchFollowedCompanies(page: currentPage)
-                        let companies = data.companies.map { $0.toDomain() }
-                        
-                        await send(.setHasNext(data.hasNext))
-                        await send(.setCompanies(companies))
-                        await send(.setIsLoading(false))
-                    } catch {
-                        await send(.handleError(error))
-                    }
+                    let data = try await homeService.fetchFollowedCompanies(page: currentPage)
+                    let companies = data.companies.map { $0.toDomain() }
+                    
+                    await send(.setHasNext(data.hasNext))
+                    await send(.setCompanies(companies))
+                    await send(.setIsLoading(false))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .setIsLoading(isLoading):
@@ -98,17 +104,21 @@ struct FollowedCompanyTabFeature {
                 }
                 
             case let .handleError(error):
-                // TODO: - Handling Error
-                print("❌ error: \(error)")
-                
-                return .none
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
     }
 }
 
 struct FollowedCompanyTabView: View {
-    let store: StoreOf<FollowedCompanyTabFeature>
+    @Bindable var store: StoreOf<FollowedCompanyTabFeature>
     
     init(store: StoreOf<FollowedCompanyTabFeature>) {
         self.store = store
@@ -118,6 +128,7 @@ struct FollowedCompanyTabView: View {
     var body: some View {
         if store.companies.isEmpty {
             empty
+                .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -140,6 +151,7 @@ struct FollowedCompanyTabView: View {
                     }
                 }
             }
+            .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
         }
     }
     

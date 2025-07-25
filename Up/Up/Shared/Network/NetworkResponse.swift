@@ -19,7 +19,7 @@ struct NetworkResponse<T: Codable>: Codable {
     }
 }
 
-struct FailResponse: Error, Codable {
+struct FailResponse: Error, Codable, Equatable {
     let code: Int
     let success: Bool
     let message: String

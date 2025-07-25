@@ -12,8 +12,9 @@ import SwiftUI
 struct MyPageFeature {
     @ObservableState
     struct State: Equatable {
-        @Presents var destination: Destination.State?
         @Shared(.user) var user
+        var isAlertShowing = false
+        var error: FailResponse?
         
         var headerText: AttributedString {
             let userName = "\(user?.nickname ?? "사용자")님"
@@ -31,22 +32,22 @@ struct MyPageFeature {
         }
     }
     
-    enum Action {
-        case destination(PresentationAction<Destination.Action>)
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case resignButtonTapped
         case signOutButtonTapped
+        case handleError(Error)
     }
-    
-    @Reducer
-    enum Destination {} // 로그인 기능 병합 후 탈퇴, 로그아웃 얼럿 추가
     
     @Dependency(\.homeService) var homeService
     @Dependency(\.myPageService) var myPageService
     
     var body: some ReducerOf<Self> {
+        BindingReducer()
+        
         Reduce { state, action in
             switch action {
-            case .destination:
+            case .binding:
                 return .none
                 
             case .resignButtonTapped:
@@ -54,16 +55,23 @@ struct MyPageFeature {
                 
             case .signOutButtonTapped:
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
-        .ifLet(\.$destination, action: \.destination)
     }
 }
 
-extension MyPageFeature.Destination.State: Equatable {}
-
 struct MyPageView: View {
-    let store: StoreOf<MyPageFeature>
+    @Bindable var  store: StoreOf<MyPageFeature>
     
     var body: some View {
         VStack(spacing: 0) {
@@ -73,6 +81,7 @@ struct MyPageView: View {
             menu
             Spacer()
         }
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var title: some View {

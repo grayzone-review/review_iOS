@@ -21,6 +21,8 @@ struct HomeReviewFeature {
         var isLoading = false
         var hasNext = true
         var currentPage = 0
+        var isAlertShowing = false
+        var error: FailResponse?
     }
     
     enum Action: BindableAction {
@@ -39,7 +41,7 @@ struct HomeReviewFeature {
         case likeButtonTapped(Review)
         case like(id: Int, Bool)
         case commentButtonTapped(Review)
-        case handleError(any Error)
+        case handleError(Error)
     }
     
     enum CancelID: Hashable {
@@ -89,35 +91,33 @@ struct HomeReviewFeature {
                         return
                     }
                     
-                    do {
-                        let data = switch category {
-                        case .popular:
-                            try await homeService.fetchPopularReviews(
-                                latitude: 37.5665,
-                                longitude: 126.9780,
-                                page: currentPage
-                            )
-                        case .mainRegion:
-                            try await homeService.fetchMainRegionReviews(
-                                latitude: 37.5665,
-                                longitude: 126.9780,
-                                page: currentPage
-                            )
-                        case .interestedRegion:
-                            try await homeService.fetchInterestedRegionReviews(
-                                latitude: 37.5665,
-                                longitude: 126.9780,
-                                page: currentPage
-                            )
-                        }
-                        
-                        let reviews = data.reviews.map { $0.toDomain() }
-                        await send(.setHasNext(data.hasNext))
-                        await send(.setHomeReviews(reviews))
-                        await send(.setIsLoading(false))
-                    } catch {
-                        await send(.handleError(error))
+                    let data = switch category {
+                    case .popular:
+                        try await homeService.fetchPopularReviews(
+                            latitude: 37.5665,
+                            longitude: 126.9780,
+                            page: currentPage
+                        )
+                    case .mainRegion:
+                        try await homeService.fetchMainRegionReviews(
+                            latitude: 37.5665,
+                            longitude: 126.9780,
+                            page: currentPage
+                        )
+                    case .interestedRegion:
+                        try await homeService.fetchInterestedRegionReviews(
+                            latitude: 37.5665,
+                            longitude: 126.9780,
+                            page: currentPage
+                        )
                     }
+                    
+                    let reviews = data.reviews.map { $0.toDomain() }
+                    await send(.setHasNext(data.hasNext))
+                    await send(.setHomeReviews(reviews))
+                    await send(.setIsLoading(false))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .setIsLoading(isLoading):
@@ -164,15 +164,13 @@ struct HomeReviewFeature {
                 
             case let .follow(id, isFollowed):
                 return .run { send in
-                    do {
-                        if isFollowed {
-                            try await companyService.createCompanyFollowing(of: id)
-                        } else {
-                            try await companyService.deleteCompanyFollowing(of: id)
-                        }
-                    } catch {
-                        await send(.handleError(error))
+                    if isFollowed {
+                        try await companyService.createCompanyFollowing(of: id)
+                    } else {
+                        try await companyService.deleteCompanyFollowing(of: id)
                     }
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .likeButtonTapped(review):
@@ -193,6 +191,8 @@ struct HomeReviewFeature {
                     } else {
                         try await reviewService.deleteReviewLike(of: id)
                     }
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .commentButtonTapped(review):
@@ -200,10 +200,14 @@ struct HomeReviewFeature {
                 return .none
                 
             case let .handleError(error):
-                // TODO: - Handling Error
-                print("❌ error: \(error)")
-                
-                return .none
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.$comments, action: \.comments) {
@@ -250,6 +254,7 @@ struct HomeReviewView: View {
                     .pretendard(.h2, color: .gray90)
             }
         }
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private func companyCard(_ company: SearchedCompany) -> some View {

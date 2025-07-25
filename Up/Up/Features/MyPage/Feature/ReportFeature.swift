@@ -18,10 +18,8 @@ struct ReportFeature {
         var targetName = ""
         var reportReason = ""
         var isLoadingIndicatorShowing = false
-        var isRequestSucceeded: Bool?
         var isAlertShowing = false
-        var isSuccess = true
-        var message = ""
+        var error: FailResponse?
         
         var information: String {
             """
@@ -39,6 +37,10 @@ struct ReportFeature {
         var isReportButtonEnable: Bool {
             category != nil && (category == .bug || targetName.isEmpty == false) && reportReason.isEmpty == false
         }
+        
+        var message: String {
+            "신고가 접수되었습니다. 검토 후 조치하겠습니다."
+        }
     }
     
     enum Action: BindableAction {
@@ -47,10 +49,10 @@ struct ReportFeature {
         case backButtonTapped
         case reportCategoryButtonTapped
         case reportButtonTapped
+        case requestFinished
         case turnIsLoadingIndicatorShowing(Bool)
         case alertDoneButtonTapped
-        case requestSucceeded
-        case requestFailed
+        case handleError(Error)
     }
     
     @Reducer
@@ -102,33 +104,38 @@ struct ReportFeature {
                         description: reason
                     )
                     await send(.turnIsLoadingIndicatorShowing(false))
-                    await send(.requestSucceeded)
+                    await send(.requestFinished)
                 } catch: { error, send in
-                    await send(.requestFailed)
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    await send(.handleError(error))
                 }
+                
+            case .requestFinished:
+                state.isAlertShowing = true
+                return .none
                 
             case let .turnIsLoadingIndicatorShowing(isShowing):
                 state.isLoadingIndicatorShowing = isShowing
                 return .none
                 
             case .alertDoneButtonTapped:
-                if state.isSuccess {
+                if state.error == nil {
                     return .run { _ in await dismiss() }
+                } else {
+                    state.error = nil
                 }
                 
                 return .none
                 
-            case .requestSucceeded:
-                state.isSuccess = true
-                state.message = "신고 완료"
-                state.isAlertShowing = true
-                return .none
-                
-            case .requestFailed:
-                state.isSuccess = false
-                state.message = "신고 실패"
-                state.isAlertShowing = true
-                return .none
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -174,8 +181,8 @@ struct ReportView: View {
         .loadingIndicator(store.isLoadingIndicatorShowing)
         .appAlert(
             $store.isAlertShowing,
-            isSuccess: store.isSuccess,
-            message: store.message
+            isSuccess: store.error == nil,
+            message: store.error?.message ?? store.message
         ) {
             store.send(.alertDoneButtonTapped)
         }

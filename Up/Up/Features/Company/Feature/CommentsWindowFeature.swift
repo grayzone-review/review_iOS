@@ -23,6 +23,8 @@ struct CommentsWindowFeature {
         var isSecret: Bool = false
         var hasNextPage: Bool = true
         var isLoading: Bool = false
+        var isAlertShowing = false
+        var error: FailResponse?
         
         var loadPoint: Comment? {
             guard comments.count > 3 else {
@@ -73,9 +75,10 @@ struct CommentsWindowFeature {
         case secretButtonTapped
         case enterCommentButtonTapped
         case commentAdded(Comment)
+        case handleError(Error)
     }
     
-    @Dependency(\.reviewService) var service
+    @Dependency(\.reviewService) var reviewService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -97,9 +100,11 @@ struct CommentsWindowFeature {
                 
             case let .showMoreRepliesButtonTapped(commentID):
                 return .run { [replies = state.replies[commentID, default: []]] send in
-                    let data = try await service.fetchReplies(of: commentID, page: replies.count / 10)
+                    let data = try await reviewService.fetchReplies(of: commentID, page: replies.count / 10)
                     let replies = data.replies.map { $0.toDomain() }
                     await send(.addMoreReplies(commentID, replies))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .addMoreReplies(commentID, replies):
@@ -115,8 +120,10 @@ struct CommentsWindowFeature {
                 state.isLoading = true
                 
                 return .run { [id = state.review.id, page = state.comments.count / 10] send in
-                    let data = try await service.fetchComments(of: id, page: page)
+                    let data = try await reviewService.fetchComments(of: id, page: page)
                     await send(.setComments(data))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .setComments(body):
@@ -156,7 +163,7 @@ struct CommentsWindowFeature {
                 state.review.commentCount += 1
                 return .run { [state] send in
                     if let targetComment {
-                        let data = try await service.createReply(
+                        let data = try await reviewService.createReply(
                             of: targetComment.id,
                             content: content,
                             isSecret: targetComment.isSecret ? true : state.isSecret
@@ -164,7 +171,7 @@ struct CommentsWindowFeature {
                         let reply = data.toDomain()
                         await send(.addMoreReplies(targetComment.id, [reply]))
                     } else {
-                        let data = try await service.createComment(
+                        let data = try await reviewService.createComment(
                             of: state.review.id,
                             content: content,
                             isSecret: state.isSecret
@@ -172,11 +179,23 @@ struct CommentsWindowFeature {
                         let comment = data.toDomain()
                         await send(.commentAdded(comment))
                     }
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .commentAdded(comment):
                 state.comments.insert(comment, at: 0)
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
     }
@@ -210,6 +229,7 @@ struct CommentsWindowView: View {
         )
         .presentationContentInteraction(.scrolls)
         .presentationDragIndicator(.hidden)
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var handle: some View {

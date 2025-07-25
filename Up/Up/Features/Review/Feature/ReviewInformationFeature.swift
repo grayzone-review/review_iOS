@@ -16,6 +16,7 @@ struct ReviewInformationFeature {
         var company: ProposedCompany?
         var jobRole: String?
         var employmentPeriod: EmploymentPeriod?
+        
         var isNextButtonEnabled: Bool {
             company != nil && jobRole != nil && employmentPeriod != nil
         }

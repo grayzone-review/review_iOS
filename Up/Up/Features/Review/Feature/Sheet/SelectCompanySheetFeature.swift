@@ -15,6 +15,8 @@ struct SelectCompanySheetFeature {
         var selected: ProposedCompany?
         var searchTerm: String = ""
         var proposedCompanies: [ProposedCompany] = []
+        var isAlertShowing = false
+        var error: FailResponse?
     }
     
     enum Action: BindableAction {
@@ -24,6 +26,7 @@ struct SelectCompanySheetFeature {
         case setProposedCompanies([ProposedCompany])
         case selectCompany(ProposedCompany)
         case delegate(Delegate)
+        case handleError(Error)
         
         enum Delegate: Equatable {
             case select(ProposedCompany)
@@ -68,6 +71,8 @@ struct SelectCompanySheetFeature {
                     )
                     let companies = data.companies.map { $0.toDomain() }
                     await send(.setProposedCompanies(companies))
+                } catch: { error, send in
+                    await send(.handleError(error))
                 }
                 
             case let .setProposedCompanies(companies):
@@ -88,6 +93,16 @@ struct SelectCompanySheetFeature {
                 
             case .delegate:
                 return .none
+                
+            case let .handleError(error):
+                if let failResponse = error as? FailResponse {
+                    state.error = failResponse
+                    state.isAlertShowing = true
+                    return .none
+                } else {
+                    print("❌ error: \(error)")
+                    return .none
+                }
             }
         }
     }
@@ -108,6 +123,7 @@ struct SelectCompanySheetView: View {
         }
         .presentationCornerRadius(24)
         .presentationDragIndicator(.hidden)
+        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var handle: some View {
