@@ -66,7 +66,7 @@ final class LocationService: NSObject {
             break
             
         @unknown default:
-            throw LocationError.authorizationDenied
+            throw LocationError.locationUnavailable
         }
         
         // 권한이 OK 이면 위치 요청

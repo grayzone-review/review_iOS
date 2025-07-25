@@ -158,12 +158,9 @@ struct SearchAreaFeature {
                 }
                 
             case let .loadMyAreaDistrict(text):
-                state.districtList.removeAll()
-                state.hasNext = true
-                state.page = 0
                 state.searchText = text
                 
-                return .none
+                return .send(.loadDistrict)
                 
             // MARK: - Search Area
             case .loadDistrict:
@@ -198,10 +195,8 @@ struct SearchAreaFeature {
                 let keyword = state.searchText
                 
                 return .run { send in
-                    print("🚧 주소검색 시작: \(keyword)")
                     let result = try await legalDistrictService.searchArea(keyword: keyword, page: page)
                     
-                    print("🚧 주소검색 결과: \(result)")
                     await send(.setDistrictList(result))
                 } catch: { error, send in
                     await send(.handleError(error))
@@ -238,7 +233,7 @@ struct SearchAreaFeature {
                 state.isLoading = false
                 state.shouldShowIndicator = false
                 
-                if let _ = error as? LocationError {
+                if let locationError = error as? LocationError, locationError == .authorizationDenied {
                     state.shouldShowNeedLoaction = true
                 }
                 return .none
