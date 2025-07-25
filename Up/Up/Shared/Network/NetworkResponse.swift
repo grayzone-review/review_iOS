@@ -20,7 +20,7 @@ struct AnyCodingKey: CodingKey {
 struct NilResponse: Codable {
     init() {}
     
-    init(from decoder: Decoder) throws {
+    init(from decoder: Swift.Decoder) throws {
         let container = try decoder.singleValueContainer()
         // JSON이 null이면 decodeNil()이 true가 되고,
         // {}같은 빈 객체가 내려오면 컨테이너 자체가 비어있으므로 통과

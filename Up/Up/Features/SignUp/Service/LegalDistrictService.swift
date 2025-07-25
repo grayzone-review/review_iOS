@@ -36,7 +36,12 @@ struct DefaultLegalDistrictService: LegalDistrictService {
         
         let response = try await session.request(request, as: LegalDistrictResponse.self)
         
-        return response.data.toDomain()
+        switch response {
+        case .success(let success):
+            return success.data.toDomain()
+        case .failure(let failure):
+            throw failure
+        }
     }
 }
 

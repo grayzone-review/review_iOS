@@ -146,15 +146,18 @@ struct UpView: View {
     }
     
     private var onboarding: some View {
-            NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-                OAuthLoginView(store: store.scope(state: \.oauthLogin, action: \.oauthLogin))
-            } destination: { store in
-                switch store.case {
-                case let .signUp(store):
-                    SignUpView(store: store)
-                case let .searchArea(store):
-                    SearchAreaView(store: store)
-                }
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+            OAuthLoginView(store: store.scope(state: \.oauthLogin, action: \.oauthLogin))
+        } destination: { store in
+            switch store.case {
+            case let .signUp(store):
+                SignUpView(store: store)
+            case let .searchArea(store):
+                SearchAreaView(store: store)
+            default:
+                EmptyView()
+            }
+        }
     }
     
     private var main: some View {
@@ -176,6 +179,8 @@ struct UpView: View {
                 
             case let .report(reportStore):
                 ReportView(store: reportStore)
+            default:
+                EmptyView()
             }
         }
     }

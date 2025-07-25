@@ -7,7 +7,7 @@
 
 struct RegionResponse: Codable {
     let meta: Meta
-    let documents: [Region]
+    let documents: [KakaoRegion]
     
     func toDomain() -> String {
         guard let region = documents.first(where: { $0.regionType == "B" }) ?? documents.first else { return "" }
@@ -24,7 +24,7 @@ struct Meta: Codable {
     }
 }
 
-struct Region: Codable {
+struct KakaoRegion: Codable {
     let regionType: String
     let addressName: String
     let region1DepthName: String

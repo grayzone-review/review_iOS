@@ -99,9 +99,13 @@ actor AuthManager: RequestInterceptor {
         let request = SignUpAPI.reissue(requestBody)
         do {
             let response = try await refreshSession.request(request, as: LoginResponse.self)
-            
-            await tokenManager.setAccessToken(response.data.accessToken)
-            await tokenManager.setRefreshToken(response.data.refreshToken)
+            switch response {
+            case .success(let success):
+                await tokenManager.setAccessToken(success.data.accessToken)
+                await tokenManager.setRefreshToken(success.data.refreshToken)
+            case .failure(let failure):
+                return false
+            }
             
             return true
         } catch {

@@ -46,7 +46,12 @@ struct DefaultSignUpService: SignUpService {
         
         let response = try await session.request(request, as: TermsListResponse.self)
         
-        return response.data.toDomain()
+        switch response {
+        case .success(let success):
+            return success.data.toDomain()
+        case .failure(let failure):
+            throw failure
+        }
     }
     
     func verifyNickname(_ nickname: String) async throws -> VerifyResult {
@@ -55,14 +60,14 @@ struct DefaultSignUpService: SignUpService {
         do {
             let response = try await session.request(request, as: NilResponse.self)
             
-            return VerifyResult(isSuccess: true, message: response.message)
-        } catch {
-            if let apiError = error as? APIError,
-               case let .statusCodeError(message) = apiError {
-                return VerifyResult(isSuccess: false, message: message)
-            } else {
-                throw error
+            switch response {
+            case .success(let success):
+                return VerifyResult(isSuccess: true, message: success.message)
+            case .failure(let failure):
+                return VerifyResult(isSuccess: false, message: failure.message)
             }
+        } catch {
+            throw error
         }
     }
     
@@ -96,11 +101,12 @@ struct DefaultSignUpService: SignUpService {
         
         let response = try await session.request(request, as: LoginResponse.self)
         
-        /// 인증수단 저장
-        print(response.data.accessToken)
-        print(response.data.refreshToken)
-        
-        return TokenData(from: response.data)
+        switch response {
+        case .success(let success):
+            return TokenData(from: success.data)
+        case .failure(let failure):
+            throw failure
+        }
     }
 }
 

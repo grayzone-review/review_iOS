@@ -66,7 +66,7 @@ struct DupCheckTextField: View {
     @Binding var text: String
     @Binding var noti: String
     
-    let defaultNoti: String
+    let defaultNoti: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
     let placeholder: String
     let checkDupTapped: () -> Void
     
@@ -81,7 +81,6 @@ struct DupCheckTextField: View {
         self._text = text
         self._state = state
         self._noti = noti
-        self.defaultNoti = noti.wrappedValue
         self.isFocused = isFocused
         self.placeholder = placeholder
         self.checkDupTapped = checkDupTapped

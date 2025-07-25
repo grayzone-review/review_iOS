@@ -173,7 +173,7 @@ struct SearchAreaFeature {
                 return .send(.loadNextDistrict)
                 
             case let .caculateNeedLoadNext(id):
-                let index = state.districtList.count - 5
+            let index = state.districtList.count - 5
                 
                 guard index >= 0,
                       !state.isLoading,
@@ -389,7 +389,7 @@ struct SearchAreaView: View {
                     .frame(width: 48, height: 48)
                 
                 Text("위치 권한 필요")
-                    .pretendard(.h3, color: .gray90)
+                    .pretendard(.h3Bold, color: .gray90)
                 
                 Text("기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.")
                     .pretendard(.body2Regular, color: .gray70)

@@ -38,9 +38,9 @@ struct DefaultKakaoAPIService: KakaoAPIService {
     
     func getCurrentDistrict(lat: Double, lng: Double) async throws -> String {
         let request = KaKaoAPI.getLegalDistrict(lat: lat, lng: lng)
-        let response = try await session.request(request, as: RegionResponse.self)
+        let response: RegionResponse = try await session.request(request, as: RegionResponse.self)
         
-        return response.data.toDomain()
+        return response.toDomain()
     }
 }
 

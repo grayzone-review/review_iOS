@@ -16,6 +16,8 @@ struct AppButton: View {
     let typography: Typography
     let action: @MainActor () -> Void
     
+    /// 버튼을 라벨로 사용할 때 true로 두면, 터치로직을 비활성화합니다.
+    let isLabel: Bool
     let disabled: Bool
     
     init(
@@ -26,6 +28,7 @@ struct AppButton: View {
         text: String,
         typography: Typography = .body1Bold,
         isEnabled: Bool = true,
+        isLabel: Bool = false,
         action: @escaping () -> Void = { }
     ) {
         self.icon = icon
@@ -35,6 +38,7 @@ struct AppButton: View {
         self.text = text
         self.typography = typography
         self.disabled = !isEnabled
+        self.isLabel = isLabel
         self.action = action
     }
     
@@ -62,7 +66,7 @@ struct AppButton: View {
                 style.makeButtonShape(disabled: disabled)
             }
         }
-        .disabled(disabled)
+        .disabled(disabled || isLabel)
     }
     
     var textView: some View {

@@ -23,25 +23,24 @@ struct SignUpFeature {
         
         /// 사용자에게 입력받은 nickname
         var nickname: String = ""
+        /// 사용자가 닉네임 중복체크를 했는지 확인하기 위한 상태값
         var dupCheckFieldState: DupCheckTextField.FieldState = .default
-        // TODO: - API나오면 요청하는 값에 맞게 모델(엔티티)을 구현해야함
         /// 사용자가 설정한 우리동네
         var myArea: District?
         /// 사용자가 설정한 관심동네 리스트
-        var preferredAreaList: [District] = [.init(id: 0, name: "수유동")]
+        var preferredAreaList: [District] = []
         /// 사용자가 관심동네를 3개 설정했는지 나타내는 값
         var isPreferredFull: Bool = false
-        // TODO: - API나오면 약관 리스트에 대한 모델을 구현해야함 (ex: title(제목), url(보여줄 웹 뷰의 URL), isRequired(필수 동의 약관인지에 대한 여부), isAgree(변수; 사용자가 동의했는지에 대한 여부))
         /// 약관 리스트
         var termList: [TermsData] = []
-        var requiredTermCodes: [String] = []
+        var allRequiredTermsAgreed: Bool = false
         /// 중복 검사 결과를 보여주는 값
         var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
-        var isAvailableName: Bool = false
         /// 사용자가 가입 가능한 상태인지 나타내는 값
         var canSignUp: Bool {
             self.dupCheckFieldState == .valid &&
-            self.myArea != nil
+            self.myArea != nil &&
+            self.termList.filter { $0.isRequired }.allSatisfy { $0.isAgree }
         }
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
@@ -55,10 +54,9 @@ struct SignUpFeature {
         case xButtonTapped
         case checkNicknameTapped
         case updateNotice(isSuccess: Bool, message: String)
-        case deletePreferredAreaTapped(Int)
+        case deletePreferredAreaTapped(District)
         case agreeAllTermsTapped
         case agreeTermTapped(code: String)
-        case termDetailTapped(url: String)
         case handleCanSignUp
         case signUpTapped
         case handleError(Error)
@@ -75,12 +73,12 @@ struct SignUpFeature {
             switch action {
             case .binding:
                 return .none
-            case let .path(.element(id: state.path.ids.first!, action: .searchArea(.delegate(.selectedArea(context, area))))):
+            case let .path(.element(id: _, action: .searchArea(.delegate(.selectedArea(context, area))))):
                 switch context {
                 case .myArea:
                     state.myArea = area
                 case .preferedArea:
-                    guard !state.isPreferredFull else { return .none }
+                    guard !state.isPreferredFull, !state.preferredAreaList.contains(area) else { return .none }
                     
                     state.preferredAreaList.append(area)
                     state.isPreferredFull = state.preferredAreaList.count >= 3
@@ -101,9 +99,6 @@ struct SignUpFeature {
                 }
             case let .addTermsList(termsData):
                 termsData.forEach { data in
-                    if data.isRequired {
-                        state.requiredTermCodes.append(data.code)
-                    }
                     state.termList.append(data)
                 }
                 state.isLoading = false
@@ -128,21 +123,26 @@ struct SignUpFeature {
                 state.notice = message
                 
                 return .none
-            case let .deletePreferredAreaTapped(index):
-                // TODO: - 관심 동네 제거
-                print("deletePreferredAreaTapped \(index)")
+            case let .deletePreferredAreaTapped(district):
+                state.preferredAreaList.removeAll { $0 == district }
+                
                 return .none
+                
             case .agreeAllTermsTapped:
-                // TODO: - 약관 모두 동의 선택
-                print("agreeAllTermsTapped")
+                state.allRequiredTermsAgreed.toggle()
+                
+                (0..<state.termList.count).forEach { index in
+                    state.termList[index].isAgree = state.allRequiredTermsAgreed
+                }
+                
                 return .none
             case let .agreeTermTapped(code):
-                // TODO: - 약관 동의 체크
-                print("agreeTermTapped \(index)")
-                return .none
-            case let .termDetailTapped(index):
-                // TODO: - 약관 상세 화면으로 이동
-                print("termDetailTapped \(index)")
+                guard let index = state.termList.firstIndex(where: { $0.code == code }) else { return .none }
+                
+                state.termList[index].isAgree.toggle()
+                
+                state.allRequiredTermsAgreed = state.termList.allSatisfy { $0.isAgree }
+                
                 return .none
             case .handleCanSignUp:
                 // TODO: - 가입 가능한 상태인지 체크
@@ -152,7 +152,7 @@ struct SignUpFeature {
                 print("signUpTapped")
                 return .none
             case let .handleError(error):
-                // TODO: - 에러 핸들링
+                
                 return .none
             }
         }
@@ -245,7 +245,7 @@ struct SignUpView: View {
     var inputNicknameView: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("닉네임")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             
             DupCheckTextField(
                 text: $store.nickname,
@@ -264,7 +264,7 @@ struct SignUpView: View {
     var setMyAreaView: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("우리 동네 설정")
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
             
             NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .myArea))) {
                 Text(store.myArea?.name ?? "동 검색하기")
@@ -287,25 +287,29 @@ struct SignUpView: View {
         VStack(alignment: .leading, spacing: 18) {
             Text("관심 동네 설정 (선택)")
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .pretendard(.h3, color: .gray90)
+                .pretendard(.h3Bold, color: .gray90)
                 .padding(.horizontal, 20)
             
             ScrollView(.horizontal) {
                 HStack(spacing: 10) {
                     Spacer(minLength: 10)
                     
-                    ForEach(Array(store.preferredAreaList.enumerated()), id: \.element.id) { index, area in
-                        makePreferredAreaButton(title: area.buttonName, index: index)
+                    ForEach(Array(store.preferredAreaList)) { district in
+                        makePreferredAreaButton(district)
                     }
-                    
-                    NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea))) {
-                        AppButton(
-                            style: .fill,
-                            size: .regular,
-                            mode: .intrinsic,
-                            text: "추가하기"
-                        )
-                        .padding(.top, 8)
+                    if !store.isPreferredFull {
+                        NavigationLink(
+                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea))
+                        ) {
+                            AppButton(
+                                style: .fill,
+                                size: .regular,
+                                mode: .intrinsic,
+                                text: "추가하기",
+                                isLabel: true
+                            )
+                            .padding(.top, 8)
+                        }
                     }
                     Spacer(minLength: 10)
                 }
@@ -315,19 +319,20 @@ struct SignUpView: View {
         .padding(.vertical, 20)
     }
     
-    func makePreferredAreaButton(title: String, index: Int) -> some View {
+    func makePreferredAreaButton(_ district: District) -> some View {
         AppButton(
             style: .strokeFill,
             size: .regular,
             mode: .intrinsic,
-            text: title,
+            text: district.buttonName,
             isEnabled: false
         )
         .overlay(alignment: .topTrailing) {
-            IconButton(icon: .closeCircleLineRed24) {
-                store.send(.deletePreferredAreaTapped(index))
-            }
-            .offset(x: 7, y: -7)
+            AppIcon.closeCircleLineRed24.image(width: 24, height: 24)
+                .offset(x: 6, y: -5)
+                .onTapGesture {
+                    store.send(.deletePreferredAreaTapped(district))
+                }
         }
         .padding(.top, 8)
     }
@@ -335,7 +340,7 @@ struct SignUpView: View {
     var termsAgreeView: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                CheckBox(isSelected: .random())
+                CheckBox(isSelected: store.allRequiredTermsAgreed)
                 
                 Text("약관 전체 동의")
                     .pretendard(.body1SemiBold, color: .gray70)

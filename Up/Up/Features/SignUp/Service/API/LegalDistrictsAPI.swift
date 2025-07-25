@@ -46,7 +46,7 @@ enum LegalDistrictsAPI: Sendable, URLRequestConvertible {
             ]
         }
         
-        var request = try URLRequest(url: components, method: method)
+        let request = try URLRequest(url: components, method: method)
         
         return request
     }

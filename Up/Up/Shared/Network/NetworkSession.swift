@@ -20,7 +20,13 @@ protocol NetworkSession {
         _ convertible: URLRequestConvertible,
         as type: T.Type
     ) async throws -> Result<NetworkResponse<T>, FailResponse>
-
+    
+    /// 다른 Wrapper없이 Raw Decodable 타입을 반환
+    func request<T: Decodable>(
+        _ convertible: URLRequestConvertible,
+        as type: T.Type
+    ) async throws -> T
+        
     /// 단순 Data만 받을 때
     func requestData(
         _ convertible: URLRequestConvertible
@@ -104,14 +110,18 @@ final class AlamofireNetworkSession: NetworkSession {
                 
                 failResponse = try? JSONDecoder().decode(FailResponse.self, from: data)
                 
-                if let failResponse,
-                   let responseError = ResponseError(rawValue: failResponse.code),
-                   responseError == .invalidAccessToken {
-                    return .failure(responseError)
+                if let failResponse {
+                    if let responseError = ResponseError(rawValue: failResponse.code),
+                       responseError == .invalidAccessToken {
+                        return .failure(responseError)
+                    } else {
+                        return .failure(failResponse)
+                    }
                 }
                 
                 return .success(())
             }
+
         let response = await dataRequest.serializingData().response
         
         switch response.result {
@@ -119,11 +129,25 @@ final class AlamofireNetworkSession: NetworkSession {
             return .success(try JSONDecoder().decode(NetworkResponse<T>.self, from: data))
             
         case let .failure(error):
-            if let failResponse {
+            if case let .responseValidationFailed(reason) = error,
+               case let .customValidationFailed(failError) = reason,
+               let failResponse = failError as? FailResponse
+            {
                 return .failure(failResponse)
+            } else {
+                throw error
             }
-            throw error
         }
+    }
+
+    /// for Raw Decodable Type
+    func request<T: Decodable>(
+        _ convertible: URLRequestConvertible,
+        as type: T.Type
+    ) async throws -> T {
+        let dataRequest = session.request(convertible)
+        
+        return try await dataRequest.serializingDecodable(T.self).value
     }
 
     /// 단순 Data 형태로 반환
