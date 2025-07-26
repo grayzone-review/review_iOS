@@ -185,7 +185,7 @@ struct MyPageView: View {
         .padding(20)
     }
     
-    private var reportButton: some View { // 작업후 NavigationLink로 래핑
+    private var reportButton: some View {
         NavigationLink(
             state: UpFeature.Path.State.report(
                 ReportFeature.State()

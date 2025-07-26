@@ -43,6 +43,7 @@ struct UpFeature {
         case search(SearchCompanyFeature)
         case detail(CompanyDetailFeature)
         case report(ReportFeature)
+        case editMyInfo(EditMyInfoFeature)
     }
     
     @Dependency(\.userDefaultsService) var userDefaultsService
@@ -176,6 +177,8 @@ struct UpView: View {
                 
             case let .report(reportStore):
                 ReportView(store: reportStore)
+            case let .editMyInfo(store):
+                EditMyInfoView(store: store)
             default:
                 EmptyView()
             }

@@ -1,8 +1,8 @@
 //
-//  SignUp.swift
+//  EditMyInfoFeature.swift
 //  Up
 //
-//  Created by Wonbi on 6/30/25.
+//  Created by Wonbi on 7/26/25.
 //
 
 import SwiftUI
@@ -10,16 +10,15 @@ import SwiftUI
 import ComposableArchitecture
 
 @Reducer
-struct SignUpFeature {
+struct EditMyInfoFeature {
     @Reducer
     enum Path {
         case searchArea(SearchAreaFeature)
-        case termDetail(TermDetailFeature)
     }
     
     @ObservableState
     struct State: Equatable {
-        let oAuthData: OAuthResult
+//        @Shared(.user) var user
         
         var path = StackState<Path.State>()
         
@@ -33,16 +32,12 @@ struct SignUpFeature {
         var preferredAreaList: [District] = []
         /// 사용자가 관심동네를 3개 설정했는지 나타내는 값
         var isPreferredFull: Bool = false
-        /// 약관 리스트
-        var termList: [TermsData] = []
-        var allRequiredTermsAgreed: Bool = false
         /// 중복 검사 결과를 보여주는 값
         var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
-        /// 사용자가 가입 가능한 상태인지 나타내는 값
-        var canSignUp: Bool {
+        /// 사용자의 정보가 수정 가능한 상태인지 나타내는 값
+        var canEdit: Bool {
             self.dupCheckFieldState == .valid &&
-            self.myArea != nil &&
-            self.termList.filter { $0.isRequired }.allSatisfy { $0.isAgree }
+            self.myArea != nil
         }
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
@@ -56,27 +51,22 @@ struct SignUpFeature {
         case path(StackActionOf<Path>)
         case binding(BindingAction<State>)
         case viewInit
-        case addTermsList([TermsData])
         case xButtonTapped
         case checkNicknameTapped
         case updateNotice(isSuccess: Bool, message: String)
         case deletePreferredAreaTapped(District)
-        case agreeAllTermsTapped
-        case agreeTermTapped(code: String)
-        case signUpTapped
+        case editTapped
         case handleError(Error)
     }
     
     @Dependency(\.dismiss) var dismiss
-    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.myPageService) var myPageService
     @Dependency(\.signUpService) var signUpService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
         
-        Reduce {
-            state,
-            action in
+        Reduce { state, action in
             switch action {
             case .binding:
                 return .none
@@ -95,22 +85,6 @@ struct SignUpFeature {
             case .path:
                 return .none
             case .viewInit:
-                guard state.termList.isEmpty,
-                      !state.isLoading else { return .none }
-                state.isLoading = true
-                
-                return .run { send in
-                    let data = try await signUpService.fetchTermsList()
-                    
-                    await send(.addTermsList(data))
-                } catch: { error, send in
-                    await send(.handleError(error))
-                }
-            case let .addTermsList(termsData):
-                termsData.forEach { data in
-                    state.termList.append(data)
-                }
-                state.isLoading = false
                 
                 return .none
             case .xButtonTapped:
@@ -137,46 +111,17 @@ struct SignUpFeature {
                 
                 return .none
                 
-            case .agreeAllTermsTapped:
-                state.allRequiredTermsAgreed.toggle()
-                
-                (0..<state.termList.count).forEach { index in
-                    state.termList[index].isAgree = state.allRequiredTermsAgreed
-                }
-                
-                return .none
-            case let .agreeTermTapped(code):
-                guard let index = state.termList.firstIndex(where: { $0.code == code }) else { return .none }
-                
-                state.termList[index].isAgree.toggle()
-                
-                state.allRequiredTermsAgreed = state.termList.allSatisfy { $0.isAgree }
-                
-                return .none
-            case .signUpTapped:
+            case .editTapped:
                 guard let mainRegionId = state.myArea?.id else { return .none }
-                let oauthData = state.oAuthData
                 let interestedRegionIds = state.preferredAreaList.map { $0.id }
                 let nickname = state.nickname
-                let agreements = state.termList.compactMap { $0.isAgree ? $0.code : nil }
                 
                 return .run { send in
-                    try await signUpService.signUp(
-                        oauthData: oauthData,
-                        mainRegionId: mainRegionId,
-                        interestedRegionIds: interestedRegionIds,
-                        nickname: nickname,
-                        agreements: agreements
+                    try await myPageService.editUser(
+                        name: nickname,
+                        mainRegionID: mainRegionId,
+                        interestedRegionIDs: interestedRegionIds
                     )
-                    
-                    let token = try await signUpService.login(
-                        oauthToken: oauthData.token,
-                        oauthProvider: .init(rawValue: oauthData.provider)
-                    )
-                    
-                    await SecureTokenManager.shared.setAccessToken(token.accessToken)
-                    await SecureTokenManager.shared.setRefreshToken(token.refreshToken)
-                    // TODO: - 메인으로 넘어가기
                 } catch: { error, send in
                     return await send(.handleError(error))
                 }
@@ -195,57 +140,51 @@ struct SignUpFeature {
     }
 }
 
-extension SignUpFeature.Path.State: Equatable {}
+extension EditMyInfoFeature.Path.State: Equatable {}
 
-struct SignUpView: View {
+struct EditMyInfoView: View {
     @FocusState var isFocused: Bool
-//    @State var isFocused: Bool = false
     
-    @Bindable var store: StoreOf<SignUpFeature>
+    @Bindable var store: StoreOf<EditMyInfoFeature>
     
-    init(store: StoreOf<SignUpFeature>) {
+    init(store: StoreOf<EditMyInfoFeature>) {
         self.store = store
         store.send(.viewInit)
     }
     
     var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            ScrollView {
+            VStack {
                 mainView
                 
                 Spacer()
-                    .frame(height: 92)
-            }
-            .background(Color.white
-                .onTapGesture {
-                    isFocused = false
-                })
-            .overlay(alignment: .bottom) {
+                
                 AppButton(
                     style: .fill,
                     size: .large,
-                    text: "가입하기",
-                    isEnabled: store.canSignUp
+                    text: "수정하기",
+                    isEnabled: store.canEdit
                 ) {
-                    store.send(.signUpTapped)
+                    store.send(.editTapped)
                 }
                 .padding(.vertical, 20)
                 .padding(.horizontal, 20)
-                .background {
-                    AppColor.white.color.ignoresSafeArea()
+            }
+            .background {
+                Color.white.onTapGesture {
+                    isFocused = false
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    IconButton(
-                        icon: .closeLine) {
-                            store.send(.xButtonTapped)
-                        }
+                ToolbarItem(placement: .topBarLeading) {
+                    IconButton(icon: .arrowLeft) {
+                        store.send(.xButtonTapped)
+                    }
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("회원 가입")
+                    Text("내 정보 수정")
                         .pretendard(.h2, color: .gray90)
                 }
             }
@@ -259,8 +198,6 @@ struct SignUpView: View {
             switch store.case {
             case let .searchArea(store):
                 SearchAreaView(store: store)
-            case let .termDetail(store):
-                TermDetailView(store: store)
             }
         }
     }
@@ -272,8 +209,6 @@ struct SignUpView: View {
             setMyAreaView
             
             setPreferredAreaView
-            
-            termsAgreeView
         }
     }
     
@@ -370,69 +305,6 @@ struct SignUpView: View {
                 }
         }
         .padding(.top, 8)
-    }
-    
-    var termsAgreeView: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                CheckBox(isSelected: store.allRequiredTermsAgreed)
-                
-                Text("약관 전체 동의")
-                    .pretendard(.body1SemiBold, color: .gray70)
-                    .lineLimit(1)
-                
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 16)
-            .contentShape(Rectangle())
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(AppColor.gray20.color)
-                    .frame(height: 1)
-            }
-            .onTapGesture {
-                store.send(.agreeAllTermsTapped)
-            }
-            
-            ForEach(store.termList) { term in
-                makeTermAgreeCell(term: term)
-            }
-        }
-        .padding(.horizontal, 20)
-    }
-    
-    func makeTermAgreeCell(term: TermsData) -> some View {
-        HStack(spacing: 0) {
-            HStack(spacing: 8) {
-                CheckBox(isSelected: term.isAgree)
-                
-                Text(term.title)
-                    .pretendard(.body1Regular, color: .gray70)
-                    .lineLimit(1)
-                
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 16)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                store.send(.agreeTermTapped(code: term.code))
-            }
-            
-            NavigationLink(state: SignUpFeature.Path.State.termDetail(.init(term: term))) {
-                HStack(spacing: 4) {
-                    Text("자세히")
-                        .pretendard(.captionRegular, color: .gray50)
-                    
-                    AppIcon.arrowRight.image(
-                        width: 14,
-                        height: 14,
-                        appColor: .gray50
-                    )
-                }
-                .padding(.vertical, 16)
-                .contentShape(Rectangle())
-            }
-        }
     }
 }
 

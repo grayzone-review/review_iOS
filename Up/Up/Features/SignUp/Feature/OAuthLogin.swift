@@ -56,6 +56,9 @@ struct OAuthLoginFeature {
                         throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "ID 토큰을 변환할 수 없습니다."])
                     }
                     
+                    print("idToken:\n\(idToken)\n")
+                    print("authorizationCode:\n\(authorizationCode)")
+                    
                     let data = OAuthResult(
                         token: idToken,
                         authorizationCode: authorizationCode,
