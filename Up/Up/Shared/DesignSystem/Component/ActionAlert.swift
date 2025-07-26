@@ -43,6 +43,28 @@ extension View {
             self
         }
     }
+    
+    func actionAlert(
+        _ isShowing: Binding<Bool>,
+        image: AppImage,
+        title: String,
+        message: String,
+        cancel: @escaping () -> Void = {},
+        preferredText: String,
+        preferred: @escaping () -> Void = {}
+    ) -> some View {
+        self.modifier(
+            ActionAlertModifier(
+                isShowing,
+                image: image,
+                title: title,
+                message: message,
+                cancel: cancel,
+                preferredText: preferredText,
+                preferred: preferred
+            )
+        )
+    }
 }
 
 private struct ActionAlert: View {
@@ -81,6 +103,126 @@ private struct ActionAlert: View {
         }
     }
     
+    private var text: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .pretendard(.h3Bold, color: .gray90)
+            Text(message)
+                .pretendard(.body2Regular, color: .gray70)
+        }
+        .multilineTextAlignment(.center)
+    }
+    
+    private var actions: some View {
+        HStack(spacing: 0) {
+            cancelButton
+            preferredButton
+        }
+    }
+    
+    private var cancelButton: some View {
+        Button {
+            cancelAction()
+        } label: {
+            ZStack(alignment: .top) {
+                VStack(spacing: 0) {
+                    Rectangle()
+                        .foregroundStyle(AppColor.gray10.color)
+                        .overlay {
+                            Text("취소")
+                                .pretendard(.body1Regular, color: .gray50)
+                        }
+                }
+                .frame(height: 48)
+                
+                Rectangle()
+                    .foregroundStyle(AppColor.gray20.color)
+                    .frame(height: 1)
+            }
+        }
+    }
+    
+    private var preferredButton: some View {
+        Button {
+            preferredAction()
+        } label: {
+            ZStack(alignment: .top) {
+                VStack(spacing: 0) {
+                    Rectangle()
+                        .foregroundStyle(AppColor.orange40.color)
+                        .overlay {
+                            Text(preferredText)
+                                .pretendard(.body1Regular, color: .white)
+                        }
+                }
+                .frame(height: 48)
+            }
+        }
+    }
+}
+
+struct ActionAlertModifier: ViewModifier {
+    let appImage: AppImage
+    let title: String
+    let message: String
+    let cancelAction: () -> Void
+    let preferredText: String
+    let preferredAction: () -> Void
+    
+    @Binding var isShowing: Bool
+    
+    init(
+        _ isShowing: Binding<Bool>,
+        image: AppImage,
+        title: String,
+        message: String,
+        cancel: @escaping () -> Void = {},
+        preferredText: String,
+        preferred: @escaping () -> Void = {}
+    ) {
+        self._isShowing = isShowing
+        self.appImage = image
+        self.title = title
+        self.message = message
+        self.cancelAction = cancel
+        self.preferredText = preferredText
+        self.preferredAction = preferred
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if isShowing {
+                    Rectangle()
+                        .foregroundStyle(AppColor.black.color.opacity(0.5))
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 0) {
+                        header
+                        actions
+                    }
+                    .background(AppColor.white.color)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(width: 280)
+                }
+            }
+    }
+    
+    private var header: some View {
+        VStack(spacing: 0) {
+            icon
+            text
+        }
+        .padding(.vertical, 20)
+    }
+    
+    private var icon: some View {
+        appImage.image
+            .scaledToFit()
+            .frame(width: 48, height: 48)
+            .padding(.bottom, 8)
+    }
+        
     private var text: some View {
         VStack(spacing: 8) {
             Text(title)

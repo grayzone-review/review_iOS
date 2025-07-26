@@ -27,7 +27,7 @@ struct OAuthLoginFeature {
         case binding(BindingAction<State>)
         case appleButtonTapped
         case kakaoButtonTapped
-        case goToSignUp
+        case goToSignUp(OAuthResult)
         case login(OAuthResult)
         case handleError(Error)
         case destination(PresentationAction<Destination.Action>)
@@ -76,8 +76,8 @@ struct OAuthLoginFeature {
                 } catch: { error, send in
                     await send(.handleError(error))
                 }
-            case .goToSignUp:
-                state.destination = .signUp(SignUpFeature.State())
+            case let .goToSignUp(data):
+                state.destination = .signUp(SignUpFeature.State(oAuthData: data))
                 
                 return .none
             case let .login(data):
@@ -89,7 +89,7 @@ struct OAuthLoginFeature {
                     
                     // TODO: - 메인으로 이동
                 } catch: { error, send in
-                    await send(.goToSignUp)
+                    await send(.goToSignUp(data))
                 }
                 
             case let .handleError(error):

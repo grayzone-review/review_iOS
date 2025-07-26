@@ -103,7 +103,7 @@ actor AuthManager: RequestInterceptor {
             case .success(let success):
                 await tokenManager.setAccessToken(success.data.accessToken)
                 await tokenManager.setRefreshToken(success.data.refreshToken)
-            case .failure(let failure):
+            case .failure:
                 return false
             }
             

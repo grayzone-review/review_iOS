@@ -11,8 +11,7 @@ protocol SignUpService {
     func fetchTermsList() async throws -> [TermsData]
     func verifyNickname(_ nickname: String) async throws -> VerifyResult
     func signUp(
-        oauthToken: String,
-        oauthProvider: OAuthProvider,
+        oauthData: OAuthResult,
         mainRegionId: Int,
         interestedRegionIds: [Int],
         nickname: String,
@@ -72,16 +71,15 @@ struct DefaultSignUpService: SignUpService {
     }
     
     func signUp(
-        oauthToken: String,
-        oauthProvider: OAuthProvider,
+        oauthData: OAuthResult,
         mainRegionId: Int,
         interestedRegionIds: [Int],
         nickname: String,
         agreements: [String]
     ) async throws {
         let requestBody = SignUpRequest(
-            oauthToken: oauthToken,
-            oauthProvider: oauthProvider,
+            oauthToken: oauthData.token,
+            oauthProvider: .init(rawValue: oauthData.provider),
             mainRegionId: mainRegionId,
             interestedRegionIds: interestedRegionIds,
             nickname: nickname,
@@ -139,7 +137,7 @@ struct MockSignUpService: SignUpService {
         return VerifyResult(isSuccess: true, message: "성공")
     }
     
-    func signUp(oauthToken: String, oauthProvider: OAuthProvider, mainRegionId: Int, interestedRegionIds: [Int], nickname: String, agreements: [String]) async throws {
+    func signUp(oauthData: OAuthResult, mainRegionId: Int, interestedRegionIds: [Int], nickname: String, agreements: [String]) async throws {
         
     }
     

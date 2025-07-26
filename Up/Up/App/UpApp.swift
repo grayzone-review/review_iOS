@@ -21,19 +21,6 @@ struct UpFeature {
         var main = MainFeature.State()
         var isFirstLaunch = true
         var isBootstrapping = true
-        
-        init() {
-            let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
-            
-            // 앱 설치 후 첫 실행이면 키체인을 초기화합니다.
-            if !hasLaunchedBefore {
-                Task {
-                    await SecureTokenManager.shared.clearTokens()
-                }
-            }
-            
-            isFirstLaunch = hasLaunchedBefore != true
-        }
     }
     
     enum Action {
@@ -83,16 +70,26 @@ struct UpFeature {
                 
             case .initKakaoSDK:
                 guard
-                    let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String
+                    let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String,
+                    let kakaoRestApiKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_REST_API_KEY") as? String
                 else {
                   fatalError("Info.plist에서 Key 정보를 읽어오지 못했습니다.")
                 }
                 
                 SDKInitializer.InitSDK(appKey: kakaoAppKey)
+                KakaoSDK.initSDK(appKey: kakaoAppKey)
+                AppConfig.kakaoRestApiKey = kakaoRestApiKey
                 return .none
                 
             case .setIsFirstLaunch:
                 let hasLaunchedBefore = try? userDefaultsService.fetch(key: "hasLaunchedBefore", type: Bool.self)
+                
+                // 앱 설치 후 첫 실행이면 키체인을 초기화합니다.
+                if hasLaunchedBefore != true {
+                    Task {
+                        await SecureTokenManager.shared.clearTokens()
+                    }
+                }
                 
                 state.isFirstLaunch = hasLaunchedBefore != true
                 return .none
@@ -193,25 +190,12 @@ struct UpApp: App {
         UpFeature()
     }
     
-    init() {
-        guard
-            let kakaoAppKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_APP_KEY") as? String,
-            let kakaoRestApiKey = Bundle.main.object(forInfoDictionaryKey: "KAKAO_REST_API_KEY") as? String
-        else {
-          fatalError("Info.plist에서 Key 정보를 읽어오지 못했습니다.")
-        }
-        
-        SDKInitializer.InitSDK(appKey: kakaoAppKey)
-        KakaoSDK.initSDK(appKey: kakaoAppKey)
-        AppConfig.kakaoRestApiKey = kakaoRestApiKey
-    }
-    
     var body: some Scene {
         WindowGroup {
             UpView(store: Self.store)
                 .onOpenURL { url in
                     if (AuthApi.isKakaoTalkLoginUrl(url)) {
-                        AuthController.handleOpenUrl(url: url)
+                        _ = AuthController.handleOpenUrl(url: url)
                     }
                 }
         }
@@ -228,7 +212,7 @@ struct UpApp: App {
     )
 }
 
-extension UINavigationController: ObservableObject, UIGestureRecognizerDelegate {
+extension UINavigationController: @retroactive ObservableObject, @retroactive UIGestureRecognizerDelegate {
     override open func viewDidLoad() {
         super.viewDidLoad()
         interactivePopGestureRecognizer?.delegate = self

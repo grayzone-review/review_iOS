@@ -19,6 +19,8 @@ struct SignUpFeature {
     
     @ObservableState
     struct State: Equatable {
+        let oAuthData: OAuthResult
+        
         var path = StackState<Path.State>()
         
         /// 사용자에게 입력받은 nickname
@@ -44,6 +46,10 @@ struct SignUpFeature {
         }
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
+        
+        /// 에러 핸들링
+        var shouldShowErrorPopup: Bool = false
+        var errorMessage: String = ""
     }
     
     enum Action: BindableAction {
@@ -57,7 +63,6 @@ struct SignUpFeature {
         case deletePreferredAreaTapped(District)
         case agreeAllTermsTapped
         case agreeTermTapped(code: String)
-        case handleCanSignUp
         case signUpTapped
         case handleError(Error)
     }
@@ -69,7 +74,9 @@ struct SignUpFeature {
     var body: some ReducerOf<Self> {
         BindingReducer()
         
-        Reduce { state, action in
+        Reduce {
+            state,
+            action in
             switch action {
             case .binding:
                 return .none
@@ -78,7 +85,8 @@ struct SignUpFeature {
                 case .myArea:
                     state.myArea = area
                 case .preferedArea:
-                    guard !state.isPreferredFull, !state.preferredAreaList.contains(area) else { return .none }
+                    guard !state.isPreferredFull,
+                          !state.preferredAreaList.contains(area) else { return .none }
                     
                     state.preferredAreaList.append(area)
                     state.isPreferredFull = state.preferredAreaList.count >= 3
@@ -87,7 +95,8 @@ struct SignUpFeature {
             case .path:
                 return .none
             case .viewInit:
-                guard state.termList.isEmpty, !state.isLoading else { return .none }
+                guard state.termList.isEmpty,
+                      !state.isLoading else { return .none }
                 state.isLoading = true
                 
                 return .run { send in
@@ -144,15 +153,34 @@ struct SignUpFeature {
                 state.allRequiredTermsAgreed = state.termList.allSatisfy { $0.isAgree }
                 
                 return .none
-            case .handleCanSignUp:
-                // TODO: - 가입 가능한 상태인지 체크
-                return .none
             case .signUpTapped:
-                // TODO: - 회원 가입
-                print("signUpTapped")
-                return .none
-            case let .handleError(error):
+                guard let mainRegionId = state.myArea?.id else { return .none }
+                let oauthData = state.oAuthData
+                let interestedRegionIds = state.preferredAreaList.map { $0.id }
+                let nickname = state.nickname
+                let agreements = state.termList.compactMap { $0.isAgree ? $0.code : nil }
                 
+                return .run { send in
+                    try await signUpService.signUp(
+                        oauthData: oauthData,
+                        mainRegionId: mainRegionId,
+                        interestedRegionIds: interestedRegionIds,
+                        nickname: nickname,
+                        agreements: agreements
+                    )
+                    
+                    // TODO: - 메인으로 넘어가기
+                } catch: { error, send in
+                    return await send(.handleError(error))
+                }
+            case let .handleError(error):
+                if let fail = error as? FailResponse {
+                    state.shouldShowErrorPopup = true
+                    state.errorMessage = fail.message
+                } else {
+                    state.shouldShowErrorPopup = true
+                    state.errorMessage = "알수없는 문제가 발생했습니다.\n문제가 반복된다면 고객센터에 문의해주세요."
+                }
                 return .none
             }
         }
@@ -215,6 +243,7 @@ struct SignUpView: View {
                         .pretendard(.h2, color: .gray90)
                 }
             }
+            .appAlert($store.shouldShowErrorPopup, isSuccess: false, message: store.errorMessage)
             .onChange(of: store.dupCheckFieldState) { old, new in
                 if old != new, new == .valid {
                     isFocused = false
@@ -405,7 +434,7 @@ struct SignUpView: View {
     NavigationStack {
         SignUpView(
             store: Store(
-                initialState: SignUpFeature.State(),
+                initialState: SignUpFeature.State(oAuthData: OAuthResult(token: "", provider: "")),
                 reducer: {
                     SignUpFeature()
                 }

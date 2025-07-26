@@ -245,8 +245,6 @@ struct SearchAreaFeature {
 }
 
 struct SearchAreaView: View {
-    @Environment(\.dismiss) var dismiss
-    
     @State private var scrollId: District.ID?
     @Bindable var store: StoreOf<SearchAreaFeature>
     
@@ -289,21 +287,19 @@ struct SearchAreaView: View {
         }
         .toolbar(.hidden)
         .navigationBarBackButtonHidden(true)
-        .overlay {
-            if store.shouldShowNeedLoaction {
-                VStack(spacing: 0) {
-                    Spacer()
-                    requestLocationPopup
-                    Spacer()
-                }
-                .background(
-                    Color.black
-                        .opacity(0.5)
-                        .frame(maxWidth: .infinity)
-                        .ignoresSafeArea()
-                )
+        .actionAlert(
+            $store.shouldShowNeedLoaction,
+            image: .mappinFill,
+            title: "위치 권한 필요",
+            message: "기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.",
+            cancel: {
+                store.send(.needLocationCancelTapped)
+            },
+            preferredText: "설정으로 이동",
+            preferred: {
+                store.send(.needLocationGoToSettingTapped)
             }
-        }
+        )
     }
     
     
@@ -379,54 +375,6 @@ struct SearchAreaView: View {
         .onTapGesture {
             store.send(.selectArea(district))
         }
-    }
-    
-    var requestLocationPopup: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 8) {
-                AppImage.mappinFill.image
-                    .scaledToFit()
-                    .frame(width: 48, height: 48)
-                
-                Text("위치 권한 필요")
-                    .pretendard(.h3Bold, color: .gray90)
-                
-                Text("기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.")
-                    .pretendard(.body2Regular, color: .gray70)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 52)
-            .background(Color.white)
-            
-            HStack(spacing: 0) {
-                Button {
-                    store.send(.needLocationCancelTapped)
-                } label: {
-                    Text("취소")
-                        .pretendard(.body1Regular, color: .gray50)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .background(AppColor.gray10.color)
-                        .overlay(alignment: .top) {
-                            Rectangle()
-                                .fill(AppColor.gray20.color)
-                                .frame(height: 1)
-                        }
-                }
-                
-                Button {
-                    store.send(.needLocationGoToSettingTapped)
-                } label: {
-                    Text("설정으로 이동")
-                        .pretendard(.body1Regular, color: .white)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .background(AppColor.orange40.color)
-                }
-            }
-        }
-        .frame(width: 280)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

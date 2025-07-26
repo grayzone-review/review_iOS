@@ -11,6 +11,7 @@ import Alamofire
 protocol NetworkSession {
     /// 반환값 없이(on‐fire) 요청만 보낼 때 사용
     /// 서버에 요청만 보내고, 응답 데이터는 필요 없을 경우 호출
+    @discardableResult
     func execute(
         _ convertible: URLRequestConvertible
     ) async throws -> FailResponse?
