@@ -259,7 +259,7 @@ struct HomeReviewView: View {
     
     private func companyCard(_ company: SearchedCompany) -> some View {
         NavigationLink(
-            state: UpFeature.Path.State.detail(
+            state: UpFeature.MainPath.State.detail(
                 CompanyDetailFeature.State(
                     companyID: company.id
                 )

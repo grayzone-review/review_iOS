@@ -11,10 +11,10 @@
 		93146C612DE1E95C00DC8106 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 93146C602DE1E95C00DC8106 /* Alamofire */; };
 		93146C6B2DE1EA2200DC8106 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = 93146C6A2DE1EA2200DC8106 /* PopupView */; };
 		93146C6E2DE1F09E00DC8106 /* KakaoMapsSDK-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 93146C6D2DE1F09E00DC8106 /* KakaoMapsSDK-SPM */; };
+		93AECA392E321CD700F2FA62 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 93AECA382E321CD700F2FA62 /* Lottie */; };
 		E35A80542E15649A00F2FB0D /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E35A80532E15649A00F2FB0D /* KakaoSDKAuth */; };
 		E35A80562E15649A00F2FB0D /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = E35A80552E15649A00F2FB0D /* KakaoSDKCommon */; };
 		E35A80582E15649A00F2FB0D /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = E35A80572E15649A00F2FB0D /* KakaoSDKUser */; };
-		93AECA392E321CD700F2FA62 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 93AECA382E321CD700F2FA62 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -449,20 +449,20 @@
 				minimumVersion = 2.12.5;
 			};
 		};
-		E35A80522E15649A00F2FB0D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kakao/kakao-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.24.4;
-			};
-		};
 		93AECA372E321CD700F2FA62 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 4.5.2;
+			};
+		};
+		E35A80522E15649A00F2FB0D /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kakao/kakao-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.24.4;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

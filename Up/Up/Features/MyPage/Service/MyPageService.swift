@@ -16,8 +16,8 @@ protocol MyPageService {
 }
 
 private enum MyPageServiceKey: DependencyKey {
-    static let liveValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static let previewValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let liveValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession())
+    static let previewValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession())
     static var testValue: any MyPageService = MockMyPageServiceService()
 }
 
@@ -55,7 +55,7 @@ struct DefaultMyPageService: MyPageService {
             throw NSError(domain: "There is no RefreshToken", code: -1)
         }
         
-        let body = ResignRequest(refreshToken: refreshToken)
+        let body = RefreshTokenRequest(refreshToken: refreshToken)
         let request = MyPageAPI.resign(requestBody: body)
         
         try await session.execute(request)
@@ -66,7 +66,7 @@ struct DefaultMyPageService: MyPageService {
             throw NSError(domain: "There is no RefreshToken", code: -1)
         }
         
-        let body = ResignRequest(refreshToken: refreshToken)
+        let body = RefreshTokenRequest(refreshToken: refreshToken)
         let request = MyPageAPI.signOut(requestBody: body)
         
         try await session.execute(request)

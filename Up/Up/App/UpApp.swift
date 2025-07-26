@@ -17,34 +17,46 @@ struct UpFeature {
     struct State: Equatable {
         var onboarding = OnboardingFeature.State()
         var oauthLogin = OAuthLoginFeature.State()
-        var path = StackState<Path.State>()
+        var loginPath = StackState<LoginPath.State>()
+        var mainPath = StackState<MainPath.State>()
         var main = MainFeature.State()
         var isFirstLaunch = true
         var isBootstrapping = true
+        var needLogin = true
     }
     
     enum Action {
         case appLaunched
         case initKakaoSDK
         case setIsFirstLaunch
+        case tokenReissue
+        case setNeedLogin(Bool)
+        case reset
         case endBootstrap
         case oauthLogin(OAuthLoginFeature.Action)
         case onboarding(OnboardingFeature.Action)
-        case path(StackActionOf<Path>)
+        case loginPath(StackActionOf<LoginPath>)
+        case mainPath(StackActionOf<MainPath>)
         case main(MainFeature.Action)
     }
     
     @Reducer
-    enum Path {
+    enum LoginPath {
         case signUp(SignUpFeature)
         case searchArea(SearchAreaFeature)
+    }
+    
+    @Reducer
+    enum MainPath {
         case activity(MyActivityFeature)
         case homeReview(HomeReviewFeature)
         case search(SearchCompanyFeature)
         case detail(CompanyDetailFeature)
         case report(ReportFeature)
+        case editMyInfo(EditMyInfoFeature)
     }
     
+    @Dependency(\.launchScreenService) var launchScreenService
     @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
@@ -83,16 +95,36 @@ struct UpFeature {
                 
             case .setIsFirstLaunch:
                 let hasLaunchedBefore = try? userDefaultsService.fetch(key: "hasLaunchedBefore", type: Bool.self)
+                state.isFirstLaunch = hasLaunchedBefore != true
                 
                 // 앱 설치 후 첫 실행이면 키체인을 초기화합니다.
                 if hasLaunchedBefore != true {
-                    Task {
-                        await SecureTokenManager.shared.clearTokens()
-                    }
+                    return .send(.reset)
+                } else {
+                    return .send(.tokenReissue)
                 }
                 
-                state.isFirstLaunch = hasLaunchedBefore != true
+            case .tokenReissue:
+                return .run { send in
+                    try await launchScreenService.tokenReissue()
+                    await send(.setNeedLogin(false))
+                    await send(.endBootstrap)
+                } catch: { error, send in
+                    await send(.reset)
+                }
+                
+            case let .setNeedLogin(needLogin):
+                state.needLogin = needLogin
                 return .none
+                
+            case .reset:
+                state.needLogin = true
+                
+                return .run { send in
+                    await SecureTokenManager.shared.clearTokens()
+                    userDefaultsService.reset()
+                    await send(.endBootstrap)
+                }
                 
             case .endBootstrap:
                 state.isBootstrapping = false
@@ -105,20 +137,31 @@ struct UpFeature {
                 return .none
             case .onboarding:
                 return .none
+                
+            case .oauthLogin(.delegate(.loginFinished)):
+                return .send(.setNeedLogin(false))
+                
             case .oauthLogin:
                 return .none
-            case .path:
+                
+            case .loginPath:
+                return .none
+                
+            case .mainPath:
                 return .none
                 
             case .main:
                 return .none
             }
         }
-        .forEach(\.path, action: \.path)
+        .forEach(\.loginPath, action: \.loginPath)
+        .forEach(\.mainPath, action: \.mainPath)
     }
 }
 
-extension UpFeature.Path.State: Equatable {}
+extension UpFeature.LoginPath.State: Equatable {}
+
+extension UpFeature.MainPath.State: Equatable {}
 
 struct UpView: View {
     @Bindable var store: StoreOf<UpFeature>
@@ -133,6 +176,8 @@ struct UpView: View {
             launchScreen
         } else if store.isFirstLaunch {
             onboarding
+        } else if store.needLogin {
+            login
         } else {
             main
         }
@@ -143,7 +188,13 @@ struct UpView: View {
     }
     
     private var onboarding: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+        OnboardingView(
+            store: store.scope(state: \.onboarding, action: \.onboarding)
+        )
+    }
+    
+    private var login: some View {
+        NavigationStack(path: $store.scope(state: \.loginPath, action: \.loginPath)) {
             OAuthLoginView(store: store.scope(state: \.oauthLogin, action: \.oauthLogin))
         } destination: { store in
             switch store.case {
@@ -158,7 +209,7 @@ struct UpView: View {
     }
     
     private var main: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+        NavigationStack(path: $store.scope(state: \.mainPath, action: \.mainPath)) {
             MainView(store: store.scope(state: \.main, action: \.main))
         } destination: { store in
             switch store.case {
@@ -176,6 +227,8 @@ struct UpView: View {
                 
             case let .report(reportStore):
                 ReportView(store: reportStore)
+            case let .editMyInfo(store):
+                EditMyInfoView(store: store)
             default:
                 EmptyView()
             }

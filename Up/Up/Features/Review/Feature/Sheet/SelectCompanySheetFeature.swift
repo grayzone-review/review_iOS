@@ -64,6 +64,8 @@ struct SelectCompanySheetFeature {
                 
             case .fetchProposedCompanies:
                 return .run { [state] send in
+                    let location = try await LocationService.shared.requestCurrentLocation()
+                    
                     let data = try await searchService.fetchProposedCompanies(
                         keyword: state.searchTerm,
                         latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.

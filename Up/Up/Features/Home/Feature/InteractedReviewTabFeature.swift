@@ -135,7 +135,7 @@ struct InteractedReviewTabView: View {
                     ForEach(store.reviews) { review in
                         VStack(spacing: 0) {
                             NavigationLink(
-                                state: UpFeature.Path.State.detail(
+                                state: UpFeature.MainPath.State.detail(
                                     CompanyDetailFeature.State(
                                         companyID: review.companyID
                                     )

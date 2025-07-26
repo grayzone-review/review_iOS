@@ -93,7 +93,7 @@ struct SearchFocusedView: View {
                     Divider()
                     ForEach(store.savedCompanies) { company in
                         NavigationLink(
-                            state: UpFeature.Path.State.detail(
+                            state: UpFeature.MainPath.State.detail(
                                 CompanyDetailFeature.State(
                                     companyID: company.id
                                 )
@@ -164,7 +164,7 @@ struct SearchFocusedView: View {
                     Divider()
                     ForEach(store.proposedCompanies) { company in
                         NavigationLink(
-                            state: UpFeature.Path.State.detail(
+                            state: UpFeature.MainPath.State.detail(
                                 CompanyDetailFeature.State(
                                     companyID: company.id
                                 )

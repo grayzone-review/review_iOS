@@ -306,7 +306,7 @@ struct SearchSubmittedView: View {
                 LazyVStack(spacing: 20) {
                     ForEach(store.searchedCompanies) { company in
                         NavigationLink(
-                            state: UpFeature.Path.State.detail(
+                            state: UpFeature.MainPath.State.detail(
                                 CompanyDetailFeature.State(
                                     companyID: company.id
                                 )
