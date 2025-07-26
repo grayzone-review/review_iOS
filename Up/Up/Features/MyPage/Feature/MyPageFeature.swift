@@ -187,7 +187,7 @@ struct MyPageView: View {
     
     private var reportButton: some View {
         NavigationLink(
-            state: UpFeature.Path.State.report(
+            state: UpFeature.MainPath.State.report(
                 ReportFeature.State()
             )
         ) {
@@ -212,7 +212,7 @@ struct MyPageView: View {
     
     private var reviewHistoryButton: some View {
         NavigationLink(
-            state: UpFeature.Path.State.activity(
+            state: UpFeature.MainPath.State.activity(
                 MyActivityFeature.State(selectedTab: .review)
             )
         ) {

@@ -135,7 +135,7 @@ struct FollowedCompanyTabView: View {
                     ForEach(store.companies) { company in
                         VStack(spacing: 0) {
                             NavigationLink(
-                                state: UpFeature.Path.State.detail(
+                                state: UpFeature.MainPath.State.detail(
                                     CompanyDetailFeature.State(
                                         companyID: company.id
                                     )

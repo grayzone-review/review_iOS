@@ -31,6 +31,11 @@ struct OAuthLoginFeature {
         case login(OAuthResult)
         case handleError(Error)
         case destination(PresentationAction<Destination.Action>)
+        case delegate(Delegate)
+        
+        enum Delegate: Equatable {
+            case loginFinished
+        }
     }
     
     @Dependency(\.signUpService) var signUpService
@@ -89,8 +94,7 @@ struct OAuthLoginFeature {
                     
                     await SecureTokenManager.shared.setAccessToken(response.accessToken)
                     await SecureTokenManager.shared.setRefreshToken(response.refreshToken)
-                    
-                    // TODO: - 메인으로 이동
+                    await send(.delegate(.loginFinished))
                 } catch: { error, send in
                     await send(.goToSignUp(data))
                 }
@@ -98,7 +102,13 @@ struct OAuthLoginFeature {
             case let .handleError(error):
                 print(error)
                 return .none
+            case .destination(.presented(.signUp(.delegate(.signUpSucceded)))):
+                return .send(.delegate(.loginFinished))
+                
             case .destination:
+                return .none
+                
+            case .delegate:
                 return .none
             }
         }

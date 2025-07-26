@@ -12,8 +12,8 @@ import Alamofire
 enum MyPageAPI: Sendable, URLRequestConvertible {
     case editUser(requestBody: EditUserRequest)
     case report(requestBody: ReportRequest)
-    case resign(requestBody: ResignRequest)
-    case signOut(requestBody: ResignRequest)
+    case resign(requestBody: RefreshTokenRequest)
+    case signOut(requestBody: RefreshTokenRequest)
 
     // 기본 서버 URL
     private var baseURL: URL {

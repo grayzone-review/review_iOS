@@ -196,7 +196,7 @@ struct HomeView: View {
     
     private var nicknameButton: some View {
         NavigationLink(
-            state: UpFeature.Path.State.activity(
+            state: UpFeature.MainPath.State.activity(
                 MyActivityFeature.State(selectedTab: .activity)
             )
         ) {
@@ -210,7 +210,7 @@ struct HomeView: View {
     
     private var searchButton: some View {
         NavigationLink(
-            state: UpFeature.Path.State.search(
+            state: UpFeature.MainPath.State.search(
                 SearchCompanyFeature.State()
             )
         ) {
@@ -243,7 +243,7 @@ struct HomeView: View {
     
     private var encourageReviewBanner: some View {
         NavigationLink(
-            state: UpFeature.Path.State.search(
+            state: UpFeature.MainPath.State.search(
                 SearchCompanyFeature.State()
             )
         ) {
@@ -277,7 +277,7 @@ struct HomeView: View {
     
     private var myReviewsBanner: some View {
         NavigationLink(
-            state: UpFeature.Path.State.activity(
+            state: UpFeature.MainPath.State.activity(
                 MyActivityFeature.State(selectedTab: .review)
             )
         ) {
@@ -311,7 +311,7 @@ struct HomeView: View {
     
     private var followingListBanner: some View {
         NavigationLink(
-            state: UpFeature.Path.State.activity(
+            state: UpFeature.MainPath.State.activity(
                 MyActivityFeature.State(selectedTab: .following)
             )
         ) {
@@ -381,7 +381,7 @@ struct HomeView: View {
                     AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                     Spacer()
                     NavigationLink(
-                        state: UpFeature.Path.State.homeReview(
+                        state: UpFeature.MainPath.State.homeReview(
                             HomeReviewFeature.State(category: .popular)
                         )
                     ) {
@@ -415,7 +415,7 @@ struct HomeView: View {
                     AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                     Spacer()
                     NavigationLink(
-                        state: UpFeature.Path.State.homeReview(
+                        state: UpFeature.MainPath.State.homeReview(
                             HomeReviewFeature.State(category: .mainRegion(store.user?.mainRegion.address))
                         )
                     ) {
@@ -449,7 +449,7 @@ struct HomeView: View {
                     AppIcon.chatSecondFill.image(width: 20,height: 20,appColor: .orange40)
                     Spacer()
                     NavigationLink(
-                        state: UpFeature.Path.State.homeReview(
+                        state: UpFeature.MainPath.State.homeReview(
                             HomeReviewFeature.State(category: .interestedRegion)
                         )
                     ) {
@@ -475,7 +475,7 @@ struct HomeView: View {
     
     private func reviewCard(_ homeReview: HomeReview) -> some View {
         NavigationLink(
-            state: UpFeature.Path.State.detail(
+            state: UpFeature.MainPath.State.detail(
                 CompanyDetailFeature.State(
                     companyID: homeReview.company.id
                 )

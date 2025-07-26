@@ -12,6 +12,7 @@ protocol UserDefaultsService {
     func fetch<T>(key: String, type: T.Type) throws -> T? where T: Decodable
     func save<T>(key: String, value: T) throws where T: Encodable
     func remove(key: String)
+    func reset()
 }
 
 private enum UserDefaultsServiceKey: DependencyKey {
@@ -68,5 +69,15 @@ struct DefaultUserDefaultsService: UserDefaultsService {
     
     func remove(key: String) {
         userDefaults.removeObject(forKey: key)
+    }
+    
+    func reset() {
+        let hasLaunchedBefore = try? fetch(key: "hasLaunchedBefore", type: Bool.self) // 남겨둬야 할 값
+        
+        if let appDomain = Bundle.main.bundleIdentifier {
+            userDefaults.removePersistentDomain(forName: appDomain) // 일괄 삭제
+        }
+        
+        try? save(key: "hasLaunchedBefore", value: hasLaunchedBefore) // 남겨둬야 할 값 재저장
     }
 }

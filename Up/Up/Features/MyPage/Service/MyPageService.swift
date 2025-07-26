@@ -55,7 +55,7 @@ struct DefaultMyPageService: MyPageService {
             throw NSError(domain: "There is no RefreshToken", code: -1)
         }
         
-        let body = ResignRequest(refreshToken: refreshToken)
+        let body = RefreshTokenRequest(refreshToken: refreshToken)
         let request = MyPageAPI.resign(requestBody: body)
         
         try await session.execute(request)
@@ -66,7 +66,7 @@ struct DefaultMyPageService: MyPageService {
             throw NSError(domain: "There is no RefreshToken", code: -1)
         }
         
-        let body = ResignRequest(refreshToken: refreshToken)
+        let body = RefreshTokenRequest(refreshToken: refreshToken)
         let request = MyPageAPI.signOut(requestBody: body)
         
         try await session.execute(request)

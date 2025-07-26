@@ -64,7 +64,12 @@ struct SignUpFeature {
         case agreeAllTermsTapped
         case agreeTermTapped(code: String)
         case signUpTapped
+        case delegate(Delegate)
         case handleError(Error)
+        
+        enum Delegate: Equatable {
+            case signUpSucceded
+        }
     }
     
     @Dependency(\.dismiss) var dismiss
@@ -177,9 +182,13 @@ struct SignUpFeature {
                     await SecureTokenManager.shared.setAccessToken(token.accessToken)
                     await SecureTokenManager.shared.setRefreshToken(token.refreshToken)
                     // TODO: - 메인으로 넘어가기
+                    await send(.delegate(.signUpSucceded))
+                    await dismiss()
                 } catch: { error, send in
                     return await send(.handleError(error))
                 }
+            case .delegate:
+                return .none
             case let .handleError(error):
                 if let fail = error as? FailResponse {
                     state.shouldShowErrorPopup = true
