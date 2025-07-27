@@ -87,7 +87,14 @@ struct DefaultSignUpService: SignUpService {
         )
         let request = SignUpAPI.signUp(requestBody)
         
-        _ = try await session.request(request, as: NilResponse.self)
+        let response = try await session.request(request, as: NilResponse.self)
+        
+        switch response {
+        case .success:
+            return
+        case .failure(let failure):
+            throw failure
+        }
     }
     
     func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData {
