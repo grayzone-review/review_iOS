@@ -17,7 +17,6 @@ struct CommentsWindowFeature {
         var replies: [Int: IdentifiedArrayOf<Reply>] = [:]
         var targetComment: Comment?
         var isFocused: Bool = false
-        var prefix: String = ""
         var content: String = ""
         var text: String = ""
         var isSecret: Bool = false
@@ -32,6 +31,14 @@ struct CommentsWindowFeature {
             }
             
             return comments[comments.count - 3]
+        }
+        
+        var prefix: String {
+            if let targetComment {
+                return "@\(targetComment.commenter) "
+            } else {
+                return ""
+            }
         }
         
         var isValidInput: Bool {
@@ -74,6 +81,7 @@ struct CommentsWindowFeature {
         case textChanged(oldValue: String, newValue: String)
         case secretButtonTapped
         case enterCommentButtonTapped
+        case reset
         case commentAdded(Comment)
         case handleError(Error)
     }
@@ -93,9 +101,9 @@ struct CommentsWindowFeature {
                     return .none
                 }
                 state.targetComment = targetComment
-                state.isFocused = true
-                state.prefix = "@\(targetComment.commenter) "
                 state.text = state.prefix + state.content
+                state.isFocused = true
+                state.isSecret = state.isSecret || targetComment.isSecret
                 return .none
                 
             case let .showMoreRepliesButtonTapped(commentID):
@@ -134,7 +142,6 @@ struct CommentsWindowFeature {
                 
             case .cancelReplyButtonTapped:
                 state.targetComment = nil
-                state.prefix = ""
                 state.text = state.content
                 return .none
                 
@@ -156,12 +163,9 @@ struct CommentsWindowFeature {
             case .enterCommentButtonTapped:
                 let targetComment = state.targetComment
                 let content = state.content
-                state.targetComment = nil
-                state.content = ""
-                state.text = ""
-                state.isFocused = false
                 state.review.commentCount += 1
                 return .run { [state] send in
+                    await send(.reset)
                     if let targetComment {
                         let data = try await reviewService.createReply(
                             of: targetComment.id,
@@ -182,6 +186,14 @@ struct CommentsWindowFeature {
                 } catch: { error, send in
                     await send(.handleError(error))
                 }
+                
+            case .reset:
+                state.isFocused = false
+                state.targetComment = nil
+                state.content = ""
+                state.text = ""
+                state.isSecret = false
+                return .none
                 
             case let .commentAdded(comment):
                 state.comments.insert(comment, at: 0)

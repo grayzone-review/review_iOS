@@ -69,13 +69,7 @@ struct MainFeature {
                 return .none
                 
             case .viewAppear:
-                guard state.user == nil else {
-                    return .none
-                }
-                
-                return .run { send in
-                    await send(.fetchUser)
-                }
+                return .send(.fetchUser)
                 
             case .fetchUser:
                 guard state.user == nil else {
