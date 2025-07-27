@@ -124,6 +124,7 @@ struct InteractedReviewTabView: View {
             }
     }
     
+    @ViewBuilder
     private var interactedReview: some View {
         if store.reviews.isEmpty {
             empty

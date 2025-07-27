@@ -122,6 +122,7 @@ struct MyReviewTabView: View {
             }
     }
     
+    @ViewBuilder
     private var myReview: some View {
         if store.reviews.isEmpty {
             empty
