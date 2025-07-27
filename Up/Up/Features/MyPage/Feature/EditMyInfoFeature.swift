@@ -50,7 +50,7 @@ struct EditMyInfoFeature {
     enum Action: BindableAction {
         case path(StackActionOf<Path>)
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case xButtonTapped
         case checkNicknameTapped
         case updateNotice(isSuccess: Bool, message: String)
@@ -84,7 +84,7 @@ struct EditMyInfoFeature {
                 return .none
             case .path:
                 return .none
-            case .viewInit:
+            case .viewAppear:
                 
                 return .none
             case .xButtonTapped:
@@ -147,11 +147,6 @@ struct EditMyInfoView: View {
     
     @Bindable var store: StoreOf<EditMyInfoFeature>
     
-    init(store: StoreOf<EditMyInfoFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
-    
     var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             VStack {
@@ -199,6 +194,9 @@ struct EditMyInfoView: View {
             case let .searchArea(store):
                 SearchAreaView(store: store)
             }
+        }
+        .onAppear {
+            store.send(.viewAppear)
         }
     }
     

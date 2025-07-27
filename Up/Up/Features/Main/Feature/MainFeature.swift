@@ -19,12 +19,14 @@ struct MainFeature {
         var myPage = MyPageFeature.State()
         var isAlertShowing = false
         var error: FailResponse?
+        var isResignAlertShowing = false
+        var isSignOutAlertShowing = false
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case viewInit
+        case viewAppear
         case fetchUser
         case userFetched(User)
         case makeReviewButtonTapped
@@ -32,6 +34,8 @@ struct MainFeature {
         case home(HomeFeature.Action)
         case myPage(MyPageFeature.Action)
         case handleError(Error)
+        case resign
+        case signOut
     }
     
     @Reducer
@@ -64,7 +68,11 @@ struct MainFeature {
             case .destination:
                 return .none
                 
-            case .viewInit:
+            case .viewAppear:
+                guard state.user == nil else {
+                    return .none
+                }
+                
                 return .run { send in
                     await send(.fetchUser)
                 }
@@ -97,7 +105,21 @@ struct MainFeature {
                 state.selectedTab = tab
                 return .none
                 
+            case let .home(.delegate(.alert(error))):
+                return .send(.handleError(error))
+                
             case .home:
+                return .none
+                
+            case let .myPage(.delegate(.alert(error))):
+                return .send(.handleError(error))
+                
+            case let .myPage(.delegate(.setIsResignAlertShowing(isResignAlertShowing))):
+                state.isResignAlertShowing = isResignAlertShowing
+                return .none
+                
+            case let .myPage(.delegate(.setIsSignOutAlertShowing(isSignOutAlertShowing))):
+                state.isSignOutAlertShowing = isSignOutAlertShowing
                 return .none
                 
             case .myPage:
@@ -112,6 +134,12 @@ struct MainFeature {
                     print("❌ error: \(error)")
                     return .none
                 }
+                
+            case .resign:
+                return .send(.myPage(.resign))
+                
+            case .signOut:
+                return .send(.myPage(.signOut))
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -131,7 +159,7 @@ struct MainView: View {
     
     init(store: StoreOf<MainFeature>) {
         self.store = store
-        store.send(.viewInit)
+        store.send(.viewAppear)
     }
     
     var body: some View {
@@ -148,7 +176,27 @@ struct MainView: View {
                 tabBar
             }
         }
+        .onAppear {
+            store.send(.viewAppear)
+        }
         .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
+        .actionAlert(
+            $store.isResignAlertShowing,
+            icon: .infoFill,
+            title: "회원 탈퇴",
+            message: "탈퇴 후, 현재 계정으로 작성한 글, 댓글등을 수정하거나 삭제할 수 없습니다. 지금 탈퇴하시겠습니까?",
+            preferredText: "탈퇴하기"
+        ) {
+            store.send(.resign)
+        }
+        .actionAlert(
+            $store.isSignOutAlertShowing,
+            title: "로그 아웃",
+            message: "로그아웃 하시겠습니까?",
+            preferredText: "로그아웃"
+        ) {
+            store.send(.signOut)
+        }
     }
     
     private var home: some View {

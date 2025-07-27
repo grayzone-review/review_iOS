@@ -14,29 +14,18 @@ struct CompanyDetailFeature {
     struct State: Equatable {
         @Presents var destination: Destination.State?
         let companyID: Int
+        var review: CompanyReviewFeature.State?
         var company: Company?
-        var reviews: [Review] = []
-        var hasNextPage: Bool = true
-        var isLoading: Bool = false
         var isAlertShowing = false
         var error: FailResponse?
-        
-        var loadPoint: Review? {
-            guard reviews.count > 3 else {
-                return nil
-            }
-            
-            return reviews[reviews.count - 3]
-        }
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case viewInit
+        case review(CompanyReviewFeature.Action)
+        case viewAppear
         case saveCompany
         case companyInformationFetched(Company)
-        case loadReivews
-        case companyReviewsFetched(ReviewsBody)
         case backButtonTapped
         case followButtonTapped
         case follow
@@ -58,7 +47,6 @@ struct CompanyDetailFeature {
     @Dependency(\.mainQueue) var mainQueue
     @Dependency(\.userDefaultsService) var userDefaultsService
     @Dependency(\.companyService) var companyService
-    @Dependency(\.reviewService) var reviewService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -68,12 +56,16 @@ struct CompanyDetailFeature {
             case .binding:
                 return.none
                 
-            case .viewInit :
+            case let .review(.delegate(.alert(error))):
+                return .send(.handleError(error))
+                
+            case .review:
+                return .none
+                
+            case .viewAppear :
                 guard state.company == nil else {
                     return .none
                 }
-                
-                state.isLoading = true
                 
                 return .run { [id = state.companyID] send in
                     let data = try await companyService.fetchCompany(of: id)
@@ -112,28 +104,7 @@ struct CompanyDetailFeature {
                 
             case let .companyInformationFetched(company):
                 state.company = company
-                state.isLoading = false
-                return .send(.loadReivews)
-                
-            case .loadReivews:
-                guard state.isLoading == false,
-                      state.hasNextPage else {
-                    return .none
-                }
-                
-                state.isLoading = true
-                
-                return .run { [companyID = state.companyID, page = state.reviews.count / 10] send in
-                    let data = try await companyService.fetchReviews(of: companyID, page: page)
-                    await send(.companyReviewsFetched(data))
-                } catch: { error, send in
-                    await send(.handleError(error))
-                }
-                
-            case let .companyReviewsFetched(body):
-                state.reviews += body.reviews.map { $0.toDomain() }
-                state.hasNextPage = body.hasNext
-                state.isLoading = false
+                state.review = CompanyReviewFeature.State(companyID: state.companyID)
                 return .none
                 
             case .backButtonTapped:
@@ -168,8 +139,7 @@ struct CompanyDetailFeature {
                 return .none
                 
             case let .destination(.presented(.review(.delegate(.created(review))))):
-                state.reviews.insert(review, at: 0)
-                return .none
+                return .send(.review(.reviewWritten(review)))
                 
             case .destination:
                 return .none
@@ -186,6 +156,9 @@ struct CompanyDetailFeature {
             }
         }
         .ifLet(\.$destination, action: \.destination)
+        .ifLet(\.review, action: \.review) {
+            CompanyReviewFeature()
+        }
     }
 }
 
@@ -193,11 +166,6 @@ extension CompanyDetailFeature.Destination.State: Equatable {}
 
 struct CompanyDetailView: View {
     @Bindable var store: StoreOf<CompanyDetailFeature>
-    
-    init(store: StoreOf<CompanyDetailFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
     
     var body: some View {
         ScrollView {
@@ -210,6 +178,9 @@ struct CompanyDetailView: View {
             
             separator
             review
+        }
+        .onAppear {
+            store.send(.viewAppear)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -310,52 +281,9 @@ struct CompanyDetailView: View {
     
     @ViewBuilder
     private var review: some View {
-        if store.reviews.isEmpty {
-            empty
-        } else {
-            reviewList
+        if let store = store.scope(state: \.review, action: \.review) {
+            CompanyReviewView(store: store)
         }
-    }
-    
-    private var empty: some View {
-        VStack(alignment: .center, spacing: 12) {
-            AppIcon.reviewFill.image(
-                width: 48,
-                height: 48,
-                appColor: .gray30
-            )
-            Text("아직 등록된 리뷰가 없습니다.")
-                .pretendard(.body1Regular, color: .gray50)
-        }
-        .frame(height: 290)
-    }
-    
-    private var reviewList: some View {
-        LazyVStack(spacing: 0) {
-            ForEach($store.reviews) { $review in
-                ReviewCardView(
-                    store: Store(
-                        initialState: ReviewCardFeature.State(
-                            review: review
-                        )
-                    ) {
-                        ReviewCardFeature()
-                    },
-                    review: $review
-                )
-                .onAppear {
-                    if store.loadPoint == review {
-                        store.send(.loadReivews)
-                    }
-                }
-                divider
-            }
-        }
-    }
-    
-    private var divider: some View {
-        Divider()
-            .background(AppColor.gray20.color)
     }
 }
 

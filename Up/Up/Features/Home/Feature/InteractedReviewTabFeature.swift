@@ -23,14 +23,18 @@ struct InteractedReviewTabFeature {
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case loadNext
         case setIsLoading(Bool)
         case setHasNext(Bool)
         case setCurrentPage
         case setReviews([ActivityReview])
         case checkNeedToLoadNext(ActivityReview)
-        case handleError(Error)
+        case delegate(Delegate)
+        
+        enum Delegate {
+            case alert(Error)
+        }
     }
     
     @Dependency(\.homeService) var homeService
@@ -43,7 +47,7 @@ struct InteractedReviewTabFeature {
             case .binding:
                 return.none
                 
-            case .viewInit:
+            case .viewAppear:
                 guard state.needInitialLoad else { return .none }
                 state.needInitialLoad = false
                 
@@ -70,7 +74,7 @@ struct InteractedReviewTabFeature {
                     await send(.setReviews(reviews))
                     await send(.setIsLoading(false))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .setIsLoading(isLoading):
@@ -103,15 +107,8 @@ struct InteractedReviewTabFeature {
                     return .none
                 }
                 
-            case let .handleError(error):
-                if let failResponse = error as? FailResponse {
-                    state.error = failResponse
-                    state.isAlertShowing = true
-                    return .none
-                } else {
-                    print("❌ error: \(error)")
-                    return .none
-                }
+            case .delegate:
+                return .none
             }
         }
     }
@@ -120,15 +117,16 @@ struct InteractedReviewTabFeature {
 struct InteractedReviewTabView: View {
     @Bindable var store: StoreOf<InteractedReviewTabFeature>
     
-    init(store: StoreOf<InteractedReviewTabFeature>) {
-        self.store = store
-        store.send(.viewInit)
+    var body: some View {
+        interactedReview
+            .onAppear {
+                store.send(.viewAppear)
+            }
     }
     
-    var body: some View {
+    private var interactedReview: some View {
         if store.reviews.isEmpty {
             empty
-                .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -151,7 +149,6 @@ struct InteractedReviewTabView: View {
                     }
                 }
             }
-            .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
         }
     }
     

@@ -16,8 +16,8 @@ protocol MyPageService {
 }
 
 private enum MyPageServiceKey: DependencyKey {
-    static let liveValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession())
-    static let previewValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession())
+    static let liveValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession(interceptor: nil))
+    static let previewValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession(interceptor: nil))
     static var testValue: any MyPageService = MockMyPageServiceService()
 }
 

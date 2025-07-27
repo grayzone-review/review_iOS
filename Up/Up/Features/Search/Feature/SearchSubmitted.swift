@@ -12,7 +12,6 @@ import SwiftUI
 struct SearchSubmittedFeature {
     @ObservableState
     struct State: Equatable {
-        var needLoad: Bool = true // viewInit을 한번만 호출하기위한 플래그 값.
         let searchTerm: String
         let searchTheme: SearchTheme
         var searchedCompanies: [SearchedCompany] = []
@@ -20,13 +19,11 @@ struct SearchSubmittedFeature {
         var hasNext: Bool = true
         var totalCount: Int?
         var currentPage: Int = 0
-        var isAlertShowing = false
-        var error: FailResponse?
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case loadNext
         case setIsLoading(Bool)
         case setHasNext(Bool)
@@ -38,10 +35,10 @@ struct SearchSubmittedFeature {
         case followButtonTapped(SearchedCompany)
         case follow(id: Int, isFollowed: Bool)
         case checkNeedToLoadNext(id: Int)
-        case handleError(Error)
         
-        enum Delegate: Equatable {
+        enum Delegate {
             case search(String, SearchTheme)
+            case alert(Error)
         }
     }
     
@@ -61,30 +58,17 @@ struct SearchSubmittedFeature {
             case .binding:
                 return .none
                 
-            case .viewInit:
-                guard state.needLoad else { return .none }
-                state.needLoad = false
-                
-                return .run { [searchTheme = state.searchTheme, searchTerm = state.searchTerm, currentPage = state.currentPage] send in
-                    let data = try await searchService.fetchSearchedCompanies(
-                        theme: searchTheme,
-                        keyword: searchTerm,
-                        latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
-                        longitude: 126.9780,
-                        page: currentPage
-                    )
-                    
-                    let companies = data.companies.map { $0.toDomain() }
-                    await send(.setHasNext(data.hasNext))
-                    await send(.setTotalCount(data.totalCount))
-                    await send(.setSearchedCompanies(companies))
-                    await send(.setIsLoading(false))
-                } catch: { error, send in
-                    await send(.handleError(error))
+            case .viewAppear:
+                guard state.searchedCompanies.isEmpty else {
+                    return .none
                 }
                 
+                return .send(.loadNext)
+                
             case .loadNext:
-                guard !state.isLoading else { return .none }
+                guard state.isLoading == false else {
+                    return .none
+                }
                 
                 state.isLoading = true
                 return .run {
@@ -117,7 +101,7 @@ struct SearchSubmittedFeature {
                     await send(.setSearchedCompanies(companies))
                     await send(.setIsLoading(false))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .setIsLoading(isLoading):
@@ -175,7 +159,7 @@ struct SearchSubmittedFeature {
                         try await companyService.deleteCompanyFollowing(of: id)
                     }
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .checkNeedToLoadNext(id):
@@ -186,16 +170,6 @@ struct SearchSubmittedFeature {
                 } else {
                     return .none
                 }
-                
-            case let .handleError(error):
-                if let failResponse = error as? FailResponse {
-                    state.error = failResponse
-                    state.isAlertShowing = true
-                    return .none
-                } else {
-                    print("❌ error: \(error)")
-                    return .none
-                }
             }
         }
     }
@@ -204,18 +178,15 @@ struct SearchSubmittedFeature {
 struct SearchSubmittedView: View {
     @Bindable var store: StoreOf<SearchSubmittedFeature>
     
-    init(store: StoreOf<SearchSubmittedFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             searchTheme
             resultCount
             searchResult
         }
-        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
+        .onAppear {
+            store.send(.viewAppear)
+        }
     }
     
     @ViewBuilder

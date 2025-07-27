@@ -16,8 +16,6 @@ struct HomeFeature {
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
         var interestedRegionReviews = [HomeReview]()
-        var isAlertShowing = false
-        var error: FailResponse?
         
         var userName: String {
             user?.nickname ?? "사용자"
@@ -26,14 +24,18 @@ struct HomeFeature {
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
         case fetchMainRegionReviews
         case mainRegionReviewsFetched([HomeReview])
         case fetchInterestedRegionReviews
         case interestedRegionReviewsFetched([HomeReview])
-        case handleError(Error)
+        case delegate(Delegate)
+        
+        enum Delegate {
+            case alert(Error)
+        }
     }
     
     @Dependency(\.homeService) var homeService
@@ -46,7 +48,7 @@ struct HomeFeature {
             case .binding:
                 return.none
                 
-            case .viewInit:
+            case .viewAppear:
                 return .run { send in
                     await send(.fetchPopularReviews)
                     await send(.fetchMainRegionReviews)
@@ -68,7 +70,7 @@ struct HomeFeature {
                     
                     await send(.popularReviewsFetched(reviews))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .popularReviewsFetched(reviews):
@@ -90,7 +92,7 @@ struct HomeFeature {
                     
                     await send(.mainRegionReviewsFetched(reviews))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .mainRegionReviewsFetched(reviews):
@@ -112,22 +114,15 @@ struct HomeFeature {
                     
                     await send(.interestedRegionReviewsFetched(reviews))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .interestedRegionReviewsFetched(reviews):
                 state.interestedRegionReviews = reviews
                 return .none
                 
-            case let .handleError(error):
-                if let failResponse = error as? FailResponse {
-                    state.error = failResponse
-                    state.isAlertShowing = true
-                    return .none
-                } else {
-                    print("❌ error: \(error)")
-                    return .none
-                }
+            case .delegate:
+                return .none
             }
         }
     }
@@ -144,12 +139,6 @@ struct HomeView: View {
     
     @Bindable var store: StoreOf<HomeFeature>
     @State private var scrollPosition: ScrollPosition?
-    
-    init(store: StoreOf<HomeFeature>) {
-        self.store = store
-        
-        store.send(.viewInit)
-    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -172,8 +161,10 @@ struct HomeView: View {
             .scrollIndicators(.hidden)
             .padding(.bottom, 0.5) // 탭바 아래로 반투명 비쳐보임 방지
         }
+        .onAppear {
+            store.send(.viewAppear)
+        }
         .toolbar(.hidden, for: .navigationBar)
-        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var navigationBar: some View {

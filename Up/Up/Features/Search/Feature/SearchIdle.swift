@@ -13,11 +13,10 @@ struct SearchIdleFeature {
     @ObservableState
     struct State: Equatable {
         var recentSearchTerms: [RecentSearchTerm] = []
-        var needLoad: Bool = true
     }
     
     enum Action {
-        case viewInit
+        case viewAppear
         case delegate(Delegate)
         case recentSearchTermButtonTapped(RecentSearchTerm)
         case deleteButtonTapped(RecentSearchTerm)
@@ -33,16 +32,10 @@ struct SearchIdleFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .viewInit:
-                guard state.needLoad else {
-                    return .none
-                }
-                
+            case .viewAppear:
                 if let recentSearchTerms = try? userDefaultsService.fetch(key: "recentSearchTerms", type: [RecentSearchTerm].self) {
                     state.recentSearchTerms = recentSearchTerms
                 }
-                
-                state.needLoad = false
                 return .none
                 
             case .delegate:
@@ -70,16 +63,14 @@ struct SearchIdleFeature {
 struct SearchIdleView: View {
     let store: StoreOf<SearchIdleFeature>
     
-    init(store: StoreOf<SearchIdleFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             recentSearchTerm
             searchTheme
             Spacer()
+        }
+        .onAppear {
+            store.send(.viewAppear)
         }
     }
     

@@ -108,6 +108,9 @@ struct SearchCompanyFeature {
                 state.searchTerm = searchTerm
                 return .send(.setSearchState(.submitted))
                 
+            case let .search(.submitted(.delegate(.alert(error)))):
+                return .send(.handleError(error))
+                
             case .search:
                 return .none
                 

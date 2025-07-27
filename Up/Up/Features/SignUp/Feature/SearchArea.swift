@@ -42,7 +42,7 @@ struct SearchAreaFeature {
     enum Action: BindableAction {
         /// Life Cycle
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case dismiss
         
         /// Focus
@@ -100,7 +100,7 @@ struct SearchAreaFeature {
             case .binding:
                 return .none
                 
-            case .viewInit:
+            case .viewAppear:
                 return .run { send in
                     let result = try await legalDistrictService.searchArea(keyword: "", page: 0)
                     
@@ -248,10 +248,6 @@ struct SearchAreaView: View {
     @State private var scrollId: District.ID?
     @Bindable var store: StoreOf<SearchAreaFeature>
     
-    init(store: StoreOf<SearchAreaFeature>) {
-        self.store = store
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             inputAreaNameView
@@ -284,6 +280,9 @@ struct SearchAreaView: View {
                 
                 store.send(.caculateNeedLoadNext(id))
             }
+        }
+        .onAppear {
+            store.send(.viewAppear)
         }
         .toolbar(.hidden)
         .navigationBarBackButtonHidden(true)

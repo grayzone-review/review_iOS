@@ -30,7 +30,7 @@ struct MyActivityFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case viewInit
+        case viewAppear
         case countsFetched(InteractionCounts)
         case makeReviewButtonTapped
         case backButtonTapped
@@ -87,7 +87,7 @@ struct MyActivityFeature {
             case .destination:
                 return .none
                 
-            case .viewInit:
+            case .viewAppear:
                 guard state.counts == nil else {
                     return .none
                 }
@@ -116,11 +116,20 @@ struct MyActivityFeature {
                 state.selectedTab = tab
                 return .none
                 
+            case let .myReview(.delegate(.alert(error))):
+                return .send(.handleError(error))
+                
             case .myReview:
                 return .none
                 
+            case let .interactedReview(.delegate(.alert(error))):
+                return .send(.handleError(error))
+                
             case .interactedReview:
                 return .none
+                
+            case let .followedCompany(.delegate(.alert(error))):
+                return .send(.handleError(error))
                 
             case .followedCompany:
                 return .none
@@ -145,11 +154,6 @@ extension MyActivityFeature.Destination.State: Equatable {}
 struct MyActivityView: View {
     @Bindable var store: StoreOf<MyActivityFeature>
     
-    init(store: StoreOf<MyActivityFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             activityCounts
@@ -165,6 +169,9 @@ struct MyActivityView: View {
             }
             .tabViewStyle(.page)
             makeReviewButton
+        }
+        .onAppear {
+            store.send(.viewAppear)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

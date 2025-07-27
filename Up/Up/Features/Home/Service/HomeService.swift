@@ -19,8 +19,8 @@ protocol HomeService {
 }
 
 private enum HomeServiceKey: DependencyKey {
-    static let liveValue: any HomeService = DefaultHomeService(session: AlamofireNetworkSession())
-    static let previewValue: any HomeService = DefaultHomeService(session: AlamofireNetworkSession())
+    static let liveValue: any HomeService = DefaultHomeService(session: AlamofireNetworkSession(interceptor: nil))
+    static let previewValue: any HomeService = DefaultHomeService(session: AlamofireNetworkSession(interceptor: nil))
     static var testValue: any HomeService = MockHomeService()
 }
 

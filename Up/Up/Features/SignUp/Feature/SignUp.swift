@@ -55,7 +55,7 @@ struct SignUpFeature {
     enum Action: BindableAction {
         case path(StackActionOf<Path>)
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case addTermsList([TermsData])
         case xButtonTapped
         case checkNicknameTapped
@@ -99,7 +99,7 @@ struct SignUpFeature {
                 return .none
             case .path:
                 return .none
-            case .viewInit:
+            case .viewAppear:
                 guard state.termList.isEmpty,
                       !state.isLoading else { return .none }
                 state.isLoading = true
@@ -212,11 +212,6 @@ struct SignUpView: View {
     
     @Bindable var store: StoreOf<SignUpFeature>
     
-    init(store: StoreOf<SignUpFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
-    
     var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             ScrollView {
@@ -271,6 +266,9 @@ struct SignUpView: View {
             case let .termDetail(store):
                 TermDetailView(store: store)
             }
+        }
+        .onAppear {
+            store.send(.viewAppear)
         }
     }
     

@@ -17,20 +17,22 @@ struct FollowedCompanyTabFeature {
         var isLoading = false
         var hasNext = true
         var currentPage = 0
-        var isAlertShowing = false
-        var error: FailResponse?
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case viewInit
+        case viewAppear
         case loadNext
         case setIsLoading(Bool)
         case setHasNext(Bool)
         case setCurrentPage
         case setCompanies([FollowedCompany])
         case checkNeedToLoadNext(FollowedCompany)
-        case handleError(Error)
+        case delegate(Delegate)
+        
+        enum Delegate {
+            case alert(Error)
+        }
     }
     
     @Dependency(\.homeService) var homeService
@@ -43,7 +45,7 @@ struct FollowedCompanyTabFeature {
             case .binding:
                 return.none
                 
-            case .viewInit:
+            case .viewAppear:
                 guard state.needInitialLoad else { return .none }
                 state.needInitialLoad = false
                 
@@ -70,7 +72,7 @@ struct FollowedCompanyTabFeature {
                     await send(.setCompanies(companies))
                     await send(.setIsLoading(false))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .setIsLoading(isLoading):
@@ -103,15 +105,8 @@ struct FollowedCompanyTabFeature {
                     return .none
                 }
                 
-            case let .handleError(error):
-                if let failResponse = error as? FailResponse {
-                    state.error = failResponse
-                    state.isAlertShowing = true
-                    return .none
-                } else {
-                    print("❌ error: \(error)")
-                    return .none
-                }
+            case .delegate:
+                return .none
             }
         }
     }
@@ -120,15 +115,17 @@ struct FollowedCompanyTabFeature {
 struct FollowedCompanyTabView: View {
     @Bindable var store: StoreOf<FollowedCompanyTabFeature>
     
-    init(store: StoreOf<FollowedCompanyTabFeature>) {
-        self.store = store
-        store.send(.viewInit)
+    var body: some View {
+        followedCompany
+            .onAppear {
+                store.send(.viewAppear)
+            }
     }
     
-    var body: some View {
+    @ViewBuilder
+    private var followedCompany: some View {
         if store.companies.isEmpty {
             empty
-                .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -151,7 +148,6 @@ struct FollowedCompanyTabView: View {
                     }
                 }
             }
-            .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
         }
     }
     

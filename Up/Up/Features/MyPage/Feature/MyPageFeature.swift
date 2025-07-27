@@ -15,8 +15,6 @@ struct MyPageFeature {
         @Shared(.user) var user
         var isResignAlertShowing = false
         var isSignOutAlertShowing = false
-        var isAlertShowing = false
-        var error: FailResponse?
         
         var headerText: AttributedString {
             let userName = "\(user?.nickname ?? "사용자")님"
@@ -41,7 +39,13 @@ struct MyPageFeature {
         case signOutButtonTapped
         case signOut
         case removeUserInformation
-        case handleError(Error)
+        case delegate(Delegate)
+        
+        enum Delegate {
+            case alert(Error)
+            case setIsResignAlertShowing(Bool)
+            case setIsSignOutAlertShowing(Bool)
+        }
     }
     
     @Dependency(\.homeService) var homeService
@@ -56,27 +60,25 @@ struct MyPageFeature {
                 return .none
                 
             case .resignButtonTapped:
-                state.isResignAlertShowing = true
-                return .none
+                return .send(.delegate(.setIsResignAlertShowing(true)))
                 
             case .resign:
                 return .run { send in
                     try await myPageService.resign()
                     await send(.removeUserInformation)
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case .signOutButtonTapped:
-                state.isSignOutAlertShowing = true
-                return .none
+                return .send(.delegate(.setIsSignOutAlertShowing(true)))
                 
             case .signOut:
                 return .run { send in
                     try await myPageService.signOut()
                     await send(.removeUserInformation)
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    await send(.delegate(.alert(error)))
                 }
                 
             case .removeUserInformation:
@@ -87,15 +89,8 @@ struct MyPageFeature {
                 }
                 return .none
                 
-            case let .handleError(error):
-                if let failResponse = error as? FailResponse {
-                    state.error = failResponse
-                    state.isAlertShowing = true
-                    return .none
-                } else {
-                    print("❌ error: \(error)")
-                    return .none
-                }
+            case .delegate:
+                return .none
             }
         }
     }
@@ -112,24 +107,6 @@ struct MyPageView: View {
             menu
             Spacer()
         }
-        .actionAlert(
-            $store.isResignAlertShowing,
-            icon: .infoFill,
-            title: "회원 탈퇴",
-            message: "탈퇴 후, 현재 계정으로 작성한 글, 댓글등을 수정하거나 삭제할 수 없습니다. 지금 탈퇴하시겠습니까?",
-            preferredText: "탈퇴하기"
-        ) {
-            store.send(.resign)
-        }
-        .actionAlert(
-            $store.isSignOutAlertShowing,
-            title: "로그 아웃",
-            message: "로그아웃 하시겠습니까?",
-            preferredText: "로그아웃"
-        ) {
-            store.send(.signOut)
-        }
-        .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
     }
     
     private var title: some View {

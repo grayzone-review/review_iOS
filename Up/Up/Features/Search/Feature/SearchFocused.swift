@@ -15,11 +15,9 @@ struct SearchFocusedFeature {
         let searchTerm: String
         let proposedCompanies: [ProposedCompany]
         var savedCompanies: [SavedCompany] = []
-        var needLoad: Bool = true
     }
     
     enum Action {
-        case viewInit
         case viewAppear
         case loadSavedCompanies
         case deleteButtonTapped(SavedCompany)
@@ -30,17 +28,6 @@ struct SearchFocusedFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .viewInit:
-                guard state.needLoad else {
-                    return .none
-                }
-                
-                state.needLoad = false
-                
-                return .run { send in
-                    await send(.loadSavedCompanies)
-                }
-                
             case .viewAppear:
                 return .send(.loadSavedCompanies)
                 
@@ -57,7 +44,6 @@ struct SearchFocusedFeature {
                 
                 try? userDefaultsService.save(key: "savedCompanies", value: state.savedCompanies)
                 
-                
                 return .none
             }
         }
@@ -67,17 +53,17 @@ struct SearchFocusedFeature {
 struct SearchFocusedView: View {
     let store: StoreOf<SearchFocusedFeature>
     
-    init(store: StoreOf<SearchFocusedFeature>) {
-        self.store = store
-        store.send(.viewInit)
+    var body: some View {
+        searchFocused
+            .onAppear {
+                store.send(.viewAppear)
+            }
     }
     
-    var body: some View {
+    @ViewBuilder
+    private var searchFocused: some View {
         if store.searchTerm.isEmpty {
             recentSearchedCompany
-                .onAppear {
-                    store.send(.viewAppear)
-                }
         } else {
             searchedCompany
         }
@@ -244,7 +230,7 @@ struct SearchFocusedView: View {
                             name: "포레스트병원",
                             address: "서울특별시 종로구 율곡로 164, 지하1,2층,1층일부,2~8층 (원남동)"
                         )
-                    ], needLoad: true
+                    ]
                 )
             ) {
                 SearchFocusedFeature()

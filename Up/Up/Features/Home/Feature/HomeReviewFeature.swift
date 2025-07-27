@@ -28,7 +28,7 @@ struct HomeReviewFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case comments(PresentationAction<CommentsWindowFeature.Action>)
-        case viewInit
+        case viewAppear
         case loadNext
         case setIsLoading(Bool)
         case setHasNext(Bool)
@@ -70,7 +70,7 @@ struct HomeReviewFeature {
             case .comments:
                 return .none
                 
-            case .viewInit:
+            case .viewAppear:
                 guard state.needInitialLoad else { return .none }
                 state.needInitialLoad = false
                 
@@ -219,11 +219,6 @@ struct HomeReviewFeature {
 struct HomeReviewView: View {
     @Bindable var store: StoreOf<HomeReviewFeature>
     
-    init(store: StoreOf<HomeReviewFeature>) {
-        self.store = store
-        store.send(.viewInit)
-    }
-    
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
@@ -238,6 +233,8 @@ struct HomeReviewView: View {
                     }
                 }
             }
+        }.onAppear {
+            store.send(.viewAppear)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -255,6 +252,9 @@ struct HomeReviewView: View {
             }
         }
         .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
+        .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
+            CommentsWindowView(store: commentsWindowStore)
+        }
     }
     
     private func companyCard(_ company: SearchedCompany) -> some View {
@@ -345,164 +345,13 @@ struct HomeReviewView: View {
     }
     
     private func reviewCard(_ review: Review) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 16) {
-                header(review)
-                rating(review)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                title(review)
-                content(review)
-                interaction(review)
-            }
-        }
-        .padding(EdgeInsets(top: 16, leading: 20, bottom: 20, trailing: 20))
-        .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
-            CommentsWindowView(store: commentsWindowStore)
-        }
-    }
-    
-    private func header(_ review: Review) -> some View {
-        HStack(spacing: 8) {
-            Text(review.reviewer)
-            divider
-            Text(review.job)
-            divider
-            Text(review.employmentPeriod)
-            divider
-            Text(DateFormatter.reviewCardFormat.string(from: review.creationDate))
-            Spacer()
-        }
-        .pretendard(.captionRegular, color: .gray50)
-        .frame(maxHeight: 18)
-    }
-    
-    private var divider: some View {
-        Divider()
-            .background(AppColor.gray20.color)
-    }
-    
-    private func rating(_ review: Review) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 4) {
-                Text(review.rating.displayText)
-                    .pretendard(.h3Bold, color: .gray90)
-                StarRatingView(rating: review.rating.totalRating)
-            }
-            ratings(review)
-        }
-    }
-    
-    private func ratings(_ review: Review) -> some View {
-        HStack(alignment: .top) {
-            VStack(spacing: 20) {
-                rating("급여", review.rating.salary)
-                rating("복지", review.rating.welfare)
-                rating("워라벨", review.rating.workLifeBalance)
-            }
-            .frame(width: 118)
-            Spacer()
-            VStack(spacing: 20) {
-                rating("사내문화", review.rating.companyCulture)
-                rating("경영진", review.rating.management)
-            }
-            .frame(width: 118)
-        }
-        .padding(20)
-        .background(AppColor.gray10.color)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColor.gray20.color)
+        ReviewCardView(
+            review: review,
+            isExpanded: true,
+            expansionHandler: { _ in },
+            likeButtonAction: { _ in store.send(.likeButtonTapped(review)) },
+            commentButtonAction: { _ in store.send(.commentButtonTapped(review)) }
         )
-    }
-    
-    private func rating(_ item: String, _ rating: Double) -> some View {
-        HStack {
-            Text(item)
-                .pretendard(.captionRegular, color: .gray50)
-            Spacer()
-            StarRatingView(rating: rating, length: 12, spacing: 2)
-        }
-    }
-    
-    private func title(_ review: Review) -> some View {
-        Text(review.title.withZeroWidthSpaces)
-            .pretendard(.h3Bold, color: .gray90)
-    }
-    
-    private func content(_ review: Review) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            reviewPoint(review, .advantage)
-            reviewPoint(review, .disadvantage)
-            reviewPoint(review, .managementFeedback)
-        }
-    }
-    
-    private func reviewPoint(_ review: Review, _ point: Review.Point) -> some View {
-        let text = switch point {
-        case .advantage:
-            review.advantagePoint
-        case .disadvantage:
-            review.disadvantagePoint
-        case .managementFeedback:
-            review.managementFeedback
-        }
-        
-        return HStack(alignment: .top, spacing: 12) {
-            Text(point.keyword)
-                .pretendard(.captionBold, color: point.accentColor)
-                .padding(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
-                .background(point.backgroundColor.color)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-            
-            Text(text.withZeroWidthSpaces)
-                .pretendard(.body1Regular, color: .gray80)
-        }
-        .padding(.vertical, 16)
-    }
-    
-    private func interaction(_ review: Review) -> some View {
-        HStack(spacing: 8) {
-            likeButton(review)
-            replyButton(review)
-        }
-    }
-    
-    private func likeButton(_ review: Review) -> some View {
-        let review = store.reviews[review.id, default: review]
-        
-        return Button {
-            store.send(.likeButtonTapped(review))
-        } label: {
-            HStack(alignment: .center, spacing: 0) {
-                (review.isLiked ? AppIcon.heartFill : .heartLine).image(
-                    width: 24,
-                    height: 24,
-                    appColor: review.isLiked ? .seRed50 : .black
-                )
-                .padding(10)
-                Text(String(review.likeCount))
-                    .pretendard(.body1Bold)
-            }
-        }
-    }
-    
-    private func replyButton(_ review: Review) -> some View {
-        Button {
-            store.send(.commentButtonTapped(review))
-        } label: {
-            HStack(alignment: .center, spacing: 0) {
-                AppIcon.chatLine.image(
-                    width: 24,
-                    height: 24,
-                    appColor: .black
-                )
-                .padding(10)
-                Text(String(store.reviews[review.id, default: review].commentCount))
-                    .pretendard(.body1Bold)
-            }
-        }
     }
     
     private var separator: some View {

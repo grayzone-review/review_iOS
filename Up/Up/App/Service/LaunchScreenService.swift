@@ -13,8 +13,8 @@ protocol LaunchScreenService {
 }
 
 private enum LaunchScreenServiceKey: DependencyKey {
-    static let liveValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
-    static let previewValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession(interceptor: AuthIDInterceptor()))
+    static let liveValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession(interceptor: nil))
+    static let previewValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession(interceptor: nil))
     static var testValue: any LaunchScreenService = MockLaunchScreenService()
 }
 
