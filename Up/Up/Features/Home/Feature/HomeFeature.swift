@@ -13,6 +13,7 @@ struct HomeFeature {
     @ObservableState
     struct State: Equatable {
         @Shared(.user) var user
+        var currentLocation: Location = .default
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
         var interestedRegionReviews = [HomeReview]()
@@ -25,6 +26,8 @@ struct HomeFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case viewAppear
+        case requestCurrentLocation
+        case currentLocationFetched(Location)
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
         case fetchMainRegionReviews
@@ -55,15 +58,30 @@ struct HomeFeature {
                     await send(.fetchInterestedRegionReviews)
                 }
                 
+            case .requestCurrentLocation:
+                return .run { send in
+                    let location = try await LocationService.shared.requestCurrentLocation()
+                    
+                    let current = location.toDomain()
+                    await send(.currentLocationFetched(current))
+                } catch: { error, send in
+                    print("error: \(error)")
+                }
+                
+            case let .currentLocationFetched(location):
+                state.currentLocation = location
+                
+                return .none
             case .fetchPopularReviews:
                 guard state.popularReviews.isEmpty else {
                     return .none
                 }
-                
+                let location = state.currentLocation
                 return .run { send in
+                    
                     let data = try await homeService.fetchPopularReviews(
-                        latitude: 37.5665, // 위치 관련 작업 이후 수정
-                        longitude: 126.9780,
+                        latitude: location.lat,
+                        longitude: location.lng,
                         page: 0
                     )
                     let reviews = data.reviews.map { $0.toDomain() }
@@ -81,11 +99,12 @@ struct HomeFeature {
                 guard state.mainRegionReviews.isEmpty else {
                     return .none
                 }
+                let location = state.currentLocation
                 
                 return .run { send in
                     let data = try await homeService.fetchMainRegionReviews(
-                        latitude: 37.5665, // 위치 관련 작업 이후 수정
-                        longitude: 126.9780,
+                        latitude: location.lat,
+                        longitude: location.lng,
                         page: 0
                     )
                     let reviews = data.reviews.map { $0.toDomain() }
@@ -103,11 +122,12 @@ struct HomeFeature {
                 guard state.interestedRegionReviews.isEmpty else {
                     return .none
                 }
+                let location = state.currentLocation
                 
                 return .run { send in
                     let data = try await homeService.fetchInterestedRegionReviews(
-                        latitude: 37.5665, // 위치 관련 작업 이후 수정
-                        longitude: 126.9780,
+                        latitude: location.lat,
+                        longitude: location.lng,
                         page: 0
                     )
                     let reviews = data.reviews.map { $0.toDomain() }
@@ -373,7 +393,7 @@ struct HomeView: View {
                     Spacer()
                     NavigationLink(
                         state: UpFeature.MainPath.State.homeReview(
-                            HomeReviewFeature.State(category: .popular)
+                            HomeReviewFeature.State(category: .popular, currentLocation: store.currentLocation)
                         )
                     ) {
                         HStack(spacing: 4) {
@@ -407,7 +427,7 @@ struct HomeView: View {
                     Spacer()
                     NavigationLink(
                         state: UpFeature.MainPath.State.homeReview(
-                            HomeReviewFeature.State(category: .mainRegion(store.user?.mainRegion.address))
+                            HomeReviewFeature.State(category: .mainRegion(store.user?.mainRegion.address), currentLocation: store.currentLocation)
                         )
                     ) {
                         HStack(spacing: 4) {
@@ -441,7 +461,7 @@ struct HomeView: View {
                     Spacer()
                     NavigationLink(
                         state: UpFeature.MainPath.State.homeReview(
-                            HomeReviewFeature.State(category: .interestedRegion)
+                            HomeReviewFeature.State(category: .interestedRegion, currentLocation: store.currentLocation)
                         )
                     ) {
                         HStack(spacing: 4) {
