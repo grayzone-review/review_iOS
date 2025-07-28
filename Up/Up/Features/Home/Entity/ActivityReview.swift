@@ -36,7 +36,7 @@ struct ActivityReviewDTO: Codable {
         case id
         case totalRating
         case title
-        case companyID
+        case companyID = "companyId"
         case companyName
         case companyAddress
         case job = "jobRole"
