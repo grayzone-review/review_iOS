@@ -267,7 +267,6 @@ struct SearchAreaView: View {
                     Color.clear
                         .frame(height: 1)
                         .onAppear {
-                            print("clear onAppear")
                             store.send(.loadNextDistrict)
                         }
                 }
@@ -277,12 +276,8 @@ struct SearchAreaView: View {
             .onChange(of: scrollId) {
                 guard let id = scrollId else { return }
                 
-                
                 store.send(.caculateNeedLoadNext(id))
             }
-        }
-        .onAppear {
-            store.send(.viewAppear)
         }
         .toolbar(.hidden)
         .navigationBarBackButtonHidden(true)

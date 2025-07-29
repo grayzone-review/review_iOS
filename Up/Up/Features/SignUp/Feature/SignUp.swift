@@ -176,6 +176,7 @@ struct SignUpFeature {
                     
                     let token = try await signUpService.login(
                         oauthToken: oauthData.token,
+                        authorizationCode: oauthData.authorizationCode,
                         oauthProvider: .init(rawValue: oauthData.provider)
                     )
                     

@@ -92,7 +92,7 @@ struct OAuthLoginFeature {
                 return .none
             case let .login(data):
                 return .run { send in
-                    let response = try await signUpService.login(oauthToken: data.token, oauthProvider: OAuthProvider(rawValue: data.provider))
+                    let response = try await signUpService.login(oauthToken: data.token, authorizationCode: data.authorizationCode, oauthProvider: OAuthProvider(rawValue: data.provider))
                     
                     await SecureTokenManager.shared.setAccessToken(response.accessToken)
                     await SecureTokenManager.shared.setRefreshToken(response.refreshToken)
