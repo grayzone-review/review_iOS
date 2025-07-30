@@ -30,7 +30,7 @@ extension DependencyValues {
 
 struct DefaultMyPageService: MyPageService {
     private let session: NetworkSession
-    private let tokenManager = TokenManager.shared
+    private let tokenManager = SecureTokenManager.shared
     
     init(session: NetworkSession) {
         self.session = session

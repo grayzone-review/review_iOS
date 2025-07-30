@@ -342,7 +342,7 @@ struct SignUpView: View {
                     }
                     if !store.isPreferredFull {
                         NavigationLink(
-                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea))
+                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea, selectedList: store.preferredAreaList))
                         ) {
                             AppButton(
                                 style: .fill,

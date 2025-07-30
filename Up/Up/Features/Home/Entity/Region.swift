@@ -13,6 +13,13 @@ struct Region: Equatable, Codable {
         case id
         case address
     }
+    
+    func toDomain() -> District {
+        return District(
+            id: self.id,
+            name: self.address
+        )
+    }
 }
 
 struct RegionDTO: Codable {

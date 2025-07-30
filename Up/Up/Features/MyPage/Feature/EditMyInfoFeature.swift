@@ -18,7 +18,8 @@ struct EditMyInfoFeature {
     
     @ObservableState
     struct State: Equatable {
-//        @Shared(.user) var user
+        let initialUserData: User?
+        @Shared(.user) var user
         
         var path = StackState<Path.State>()
         
@@ -34,17 +35,25 @@ struct EditMyInfoFeature {
         var isPreferredFull: Bool = false
         /// 중복 검사 결과를 보여주는 값
         var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
-        /// 사용자의 정보가 수정 가능한 상태인지 나타내는 값
-        var canEdit: Bool {
-            self.dupCheckFieldState == .valid &&
-            self.myArea != nil
-        }
         /// 비동기 로직이 수행중인지 아닌지 나타내는 값
         var isLoading: Bool = false
+        /// 사용자의 정보가 수정 가능한 상태인지 나타내는 값
+        var isChanged: Bool {
+            (initialUserData?.nickname != nickname && dupCheckFieldState == .valid) ||
+            initialUserData?.mainRegion.id != myArea?.id ||
+            Set(initialUserData?.interestedRegions.map(\.id) ?? []) != Set(preferredAreaList.map(\.id))
+        }
         
         /// 에러 핸들링
         var shouldShowErrorPopup: Bool = false
         var errorMessage: String = ""
+        
+        init(initialUserData: User?) {
+            self.initialUserData = initialUserData
+            self.nickname = initialUserData?.nickname ?? ""
+            self.myArea = initialUserData?.mainRegion.toDomain() ?? .init()
+            self.preferredAreaList = initialUserData?.interestedRegions.map { $0.toDomain() } ?? []
+        }
     }
     
     enum Action: BindableAction {
@@ -158,7 +167,7 @@ struct EditMyInfoView: View {
                     style: .fill,
                     size: .large,
                     text: "수정하기",
-                    isEnabled: store.canEdit
+                    isEnabled: store.isChanged
                 ) {
                     store.send(.editTapped)
                 }
@@ -267,7 +276,7 @@ struct EditMyInfoView: View {
                     }
                     if !store.isPreferredFull {
                         NavigationLink(
-                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea))
+                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea, selectedList: store.preferredAreaList))
                         ) {
                             AppButton(
                                 style: .fill,
