@@ -12,6 +12,7 @@ import SwiftUI
 struct SearchCompanyFeature {
     @ObservableState
     struct State: Equatable {
+        var currentLocation: Location = .default
         var search: Search.State? = .idle(SearchIdleFeature.State())
         var searchState: SearchState = .idle
         var searchTerm: String = ""
@@ -24,6 +25,8 @@ struct SearchCompanyFeature {
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
+        case requestCurrentLocation
+        case currentLocationFetched(Location)
         case backButtonTapped
         case textFieldFocused
         case clearButtonTapped
@@ -61,6 +64,20 @@ struct SearchCompanyFeature {
             case .binding:
                 return .none
                 
+            case .requestCurrentLocation:
+                return .run { send in
+                    let location = try await LocationService.shared.requestCurrentLocation()
+                    
+                    let current = location.toDomain()
+                    await send(.currentLocationFetched(current))
+                } catch: { error, send in
+                    print("error: \(error)")
+                }
+                
+            case let .currentLocationFetched(location):
+                state.currentLocation = location
+                
+                return .none
             case .backButtonTapped:
                 return .run { _ in await dismiss() }
                 
@@ -135,8 +152,8 @@ struct SearchCompanyFeature {
                 return .run { [state] send in
                     let data = try await searchService.fetchProposedCompanies(
                         keyword: state.searchTerm,
-                        latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
-                        longitude: 126.9780
+                        latitude: state.currentLocation.lat,
+                        longitude: state.currentLocation.lng
                     )
                     let companies = data.companies.map { $0.toDomain() }
                     
@@ -170,7 +187,8 @@ struct SearchCompanyFeature {
                     state.search = .submitted(
                         SearchSubmittedFeature.State(
                             searchTerm: state.searchTerm,
-                            searchTheme: state.searchTheme
+                            searchTheme: state.searchTheme,
+                            currentLocation: state.currentLocation
                         )
                     )
                 }

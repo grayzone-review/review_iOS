@@ -148,18 +148,24 @@ struct MyPageView: View {
         }
     }
     
-    private var editUserButton: some View { // 작업후 NavigationLink로 래핑
-        HStack(spacing: 8) {
-            AppIcon.userLine.image(
-                width: 24,
-                height: 24,
-                appColor: .gray90
+    private var editUserButton: some View {
+        NavigationLink(
+            state: UpFeature.MainPath.State.editMyInfo(
+                EditMyInfoFeature.State(initialUserData: store.user)
             )
-            Text("내 정보 수정")
-                .pretendard(.body1Regular, color: .gray90)
-            Spacer()
+        ) {
+            HStack(spacing: 8) {
+                AppIcon.userLine.image(
+                    width: 24,
+                    height: 24,
+                    appColor: .gray90
+                )
+                Text("내 정보 수정")
+                    .pretendard(.body1Regular, color: .gray90)
+                Spacer()
+            }
+            .padding(20)
         }
-        .padding(20)
     }
     
     private var reportButton: some View {

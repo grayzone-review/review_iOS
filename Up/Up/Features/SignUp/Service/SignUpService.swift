@@ -17,7 +17,7 @@ protocol SignUpService {
         nickname: String,
         agreements: [String]
     ) async throws
-    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData 
+    func login(oauthToken: String, authorizationCode: String?, oauthProvider: OAuthProvider) async throws -> TokenData
 }
 
 private enum SignUpServiceKey: DependencyKey {
@@ -87,12 +87,20 @@ struct DefaultSignUpService: SignUpService {
         )
         let request = SignUpAPI.signUp(requestBody)
         
-        _ = try await session.request(request, as: NilResponse.self)
+        let response = try await session.request(request, as: NilResponse.self)
+        
+        switch response {
+        case .success:
+            return
+        case .failure(let failure):
+            throw failure
+        }
     }
     
-    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData {
+    func login(oauthToken: String, authorizationCode: String?, oauthProvider: OAuthProvider) async throws -> TokenData {
         let requestBody = LoginRequset(
             oauthToken: oauthToken,
+            authorizationCode: authorizationCode,
             oauthProvider: oauthProvider
         )
         let request = SignUpAPI.login(requestBody)
@@ -141,7 +149,7 @@ struct MockSignUpService: SignUpService {
         
     }
     
-    func login(oauthToken: String, oauthProvider: OAuthProvider) async throws -> TokenData {
+    func login(oauthToken: String, authorizationCode: String?, oauthProvider: OAuthProvider) async throws -> TokenData {
         return TokenData(accessToken: "", refreshToken: "")
     }
 }

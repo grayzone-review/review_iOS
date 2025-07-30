@@ -14,6 +14,8 @@ struct HomeReviewFeature {
     struct State: Equatable {
         @Presents var comments: CommentsWindowFeature.State?
         let category: HomeReviewCategory
+        let currentLocation: Location 
+        
         var homeReviews = [HomeReview]()
         var companies = [Int: SearchedCompany]()
         var reviews = [Int: Review]()
@@ -84,7 +86,8 @@ struct HomeReviewFeature {
                     [
                         category = state.category,
                         hasNext = state.hasNext,
-                        currentPage = state.currentPage
+                        currentPage = state.currentPage,
+                        location = state.currentLocation
                     ] send in
                     guard hasNext else {
                         await send(.setIsLoading(false))
@@ -94,20 +97,20 @@ struct HomeReviewFeature {
                     let data = switch category {
                     case .popular:
                         try await homeService.fetchPopularReviews(
-                            latitude: 37.5665,
-                            longitude: 126.9780,
+                            latitude: location.lat,
+                            longitude: location.lng,
                             page: currentPage
                         )
                     case .mainRegion:
                         try await homeService.fetchMainRegionReviews(
-                            latitude: 37.5665,
-                            longitude: 126.9780,
+                            latitude: location.lat,
+                            longitude: location.lng,
                             page: currentPage
                         )
                     case .interestedRegion:
                         try await homeService.fetchInterestedRegionReviews(
-                            latitude: 37.5665,
-                            longitude: 126.9780,
+                            latitude: location.lat,
+                            longitude: location.lng,
                             page: currentPage
                         )
                     }
@@ -365,7 +368,7 @@ struct HomeReviewView: View {
     NavigationStack {
         HomeReviewView(
             store: Store(
-                initialState: HomeReviewFeature.State(category: .popular)
+                initialState: HomeReviewFeature.State(category: .popular, currentLocation: .default)
             ) {
                 HomeReviewFeature()
             }

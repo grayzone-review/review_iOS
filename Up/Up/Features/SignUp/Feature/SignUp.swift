@@ -176,6 +176,7 @@ struct SignUpFeature {
                     
                     let token = try await signUpService.login(
                         oauthToken: oauthData.token,
+                        authorizationCode: oauthData.authorizationCode,
                         oauthProvider: .init(rawValue: oauthData.provider)
                     )
                     
@@ -341,7 +342,7 @@ struct SignUpView: View {
                     }
                     if !store.isPreferredFull {
                         NavigationLink(
-                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea))
+                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea, selectedList: store.preferredAreaList))
                         ) {
                             AppButton(
                                 style: .fill,

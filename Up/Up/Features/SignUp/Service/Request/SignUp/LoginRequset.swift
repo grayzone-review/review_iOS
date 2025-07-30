@@ -9,15 +9,18 @@
 public struct LoginRequset: Encodable, Sendable {
     /// 소셜 로그인 후 받은 토큰
     public let oauthToken: String
+    public let authorizationCode: String?
 
     /// 소셜 로그인 제공자 (apple, kakao)
     public let oauthProvider: OAuthProvider
 
     public init(
         oauthToken: String,
+        authorizationCode: String? = nil,
         oauthProvider: OAuthProvider
     ) {
         self.oauthToken = oauthToken
+        self.authorizationCode = authorizationCode
         self.oauthProvider = oauthProvider
     }
 }

@@ -12,6 +12,7 @@ import SwiftUI
 struct SelectCompanySheetFeature {
     @ObservableState
     struct State: Equatable {
+        var currentLocation: Location = .default
         var selected: ProposedCompany?
         var searchTerm: String = ""
         var proposedCompanies: [ProposedCompany] = []
@@ -22,6 +23,8 @@ struct SelectCompanySheetFeature {
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case termChanged
+        case requestCurrentLocation
+        case currentLocationFetched(Location)
         case fetchProposedCompanies
         case setProposedCompanies([ProposedCompany])
         case selectCompany(ProposedCompany)
@@ -62,14 +65,26 @@ struct SelectCompanySheetFeature {
                         scheduler: mainQueue
                     )
                 
-            case .fetchProposedCompanies:
-                return .run { [state] send in
+            case .requestCurrentLocation:
+                return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
                     
+                    let current = location.toDomain()
+                    await send(.currentLocationFetched(current))
+                } catch: { error, send in
+                    print("error: \(error)")
+                }
+                
+            case let .currentLocationFetched(location):
+                state.currentLocation = location
+                
+                return .none
+            case .fetchProposedCompanies:
+                return .run { [state] send in
                     let data = try await searchService.fetchProposedCompanies(
                         keyword: state.searchTerm,
-                        latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
-                        longitude: 126.9780
+                        latitude: state.currentLocation.lat,
+                        longitude: state.currentLocation.lng
                     )
                     let companies = data.companies.map { $0.toDomain() }
                     await send(.setProposedCompanies(companies))
@@ -121,6 +136,7 @@ struct SelectCompanySheetView: View {
             searchedCompany
         }
         .onAppear {
+            store.send(.requestCurrentLocation)
             isFocused = true
         }
         .presentationCornerRadius(24)

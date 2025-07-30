@@ -67,6 +67,7 @@ private struct AppAlert: View {
     private var text: some View {
         Text(message)
             .pretendard(.body2Regular, color: .gray90)
+            .multilineTextAlignment(.center)
     }
     
     @ViewBuilder

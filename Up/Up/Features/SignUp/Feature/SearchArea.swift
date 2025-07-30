@@ -20,6 +20,7 @@ struct SearchAreaFeature {
     @ObservableState
     struct State: Equatable {
         let context: SearchAreaContext
+        let selectedList: [District]
         /// 사용자에게 입력받은 검색어
         var searchText: String = ""
         var selectedDistrict: District?
@@ -33,6 +34,11 @@ struct SearchAreaFeature {
         var isFocused: Bool = false
         var shouldShowIndicator: Bool = false
         var shouldShowNeedLoaction: Bool = false
+        
+        init(context: SearchAreaContext, selectedList: [District] = []) {
+            self.context = context
+            self.selectedList = selectedList
+        }
         
         func isSelected(_ district: District) -> Bool {
             selectedDistrict == district
@@ -203,7 +209,8 @@ struct SearchAreaFeature {
                 }
                 
             case let .setDistrictList(result):
-                state.districtList.append(contentsOf: result.legalDistricts)
+                let list = result.legalDistricts.filter { !state.selectedList.contains($0) }
+                state.districtList.append(contentsOf: list)
                 state.hasNext = result.hasNext
                 state.page += 1
                 state.isLoading = false
@@ -267,7 +274,6 @@ struct SearchAreaView: View {
                     Color.clear
                         .frame(height: 1)
                         .onAppear {
-                            print("clear onAppear")
                             store.send(.loadNextDistrict)
                         }
                 }
@@ -277,12 +283,8 @@ struct SearchAreaView: View {
             .onChange(of: scrollId) {
                 guard let id = scrollId else { return }
                 
-                
                 store.send(.caculateNeedLoadNext(id))
             }
-        }
-        .onAppear {
-            store.send(.viewAppear)
         }
         .toolbar(.hidden)
         .navigationBarBackButtonHidden(true)
@@ -381,7 +383,7 @@ struct SearchAreaView: View {
     NavigationStack {
         SearchAreaView(
             store: Store(
-                initialState: SearchAreaFeature.State(context: .myArea),
+                initialState: SearchAreaFeature.State(context: .myArea, selectedList: []),
                 reducer: {
                     SearchAreaFeature()
                 }

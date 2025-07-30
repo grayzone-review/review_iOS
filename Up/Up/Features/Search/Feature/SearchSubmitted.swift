@@ -14,6 +14,8 @@ struct SearchSubmittedFeature {
     struct State: Equatable {
         let searchTerm: String
         let searchTheme: SearchTheme
+        let currentLocation: Location
+
         var searchedCompanies: [SearchedCompany] = []
         var isLoading: Bool = true
         var hasNext: Bool = true
@@ -76,7 +78,8 @@ struct SearchSubmittedFeature {
                         searchTheme = state.searchTheme,
                         searchTerm = state.searchTerm,
                         hasNext = state.hasNext,
-                        currentPage = state.currentPage
+                        currentPage = state.currentPage,
+                        currentLocation = state.currentLocation
                     ]
                     send in
                     guard hasNext else {
@@ -89,8 +92,8 @@ struct SearchSubmittedFeature {
                         try await searchService.fetchSearchedCompanies(
                             theme: searchTheme,
                             keyword: searchTerm,
-                            latitude: 37.5665, // 추후 위치 권한 설정후 위,경도 입력으로 변경. 혹은 keyword만 받도록 수정.
-                            longitude: 126.9780,
+                            latitude: currentLocation.lat,
+                            longitude: currentLocation.lng,
                             page: currentPage
                         )
                     }
@@ -408,7 +411,8 @@ struct SearchSubmittedView: View {
         store: Store(
             initialState: SearchSubmittedFeature.State(
                 searchTerm: "스타",
-                searchTheme: .near
+                searchTheme: .near,
+                currentLocation: .default
             )
         ) {
             SearchSubmittedFeature()

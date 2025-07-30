@@ -21,6 +21,8 @@ struct OAuthLoginFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
+        var shouldShowErrorAlert: Bool = false
+        var errorMessage: String = ""
     }
     
     enum Action: BindableAction {
@@ -90,17 +92,27 @@ struct OAuthLoginFeature {
                 return .none
             case let .login(data):
                 return .run { send in
-                    let response = try await signUpService.login(oauthToken: data.token, oauthProvider: OAuthProvider(rawValue: data.provider))
+                    let response = try await signUpService.login(oauthToken: data.token, authorizationCode: data.authorizationCode, oauthProvider: OAuthProvider(rawValue: data.provider))
                     
                     await SecureTokenManager.shared.setAccessToken(response.accessToken)
                     await SecureTokenManager.shared.setRefreshToken(response.refreshToken)
                     await send(.delegate(.loginFinished))
                 } catch: { error, send in
-                    await send(.goToSignUp(data))
+                    if let error = error as? FailResponse, error.code == 3001 {
+                        await send(.goToSignUp(data))
+                    } else {
+                        await send(.handleError(error))
+                    }
                 }
                 
             case let .handleError(error):
-                print(error)
+                if let fail = error as? FailResponse {
+                    state.errorMessage = fail.message
+                } else {
+                    state.errorMessage = "알수없는 문제가 발생했습니다.\n문제가 반복된다면 고객센터에 문의해주세요."
+                }
+                state.shouldShowErrorAlert = true
+                
                 return .none
             case .destination(.presented(.signUp(.delegate(.signUpSucceded)))):
                 return .send(.delegate(.loginFinished))
@@ -152,6 +164,7 @@ struct OAuthLoginView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 20)
         .background(AppColor.orange40.color)
+        .appAlert($store.shouldShowErrorAlert, isSuccess: false, message: store.errorMessage)
     }
     
     var appleSignUpButton: some View {
