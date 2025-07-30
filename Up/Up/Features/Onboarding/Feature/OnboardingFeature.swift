@@ -26,11 +26,11 @@ struct OnboardingFeature {
             var attributedString = AttributedString(text)
             
             attributedString.foregroundColor = AppColor.gray90.color
-            attributedString.font = Typography.h1Bold.font
+            attributedString.font = AppFont.h1Bold.font
             
             if let firstRow = text.split(separator: "\n").first,
                let range = attributedString.range(of: String(firstRow)) {
-                attributedString[range].font = Typography.h1Regular.font
+                attributedString[range].font = AppFont.h1Regular.font
             }
             
             return attributedString

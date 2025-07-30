@@ -20,7 +20,7 @@ struct CommentView: View {
         var attributedString = AttributedString(prefix + content)
         
         attributedString.foregroundColor = AppColor.gray90.color
-        attributedString.font = Typography.body1Regular.font
+        attributedString.font = AppFont.body1Regular.font
         
         if let range = attributedString.range(of: prefix) {
             attributedString[range].foregroundColor = AppColor.orange40.color

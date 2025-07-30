@@ -47,7 +47,7 @@ struct ReviewMakingFeature {
             var attributedString = AttributedString("\(currentPage)/3")
             
             attributedString.foregroundColor = isLast ? AppColor.orange40.color : AppColor.gray50.color
-            attributedString.font = Typography.captionBold.font
+            attributedString.font = AppFont.captionBold.font
             
             if let range = attributedString.range(of: "\(currentPage)") {
                 attributedString[range].foregroundColor = AppColor.orange40.color

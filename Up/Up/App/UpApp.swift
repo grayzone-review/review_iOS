@@ -77,7 +77,6 @@ struct UpFeature {
                 return .run { send in
                     await send(.initKakaoSDK)
                     await send(.setIsFirstLaunch)
-                    await send(.endBootstrap)
                 }
                 
             case .initKakaoSDK:
@@ -99,7 +98,10 @@ struct UpFeature {
                 
                 // 앱 설치 후 첫 실행이면 키체인을 초기화합니다.
                 if hasLaunchedBefore != true {
-                    return .send(.reset)
+                    return .run { send in
+                        await send(.reset)
+                        await send(.endBootstrap)
+                    }
                 } else {
                     return .send(.tokenReissue)
                 }
@@ -111,6 +113,7 @@ struct UpFeature {
                     await send(.endBootstrap)
                 } catch: { error, send in
                     await send(.reset)
+                    await send(.endBootstrap)
                 }
                 
             case let .setNeedLogin(needLogin):
@@ -123,7 +126,6 @@ struct UpFeature {
                 return .run { send in
                     await SecureTokenManager.shared.clearTokens()
                     userDefaultsService.reset()
-                    await send(.endBootstrap)
                 }
                 
             case .endBootstrap:
@@ -184,7 +186,7 @@ struct UpView: View {
     }
     
     private var launchScreen: some View {
-        Text("Launch Screen")
+        SplashView()
     }
     
     private var onboarding: some View {
@@ -202,8 +204,6 @@ struct UpView: View {
                 SignUpView(store: store)
             case let .searchArea(store):
                 SearchAreaView(store: store)
-            default:
-                EmptyView()
             }
         }
     }
@@ -229,8 +229,6 @@ struct UpView: View {
                 ReportView(store: reportStore)
             case let .editMyInfo(store):
                 EditMyInfoView(store: store)
-            default:
-                EmptyView()
             }
         }
     }
