@@ -122,6 +122,7 @@ struct UpFeature {
                 
             case .reset:
                 state.needLogin = true
+                state.main = MainFeature.State()
                 
                 return .run { send in
                     await SecureTokenManager.shared.clearTokens()
