@@ -13,7 +13,7 @@ struct ReviewRatingFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
-        var company: ProposedCompany
+        var company: ProposedCompany?
         var ratings = [RatingType: Double]()
         
         var totalRating: Double {
@@ -33,6 +33,7 @@ struct ReviewRatingFeature {
     }
     
     enum Action {
+        case setCompany(ProposedCompany?)
         case companyButtonTapped
         case ratingButtonTapped(RatingType, Double)
         case previousButtonTapped
@@ -41,7 +42,7 @@ struct ReviewRatingFeature {
         case delegate(Delegate)
         
         enum Delegate: Equatable {
-            case previousButtonTapped(ProposedCompany)
+            case previousButtonTapped(ProposedCompany?)
             case nextButtonTapped(
                 workLifeBalance: Double?,
                 welfare: Double?,
@@ -60,6 +61,10 @@ struct ReviewRatingFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
+            case let .setCompany(company):
+                state.company = company
+                return .none
+                
             case .companyButtonTapped:
                 state.destination = .company(
                     SelectCompanySheetFeature.State(
@@ -136,7 +141,7 @@ struct ReviewRatingView: View {
         Button {
             store.send(.companyButtonTapped)
         } label: {
-            Text(store.company.name)
+            Text(store.company?.name ?? "")
                 .pretendard(.h3Bold, color: .orange40)
         }
         .sheet(

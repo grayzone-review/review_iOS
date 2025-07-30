@@ -13,7 +13,8 @@ struct ReviewMakingFeature {
     @ObservableState
     struct State: Equatable {
         var review: ReviewMaking.State?
-        var reviewStates: [ReviewMaking.State] = []
+        var reviewStates: [ReviewMaking.State?]
+        var reviewIndex = 0
         var company: ProposedCompany?
         var workLifeBalance: Double?
         var welfare: Double?
@@ -38,11 +39,16 @@ struct ReviewMakingFeature {
                 )
             }
             
-            review = .information(ReviewInformationFeature.State(company: injectedCompany))
+            reviewStates = [
+                .information(ReviewInformationFeature.State(company: injectedCompany)),
+                .rating(ReviewRatingFeature.State(company: injectedCompany)),
+                .point(ReviewPointFeature.State())
+            ]
+            review = reviewStates[0]
         }
         
         var currentPageText: AttributedString {
-            let currentPage = reviewStates.count + 1
+            let currentPage = reviewIndex + 1
             let isLast = currentPage == 3
             var attributedString = AttributedString("\(currentPage)/3")
             
@@ -57,7 +63,7 @@ struct ReviewMakingFeature {
         }
         
         var progressBarScale: Double {
-            Double(reviewStates.count + 1) / 3
+            Double(reviewIndex + 1) / 3
         }
         
         var message: String {
@@ -106,20 +112,18 @@ struct ReviewMakingFeature {
                 jobRole,
                 employmentPeriod
             )))):
-                guard let currentState = state.review,
-                      let company else {
-                    return .none
-                }
-                
-                state.reviewStates.append(currentState)
-                state.review = .rating(ReviewRatingFeature.State(company: company))
+                state.reviewStates[0] = state.review
+                state.reviewIndex += 1
+                state.review = state.reviewStates[1]
                 state.company = company
                 state.jobRole = jobRole
                 state.employmentPeriod = employmentPeriod
-                return .none
+                return .send(.review(.rating(.setCompany(company))))
                 
             case let .review(.rating(.delegate(.previousButtonTapped(company)))):
-                state.review = state.reviewStates.popLast()
+                state.reviewStates[1] = state.review
+                state.reviewIndex -= 1
+                state.review = state.reviewStates[0]
                 return .send(.review(.information(.setCompany(company))))
                 
             case let .review(.rating(.delegate(.nextButtonTapped(
@@ -129,12 +133,9 @@ struct ReviewMakingFeature {
                 companyCulture,
                 management
             )))):
-                guard let currentState = state.review else {
-                    return .none
-                }
-                
-                state.reviewStates.append(currentState)
-                state.review = .point(ReviewPointFeature.State())
+                state.reviewStates[1] = state.review
+                state.reviewIndex += 1
+                state.review = state.reviewStates[2]
                 state.workLifeBalance = workLifeBalance
                 state.welfare = welfare
                 state.salary = salary
@@ -143,7 +144,9 @@ struct ReviewMakingFeature {
                 return .none
                 
             case .review(.point(.delegate(.previousButtonTapped))):
-                state.review = state.reviewStates.popLast()
+                state.reviewStates[2] = state.review
+                state.reviewIndex -= 1
+                state.review = state.reviewStates[1]
                 return .none
                 
             case let .review(.point(.delegate(.doneButtonTapped(
@@ -297,7 +300,7 @@ struct ReviewMakingView: View {
     
     @ViewBuilder
     private var bodyArea: some View {
-        switch store.reviewStates.count {
+        switch store.reviewIndex {
         case 0:
             if let companyInformationStore = store.scope(state: \.review?.information, action: \.review.information) {
                 ReviewInformationView(store: companyInformationStore)
