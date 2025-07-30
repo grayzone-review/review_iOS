@@ -16,7 +16,7 @@ private struct RefreshResponse: Decodable {
 
 actor AuthManager: RequestInterceptor {
     private let tokenManager = SecureTokenManager.shared
-    private let refreshSession: NetworkSession = AlamofireNetworkSession()
+    private let refreshSession: NetworkSession = AlamofireNetworkSession(interceptor: nil)
     
     private var isRefreshing: Bool = false
     private var requestsToRetry: [(RetryResult) -> Void] = []

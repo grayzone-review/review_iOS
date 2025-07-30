@@ -16,8 +16,8 @@ protocol MyPageService {
 }
 
 private enum MyPageServiceKey: DependencyKey {
-    static let liveValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession(interceptor: nil))
-    static let previewValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession(interceptor: nil))
+    static let liveValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession())
+    static let previewValue: any MyPageService = DefaultMyPageService(session: AlamofireNetworkSession())
     static var testValue: any MyPageService = MockMyPageServiceService()
 }
 
@@ -30,7 +30,7 @@ extension DependencyValues {
 
 struct DefaultMyPageService: MyPageService {
     private let session: NetworkSession
-    private let tokenManager = TokenManager.shared
+    private let tokenManager = SecureTokenManager.shared
     
     init(session: NetworkSession) {
         self.session = session

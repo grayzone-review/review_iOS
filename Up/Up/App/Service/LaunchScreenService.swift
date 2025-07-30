@@ -13,8 +13,8 @@ protocol LaunchScreenService {
 }
 
 private enum LaunchScreenServiceKey: DependencyKey {
-    static let liveValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession(interceptor: nil))
-    static let previewValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession(interceptor: nil))
+    static let liveValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession())
+    static let previewValue: any LaunchScreenService = DefaultLaunchScreenService(session: AlamofireNetworkSession())
     static var testValue: any LaunchScreenService = MockLaunchScreenService()
 }
 
@@ -27,7 +27,7 @@ extension DependencyValues {
 
 struct DefaultLaunchScreenService: LaunchScreenService {
     private let session: NetworkSession
-    private let tokenManager = TokenManager.shared
+    private let tokenManager = SecureTokenManager.shared
     
     init(session: NetworkSession) {
         self.session = session
