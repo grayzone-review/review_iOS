@@ -229,6 +229,7 @@ struct EditMyInfoView: View {
                 state: $store.dupCheckFieldState,
                 isFocused: $isFocused,
                 noti: $store.notice,
+                initialText: store.initialUserData?.nickname ?? "",
                 placeholder: "닉네임"
             ) {
                 store.send(.checkNicknameTapped)

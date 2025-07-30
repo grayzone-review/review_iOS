@@ -66,6 +66,7 @@ struct DupCheckTextField: View {
     @Binding var text: String
     @Binding var noti: String
     
+    let initialText: String
     let defaultNoti: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
     let placeholder: String
     let checkDupTapped: () -> Void
@@ -75,12 +76,14 @@ struct DupCheckTextField: View {
         state: Binding<FieldState>,
         isFocused: FocusState<Bool>.Binding,
         noti: Binding<String>,
+        initialText: String = "",
         placeholder: String,
         checkDupTapped: @escaping () -> Void
     ) {
         self._text = text
         self._state = state
         self._noti = noti
+        self.initialText = initialText
         self.isFocused = isFocused
         self.placeholder = placeholder
         self.checkDupTapped = checkDupTapped
@@ -118,8 +121,8 @@ struct DupCheckTextField: View {
                 return
             }
             
-            // 입력값이 비었을 때
-            if new.isEmpty {
+            // 입력값이 비었거나 initialText와 일치할 때
+            if new.isEmpty || initialText == new {
                 state = isFocused.wrappedValue ? .focused : .default
                 noti = defaultNoti
                 isCheckable = false
