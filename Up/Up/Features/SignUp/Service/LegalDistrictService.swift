@@ -12,8 +12,8 @@ protocol LegalDistrictService {
 }
 
 private enum LegalDistrictServiceKey: DependencyKey {
-    static let liveValue: any LegalDistrictService = DefaultLegalDistrictService(session: AlamofireNetworkSession(interceptor: nil))
-    static let previewValue: any LegalDistrictService = DefaultLegalDistrictService(session: AlamofireNetworkSession(interceptor: nil))
+    static let liveValue: any LegalDistrictService = DefaultLegalDistrictService(session: AlamofireNetworkSession())
+    static let previewValue: any LegalDistrictService = DefaultLegalDistrictService(session: AlamofireNetworkSession())
     static var testValue: any LegalDistrictService = MockLegalDistrictService()
 }
 

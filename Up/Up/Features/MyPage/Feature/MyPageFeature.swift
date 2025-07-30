@@ -21,11 +21,11 @@ struct MyPageFeature {
             var attributedString = AttributedString("안녕하세요! \(userName)")
             
             attributedString.foregroundColor = AppColor.gray90.color
-            attributedString.font = Typography.h3Regular.font
+            attributedString.font = AppFont.h3Regular.font
             
             if let range = attributedString.range(of: userName) {
                 attributedString[range].foregroundColor = AppColor.orange40.color
-                attributedString[range].font = Typography.h3Bold.font
+                attributedString[range].font = AppFont.h3Bold.font
             }
             
             return attributedString

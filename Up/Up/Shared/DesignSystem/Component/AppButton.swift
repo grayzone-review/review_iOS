@@ -13,7 +13,7 @@ struct AppButton: View {
     let size: Size
     let mode: SizingMode
     let text: String
-    let typography: Typography
+    let typography: AppFont
     let action: @MainActor () -> Void
     
     /// 버튼을 라벨로 사용할 때 true로 두면, 터치로직을 비활성화합니다.
@@ -26,7 +26,7 @@ struct AppButton: View {
         size: Size = .regular,
         mode: SizingMode = .fill,
         text: String,
-        typography: Typography = .body1Bold,
+        typography: AppFont = .body1Bold,
         isEnabled: Bool = true,
         isLabel: Bool = false,
         action: @escaping () -> Void = { }

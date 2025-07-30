@@ -7,7 +7,22 @@
 
 import SwiftUI
 
-enum Typography: String {
+enum AppFont: String {
+    
+    enum Typography {
+        case pretendard
+        case zenDots
+        
+        var fileName: String {
+            switch self {
+            case .pretendard:
+                return "Pretendard"
+            case .zenDots:
+                return "ZenDots"
+            }
+        }
+    }
+    
     case h1Bold
     case h1Regular
     case h2
@@ -22,12 +37,13 @@ enum Typography: String {
     case captionRegular
     case captionSemiBold
     case logo
+    case splash
     
     var weight: String {
         switch self {
         case .h1Bold, .h2, .h3Bold, .body1Bold, .body2Bold, .captionBold:
             return "Bold"
-        case .h1Regular, .h3Regular, .body1Regular, .body2Regular, .captionRegular, .logo:
+        case .h1Regular, .h3Regular, .body1Regular, .body2Regular, .captionRegular, .logo, .splash:
             return "Regular"
         case .body1SemiBold, .captionSemiBold:
             return "SemiBold"
@@ -36,6 +52,8 @@ enum Typography: String {
     
     var size: CGFloat {
         switch self {
+        case .splash:
+            return 36
         case .h1Bold, .h1Regular, .logo:
             return 22
         case .h2:
@@ -51,23 +69,26 @@ enum Typography: String {
         }
     }
     
-    private var uiFont: UIFont {
-        if self == .logo {
-            return .init(name: "ZenDots-Regular", size: size) ?? .systemFont(ofSize: size)
+    private var typography: Typography {
+        switch self {
+        case .logo, .splash:
+            return .zenDots
+        default:
+            return .pretendard
         }
-        return .init(name: "Pretendard-\(weight)", size: size) ?? .systemFont(ofSize: size)
+    }
+    
+    private var uiFont: UIFont {
+        return .init(name: "\(typography.fileName)-\(weight)", size: size) ?? .systemFont(ofSize: size)
     }
     
     var font: Font {
-        if self == .logo {
-            return .custom("ZenDots-Regular", fixedSize: size)
-        }
-        return .custom("Pretendard-\(weight)", fixedSize: size)
+        return .custom("\(typography.fileName)-\(weight)", fixedSize: size)
     }
     
     var lineSpacing: CGFloat {
         switch self {
-        case .h1Bold, .h2, .h3Bold, .h3Regular, .body1Bold, .body2Bold, .captionBold, .captionSemiBold, .logo:
+        case .h1Bold, .h2, .h3Bold, .h3Regular, .body1Bold, .body2Bold, .captionBold, .captionSemiBold, .logo, .splash:
             return (uiFont.pointSize * 0.3) / 2
         case .h1Regular, .body1Regular, .body1SemiBold, .body2Regular, .captionRegular:
             return (uiFont.pointSize * 0.5) / 2
@@ -76,19 +97,19 @@ enum Typography: String {
 }
 
 extension View {
-    func pretendard(_ typography: Typography, color: AppColor = .black) -> some View {
+    func pretendard(_ font: AppFont, color: AppColor = .black) -> some View {
         self
-            .font(typography.font)
+            .font(font.font)
             .foregroundStyle(color.color)
-            .padding(.vertical, typography.lineSpacing / 2)
-            .lineSpacing(typography.lineSpacing)
+            .padding(.vertical, font.lineSpacing / 2)
+            .lineSpacing(font.lineSpacing)
     }
     
-    func pretendard(_ typography: Typography, sysyemColor: Color) -> some View {
+    func pretendard(_ font: AppFont, sysyemColor: Color) -> some View {
         self
-            .font(typography.font)
+            .font(font.font)
             .foregroundStyle(sysyemColor)
-            .padding(.vertical, typography.lineSpacing / 2)
-            .lineSpacing(typography.lineSpacing)
+            .padding(.vertical, font.lineSpacing / 2)
+            .lineSpacing(font.lineSpacing)
     }
 }

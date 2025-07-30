@@ -38,7 +38,7 @@ struct TextInputSheetFeature {
             var attributedString = AttributedString("\(text.count)/\(minimum)자 - \(maximum)자")
             
             attributedString.foregroundColor = AppColor.gray50.color
-            attributedString.font = Typography.captionRegular.font
+            attributedString.font = AppFont.captionRegular.font
             
             switch text.count {
             case ..<minimum:
