@@ -151,6 +151,9 @@ struct CompanyReviewView: View {
             .onAppear {
                 store.send(.viewAppear)
             }
+            .sheet(item: $store.scope(state: \.comments, action: \.comments)) { commentsWindowStore in
+                CommentsWindowView(store: commentsWindowStore)
+            }
     }
     
     @ViewBuilder

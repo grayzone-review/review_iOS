@@ -82,12 +82,13 @@ struct MyPageFeature {
                 }
                 
             case .removeUserInformation:
-                // 탈퇴 및 로그아웃을 위한 계정 정리 작업 실행
-                // 토큰 삭제, 로그인 화면으로 이동 등
                 state.$user.withLock { // 앱의 고유한 유저 정보 삭제
                     $0 = nil
                 }
-                return .none
+                
+                return .run { send in
+                    await UpApp.store.send(.reset)
+                }
                 
             case .delegate:
                 return .none
