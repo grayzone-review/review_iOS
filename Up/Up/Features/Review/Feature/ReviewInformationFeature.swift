@@ -28,7 +28,7 @@ struct ReviewInformationFeature {
     
     enum Action {
         case inputCompanyFieldTapped
-        case setCompany(ProposedCompany)
+        case setCompany(ProposedCompany?)
         case inputJobRoleFieldTapped
         case selectEmploymentPeriodFieldTapped
         case nextButtonTapped

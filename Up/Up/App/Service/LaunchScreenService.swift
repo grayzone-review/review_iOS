@@ -9,7 +9,7 @@ import Foundation
 import Dependencies
 
 protocol LaunchScreenService {
-    func tokenReissue() async throws
+    func tokenReissue() async throws -> TokenData
 }
 
 private enum LaunchScreenServiceKey: DependencyKey {
@@ -33,21 +33,26 @@ struct DefaultLaunchScreenService: LaunchScreenService {
         self.session = session
     }
     
-    func tokenReissue() async throws {
+    func tokenReissue() async throws -> TokenData {
         guard let refreshToken = await tokenManager.getRefreshToken() else {
             throw NSError(domain: "There is no RefreshToken", code: -1)
         }
         
         let body = RefreshTokenRequest(refreshToken: refreshToken)
-        let request = MyPageAPI.signOut(requestBody: body)
-        let error = try await session.execute(request)
+        let request = LaunchScreenAPI.tokenReissue(requestBody: body)
+        let response = try await session.request(request, as: LoginResponse.self)
         
-        if let error {
-            throw error
+        switch response {
+        case .success(let success):
+            return TokenData(from: success.data)
+        case .failure(let failure):
+            throw failure
         }
     }
 }
 
 struct MockLaunchScreenService: LaunchScreenService {
-    func tokenReissue() async throws {}
+    func tokenReissue() async throws -> TokenData {
+        TokenData(accessToken: "accessToken", refreshToken: "refreshToken")
+    }
 }

@@ -110,7 +110,9 @@ struct UpFeature {
                 
             case .tokenReissue:
                 return .run { send in
-                    try await launchScreenService.tokenReissue()
+                    let token = try await launchScreenService.tokenReissue()
+                    await SecureTokenManager.shared.setAccessToken(token.accessToken)
+                    await SecureTokenManager.shared.setRefreshToken(token.refreshToken)
                     await send(.setNeedLogin(false))
                     await send(.endBootstrap)
                 } catch: { error, send in
