@@ -177,10 +177,11 @@ struct HomeReviewFeature {
                 }
                 
             case let .likeButtonTapped(review):
-                state.reviews[review.id, default: review].isLiked.toggle()
-                let isLiked = state.reviews[review.id, default: review].isLiked
-                state.reviews[review.id, default: review].likeCount += isLiked ? 1 : -1
-                return .send(.like(id: review.id, state.reviews[review.id, default: review].isLiked))
+                var newReview = state.reviews[review.id, default: review]
+                newReview.isLiked.toggle()
+                newReview.likeCount += newReview.isLiked ? 1 : -1
+                state.reviews[review.id] = newReview
+                return .send(.like(id: review.id, newReview.isLiked))
                     .debounce(
                         id: CancelID.like(id: review.id),
                         for: 1,
@@ -228,7 +229,7 @@ struct HomeReviewView: View {
                 ForEach(store.homeReviews) { homeReview in
                     VStack(spacing: 0) {
                         companyCard(homeReview.company)
-                        reviewCard(homeReview.review)
+                        reviewCard(store.reviews[homeReview.review.id, default: homeReview.review])
                         separator
                     }
                     .onAppear {

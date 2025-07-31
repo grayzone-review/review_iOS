@@ -21,6 +21,7 @@ struct MainFeature {
         var error: FailResponse?
         var isResignAlertShowing = false
         var isSignOutAlertShowing = false
+        var isFirstAppear = true
     }
     
     enum Action: BindableAction {
@@ -69,6 +70,10 @@ struct MainFeature {
                 return .none
                 
             case .viewAppear:
+                guard state.isFirstAppear else {
+                    return .none
+                }
+                state.isFirstAppear = false
                 return .send(.fetchUser)
                 
             case .fetchUser:
