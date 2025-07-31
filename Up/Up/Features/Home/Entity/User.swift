@@ -18,10 +18,10 @@ struct User: Equatable, Codable {
 }
 
 struct UserDTO: Codable {
-    let nickname: String
-    let mainRegionId: Int
-    let mainRegionAddress: String
-    let interestedRegions: [RegionDTO]
+    let nickname: String?
+    let mainRegionId: Int?
+    let mainRegionAddress: String?
+    let interestedRegions: [RegionDTO]?
     
     enum CodingKeys: String, CodingKey {
         case nickname
@@ -34,12 +34,12 @@ struct UserDTO: Codable {
 extension UserDTO {
     func toDomain() -> User {
         User(
-            nickname: nickname,
+            nickname: nickname ?? "",
             mainRegion: Region(
-                id: mainRegionId,
-                address: mainRegionAddress
+                id: mainRegionId ?? -1,
+                address: mainRegionAddress ?? ""
             ),
-            interestedRegions: interestedRegions.map { $0.toDomain() }
+            interestedRegions: interestedRegions?.map { $0.toDomain() } ?? []
         )
     }
 }

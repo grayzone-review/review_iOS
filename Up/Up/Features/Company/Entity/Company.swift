@@ -34,15 +34,15 @@ struct Coordinate: Equatable {
 }
 
 struct CompanyDTO: Codable {
-    let id: Int
-    let name: String
-    let permittedAt: String
-    let lotNumberAddress: String
-    let roadNameAddress: String
-    let totalRating: Double
-    let isFollowed: Bool
-    let longitude: Double
-    let latitude: Double
+    let id: Int?
+    let name: String?
+    let permittedAt: String?
+    let lotNumberAddress: String?
+    let roadNameAddress: String?
+    let totalRating: Double?
+    let isFollowed: Bool?
+    let longitude: Double?
+    let latitude: Double?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -59,21 +59,21 @@ struct CompanyDTO: Codable {
 
 extension CompanyDTO {
     func toDomain() -> Company {
-        let permissionDate = DateFormatter.serverFormat.date(from: permittedAt)
+        let permissionDate = DateFormatter.serverFormat.date(from: permittedAt ?? "")
         
         return Company(
-            id: id,
-            name: name,
+            id: id ?? -1,
+            name: name ?? "",
             permissionDate: permissionDate,
             address: Address(
-                lotNumberAddress: lotNumberAddress,
-                roadNameAddress: roadNameAddress
+                lotNumberAddress: lotNumberAddress ?? "",
+                roadNameAddress: roadNameAddress ?? ""
             ),
-            totalRating: totalRating,
-            isFollowed: isFollowed,
+            totalRating: totalRating ?? 0,
+            isFollowed: isFollowed ?? false,
             coordinate: Coordinate(
-                latitude: latitude,
-                longitude: longitude
+                latitude: latitude ?? 37.5665,
+                longitude: longitude ?? 126.9780
             )
         )
     }

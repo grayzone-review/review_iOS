@@ -14,9 +14,9 @@ struct InteractionCounts: Equatable {
 }
 
 struct InteractionCountsDTO: Codable {
-    let myReviewCount: Int
-    let interactedReviewCount: Int
-    let followedCompanyCount: Int
+    let myReviewCount: Int?
+    let interactedReviewCount: Int?
+    let followedCompanyCount: Int?
     
     enum CodingKeys: String, CodingKey {
         case myReviewCount
@@ -28,9 +28,9 @@ struct InteractionCountsDTO: Codable {
 extension InteractionCountsDTO {
     func toDomain() -> InteractionCounts {
         InteractionCounts(
-            myReviewCount: myReviewCount,
-            interactedReviewCount: interactedReviewCount,
-            followedCompanyCount: followedCompanyCount
+            myReviewCount: myReviewCount ?? 0,
+            interactedReviewCount: interactedReviewCount ?? 0,
+            followedCompanyCount: followedCompanyCount ?? 0
         )
     }
 }
