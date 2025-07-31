@@ -17,7 +17,7 @@ struct SearchSubmittedFeature {
         let currentLocation: Location
 
         var searchedCompanies: [SearchedCompany] = []
-        var isLoading: Bool = true
+        var isLoading: Bool = false
         var hasNext: Bool = true
         var totalCount: Int?
         var currentPage: Int = 0
@@ -139,7 +139,12 @@ struct SearchSubmittedFeature {
                 return .none
                 
             case let .themeButtonTapped(searchTheme):
-                return .send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
+                state.searchedCompanies = []
+                state.hasNext = true
+                return .run { send in
+                    await send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
+                    await send(.loadNext)
+                }
                 
             case let .followButtonTapped(company):
                 guard let index = state.searchedCompanies.firstIndex(where: { $0.id == company.id }) else {
@@ -274,7 +279,11 @@ struct SearchSubmittedView: View {
     @ViewBuilder
     private var searchResult: some View {
         if store.searchedCompanies.isEmpty {
-            empty
+            if store.isLoading {
+                loadingIndicator
+            } else {
+                empty
+            }
         } else {
             ScrollView {
                 LazyVStack(spacing: 20) {
@@ -299,6 +308,12 @@ struct SearchSubmittedView: View {
                             store.send(.checkNeedToLoadNext(id: company.id))
                         }
                     }
+                    if store.isLoading {
+                        Rectangle()
+                            .foregroundStyle(.clear)
+                            .frame(height: 75)
+                            .loadingIndicator(store.isLoading, isAccentColor: false, isBlocking: false)
+                    }
                 }
                 .padding([.horizontal, .bottom], 20)
             }
@@ -317,6 +332,12 @@ struct SearchSubmittedView: View {
                 .pretendard(.body1Regular, color: .gray50)
             Spacer()
         }
+    }
+    
+    private var loadingIndicator: some View {
+        Rectangle()
+            .foregroundStyle(.clear)
+            .loadingIndicator(store.isLoading, isBlocking: false)
     }
     
     private func searchedCompany(_ company: SearchedCompany) -> some View {
