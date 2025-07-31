@@ -54,6 +54,7 @@ struct UpFeature {
         case detail(CompanyDetailFeature)
         case report(ReportFeature)
         case editMyInfo(EditMyInfoFeature)
+        case searchArea(SearchAreaFeature)
     }
     
     @Dependency(\.launchScreenService) var launchScreenService
@@ -63,6 +64,7 @@ struct UpFeature {
         Scope(state: \.onboarding, action: \.onboarding) {
             OnboardingFeature()
         }
+        
         Scope(state: \.main, action: \.main) {
             MainFeature()
         }
@@ -149,6 +151,21 @@ struct UpFeature {
             case .loginPath:
                 return .none
                 
+            case let .mainPath(.element(id: _, action: .searchArea(.delegate(.selectedArea(context, area))))):
+                /// delegate를 수신한 시점에는 뷰가 아직 dismiss되지 않았습니다. (선택 후 0.3초 후에 화면을 dismiss해야 하기 때문)
+                /// 따라서, 내 정보 수정 화면은 mainPath 스택의 맨 뒤에서 2번째에 위치해 있습니다. [.., .., EditMyInfo, SearchArea] 와 같은 느낌.
+                /// 결과적으로 EditMyInfo의 인덱스는 mainPath.ids.count - 2 가 됩니다.
+                let editInfoID = state.mainPath.ids.count - 2
+                guard editInfoID >= 0 else { return .none }
+                
+                let editID = state.mainPath.ids[editInfoID]
+                
+                return .send(
+                  .mainPath(.element(
+                    id: editID,
+                    action: .editMyInfo(.selectedArea(context, area))
+                  ))
+                )
             case .mainPath:
                 return .none
                 
@@ -229,6 +246,8 @@ struct UpView: View {
                 ReportView(store: reportStore)
             case let .editMyInfo(store):
                 EditMyInfoView(store: store)
+            case let .searchArea(store):
+                SearchAreaView(store: store)
             }
         }
     }

@@ -11,17 +11,10 @@ import ComposableArchitecture
 
 @Reducer
 struct EditMyInfoFeature {
-    @Reducer
-    enum Path {
-        case searchArea(SearchAreaFeature)
-    }
-    
     @ObservableState
     struct State: Equatable {
         let initialUserData: User?
         @Shared(.user) var user
-        
-        var path = StackState<Path.State>()
         
         /// 사용자에게 입력받은 nickname
         var nickname: String = ""
@@ -57,14 +50,15 @@ struct EditMyInfoFeature {
     }
     
     enum Action: BindableAction {
-        case path(StackActionOf<Path>)
         case binding(BindingAction<State>)
+        case selectedArea(SearchAreaContext, District)
         case viewAppear
         case xButtonTapped
         case checkNicknameTapped
         case updateNotice(isSuccess: Bool, message: String)
         case deletePreferredAreaTapped(District)
         case editTapped
+        case updateUserData(User)
         case handleError(Error)
     }
     
@@ -75,27 +69,29 @@ struct EditMyInfoFeature {
     var body: some ReducerOf<Self> {
         BindingReducer()
         
-        Reduce { state, action in
+        Reduce {
+            state,
+            action in
             switch action {
             case .binding:
                 return .none
-            case let .path(.element(id: _, action: .searchArea(.delegate(.selectedArea(context, area))))):
+                
+            case let .selectedArea(context, district):
                 switch context {
                 case .myArea:
-                    state.myArea = area
+                    state.myArea = district
                 case .preferedArea:
                     guard !state.isPreferredFull,
-                          !state.preferredAreaList.contains(area) else { return .none }
+                          !state.preferredAreaList.contains(district) else { return .none }
                     
-                    state.preferredAreaList.append(area)
+                    state.preferredAreaList.append(district)
                     state.isPreferredFull = state.preferredAreaList.count >= 3
                 }
-                return .none
-            case .path:
-                return .none
-            case .viewAppear:
                 
                 return .none
+            case .viewAppear:
+                return .none
+                
             case .xButtonTapped:
                 return .run { _ in
                     await dismiss()
@@ -121,19 +117,34 @@ struct EditMyInfoFeature {
                 return .none
                 
             case .editTapped:
-                guard let mainRegionId = state.myArea?.id else { return .none }
+                guard let mainRegion = state.myArea else { return .none }
                 let interestedRegionIds = state.preferredAreaList.map { $0.id }
                 let nickname = state.nickname
+                
+                let newUserData = User(
+                    nickname: nickname,
+                    mainRegion: Region(id: mainRegion.id, address: mainRegion.name),
+                    interestedRegions: state.preferredAreaList.map { Region(id: $0.id, address: $0.name) }
+                )
                 
                 return .run { send in
                     try await myPageService.editUser(
                         name: nickname,
-                        mainRegionID: mainRegionId,
+                        mainRegionID: mainRegion.id,
                         interestedRegionIDs: interestedRegionIds
                     )
+                    
+                    await send(.updateUserData(newUserData))
                 } catch: { error, send in
                     return await send(.handleError(error))
                 }
+                
+            case let .updateUserData(user):
+                state.$user.withLock {
+                    $0 = user
+                }
+                
+                return .run { _ in await dismiss() }
             case let .handleError(error):
                 if let fail = error as? FailResponse {
                     state.shouldShowErrorPopup = true
@@ -145,11 +156,8 @@ struct EditMyInfoFeature {
                 return .none
             }
         }
-        .forEach(\.path, action: \.path) { Path.body }
     }
 }
-
-extension EditMyInfoFeature.Path.State: Equatable {}
 
 struct EditMyInfoView: View {
     @FocusState var isFocused: Bool
@@ -157,51 +165,48 @@ struct EditMyInfoView: View {
     @Bindable var store: StoreOf<EditMyInfoFeature>
     
     var body: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            VStack {
-                mainView
-                
-                Spacer()
-                
-                AppButton(
-                    style: .fill,
-                    size: .large,
-                    text: "수정하기",
-                    isEnabled: store.isChanged
-                ) {
-                    store.send(.editTapped)
-                }
-                .padding(.vertical, 20)
-                .padding(.horizontal, 20)
+        VStack {
+            mainView
+            
+            Spacer()
+        }
+        .background {
+            Color.white.onTapGesture {
+                isFocused = false
             }
+        }
+        .overlay(alignment: .bottom) {
+            AppButton(
+                style: .fill,
+                size: .large,
+                text: "수정하기",
+                isEnabled: store.isChanged
+            ) {
+                store.send(.editTapped)
+            }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 20)
             .background {
-                Color.white.onTapGesture {
-                    isFocused = false
+                AppColor.white.color.ignoresSafeArea()
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                IconButton(icon: .arrowLeft) {
+                    store.send(.xButtonTapped)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    IconButton(icon: .arrowLeft) {
-                        store.send(.xButtonTapped)
-                    }
-                }
-                ToolbarItem(placement: .principal) {
-                    Text("내 정보 수정")
-                        .pretendard(.h2, color: .gray90)
-                }
+            ToolbarItem(placement: .principal) {
+                Text("내 정보 수정")
+                    .pretendard(.h2, color: .gray90)
             }
-            .appAlert($store.shouldShowErrorPopup, isSuccess: false, message: store.errorMessage)
-            .onChange(of: store.dupCheckFieldState) { old, new in
-                if old != new, new == .valid {
-                    isFocused = false
-                }
-            }
-        } destination: { store in
-            switch store.case {
-            case let .searchArea(store):
-                SearchAreaView(store: store)
+        }
+        .appAlert($store.shouldShowErrorPopup, isSuccess: false, message: store.errorMessage)
+        .onChange(of: store.dupCheckFieldState) { old, new in
+            if old != new, new == .valid {
+                isFocused = false
             }
         }
         .onAppear {
@@ -229,6 +234,7 @@ struct EditMyInfoView: View {
                 state: $store.dupCheckFieldState,
                 isFocused: $isFocused,
                 noti: $store.notice,
+                initialText: store.initialUserData?.nickname ?? "",
                 placeholder: "닉네임"
             ) {
                 store.send(.checkNicknameTapped)
@@ -243,7 +249,7 @@ struct EditMyInfoView: View {
             Text("우리 동네 설정")
                 .pretendard(.h3Bold, color: .gray90)
             
-            NavigationLink(state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .myArea))) {
+            NavigationLink(state: UpFeature.MainPath.State.searchArea(SearchAreaFeature.State(context: .myArea))) {
                 Text(store.myArea?.name ?? "동 검색하기")
                     .pretendard(.body1Regular, color: store.myArea == nil ? .gray50 : .gray90)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -276,7 +282,7 @@ struct EditMyInfoView: View {
                     }
                     if !store.isPreferredFull {
                         NavigationLink(
-                            state: SignUpFeature.Path.State.searchArea(SearchAreaFeature.State(context: .preferedArea, selectedList: store.preferredAreaList))
+                            state: UpFeature.MainPath.State.searchArea(SearchAreaFeature.State(context: .preferedArea, selectedList: store.preferredAreaList))
                         ) {
                             AppButton(
                                 style: .fill,
