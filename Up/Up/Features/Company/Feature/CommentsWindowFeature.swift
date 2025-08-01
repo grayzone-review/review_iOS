@@ -83,6 +83,7 @@ struct CommentsWindowFeature {
         case enterCommentButtonTapped
         case reset
         case commentAdded(Comment)
+        case replyAdded(Int, Reply)
         case handleError(Error)
     }
     
@@ -173,7 +174,7 @@ struct CommentsWindowFeature {
                             isSecret: targetComment.isSecret ? true : state.isSecret
                         )
                         let reply = data.toDomain()
-                        await send(.addMoreReplies(targetComment.id, [reply]))
+                        await send(.replyAdded(targetComment.id, reply))
                     } else {
                         let data = try await reviewService.createComment(
                             of: state.review.id,
@@ -197,6 +198,10 @@ struct CommentsWindowFeature {
                 
             case let .commentAdded(comment):
                 state.comments.insert(comment, at: 0)
+                return .none
+                
+            case let .replyAdded(commentID, reply):
+                state.replies[commentID, default: []].insert(reply, at: 0)
                 return .none
                 
             case let .handleError(error):
