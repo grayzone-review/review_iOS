@@ -73,9 +73,7 @@ enum HomeAPI: Sendable, URLRequestConvertible {
         var components = URLComponents(string: AppConfig.Network.host + path)!
 
         switch self {
-        case let .popularReviews(latitude, longitude, page, size),
-            let .mainRegionReviews(latitude, longitude, page, size),
-            let .interestedRegionReviews(latitude, longitude, page, size):
+        case let .popularReviews(latitude, longitude, page, size):
             components.queryItems = [
                 URLQueryItem(name: "latitude", value: "\(latitude)"),
                 URLQueryItem(name: "longitude", value: "\(longitude)"),
@@ -86,9 +84,31 @@ enum HomeAPI: Sendable, URLRequestConvertible {
             let request = try URLRequest(url: url, method: method)
             
             return request
+        case let .mainRegionReviews(latitude, longitude, page, size),
+            let .interestedRegionReviews(latitude, longitude, page, size):
+            components.queryItems = [
+                URLQueryItem(name: "latitude", value: "\(latitude)"),
+                URLQueryItem(name: "longitude", value: "\(longitude)"),
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)"),
+                URLQueryItem(name: "sort", value: "createdAt,desc")
+            ]
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+            
+            return request
         case let .myReviews(page, size),
-            let .interactedReviews(page, size),
-            let .followedCompanies(page, size):
+            let .interactedReviews(page, size):
+            components.queryItems = [
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)"),
+                URLQueryItem(name: "sort", value: "createdAt,desc")
+            ]
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+            
+            return request
+        case let .followedCompanies(page, size):
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "size", value: "\(size)")

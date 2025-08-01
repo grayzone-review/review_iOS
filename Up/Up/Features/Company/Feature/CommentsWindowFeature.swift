@@ -223,11 +223,6 @@ struct CommentsWindowView: View {
     @FocusState var isFocused: Bool
     @State private var selectedDetent: PresentationDetent = .medium
     
-    init(store: StoreOf<CommentsWindowFeature>) {
-        self.store = store
-        store.send(.loadComments)
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             handle
@@ -247,6 +242,9 @@ struct CommentsWindowView: View {
         .presentationContentInteraction(.scrolls)
         .presentationDragIndicator(.hidden)
         .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
+        .onAppear {
+            store.send(.loadComments)
+        }
     }
     
     private var handle: some View {

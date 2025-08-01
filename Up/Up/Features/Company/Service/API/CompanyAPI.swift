@@ -58,7 +58,8 @@ enum CompanyAPI: Sendable, URLRequestConvertible {
         case let .companyReviews(_, page, size):
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
-                URLQueryItem(name: "size", value: "\(size)")
+                URLQueryItem(name: "size", value: "\(size)"),
+                URLQueryItem(name: "sort", value: "createdAt,desc")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
