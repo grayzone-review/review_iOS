@@ -386,26 +386,18 @@ struct CommentsWindowView: View {
         }
     }
     
-    @ViewBuilder
     private var enterCommentButton: some View {
-        if store.isValidInput {
-            Button {
-                store.send(.enterCommentButtonTapped)
-            } label: {
-                enterButtonIcon
-            }
-        } else {
-            enterButtonIcon
+        Button {
+            store.send(.enterCommentButtonTapped)
+        } label: {
+            AppIcon.sendFill.image(
+                width: 28,
+                height: 28,
+                appColor: store.isValidInput ? .orange40 : .gray50
+            )
+            .padding(10)
         }
-    }
-    
-    private var enterButtonIcon: some View {
-        AppIcon.sendFill.image(
-            width: 28,
-            height: 28,
-            appColor: store.isValidInput ? .orange40 : .gray50
-        )
-        .padding(10)
+        .disabled(!store.isValidInput)
     }
 }
 
