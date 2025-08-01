@@ -10,14 +10,16 @@ import Lottie
 
 extension View {
     @ViewBuilder
-    func loadingIndicator(_ isLoading: Bool) -> some View {
+    func loadingIndicator(_ isLoading: Bool, isAccentColor: Bool = true, isBlocking: Bool = true) -> some View {
         if isLoading {
             ZStack {
                 self
-                Rectangle()
-                    .foregroundStyle(AppColor.black.color.opacity(0.5))
-                    .ignoresSafeArea()
-                LottieView(animation: .named("Insider-loading"))
+                if isBlocking {
+                    Rectangle()
+                        .foregroundStyle(AppColor.black.color.opacity(0.5))
+                        .ignoresSafeArea()
+                }
+                LottieView(animation: .named(isAccentColor ? "Insider_loading_orange" : "Insider_loading_gray"))
                     .playing(loopMode: .loop)
             }
         } else {
