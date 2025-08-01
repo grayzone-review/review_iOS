@@ -23,8 +23,8 @@ struct Region: Equatable, Codable {
 }
 
 struct RegionDTO: Codable {
-    let id: Int
-    let address: String
+    let id: Int?
+    let address: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -35,8 +35,8 @@ struct RegionDTO: Codable {
 extension RegionDTO {
     func toDomain() -> Region {
         Region(
-            id: id,
-            address: address
+            id: id ?? -1,
+            address: address ?? ""
         )
     }
 }

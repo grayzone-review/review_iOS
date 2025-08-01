@@ -33,11 +33,11 @@ struct SearchedCompany: Equatable, Identifiable {
 }
 
 struct SearchedCompanyDTO: Codable {
-    let id: Int
-    let name: String
-    let address: String
-    let totalRating: Double
-    let isFollowed: Bool
+    let id: Int?
+    let name: String?
+    let address: String?
+    let totalRating: Double?
+    let isFollowed: Bool?
     let distance: Double?
     let reviewTitle: String?
     
@@ -55,11 +55,11 @@ struct SearchedCompanyDTO: Codable {
 extension SearchedCompanyDTO {
     func toDomain() -> SearchedCompany {
         SearchedCompany(
-            id: id,
-            name: name,
-            address: address,
-            totalRating: totalRating,
-            isFollowed: isFollowed,
+            id: id ?? -1,
+            name: name ?? "",
+            address: address ?? "",
+            totalRating: totalRating ?? 0,
+            isFollowed: isFollowed ?? false,
             distance: distance,
             reviewTitle: reviewTitle
         )

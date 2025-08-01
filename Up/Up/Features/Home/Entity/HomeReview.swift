@@ -14,8 +14,8 @@ struct HomeReview: Equatable, Identifiable {
 }
 
 struct HomeReviewDTO: Codable {
-    let company: SearchedCompanyDTO
-    let review: ReviewDTO
+    let company: SearchedCompanyDTO?
+    let review: ReviewDTO?
     
     enum CodingKeys: String, CodingKey {
         case company
@@ -26,8 +26,36 @@ struct HomeReviewDTO: Codable {
 extension HomeReviewDTO {
     func toDomain() -> HomeReview {
         HomeReview(
-            company: company.toDomain(),
-            review: review.toDomain()
+            company: company?.toDomain() ?? SearchedCompany(
+                id: -1,
+                name: "",
+                address: "",
+                totalRating: 0,
+                isFollowed: false,
+                distance: nil,
+                reviewTitle: nil
+            ),
+            review: review?.toDomain() ?? Review(
+                id: -1,
+                rating: Rating(
+                    workLifeBalance: 0,
+                    welfare: 0,
+                    salary: 0,
+                    companyCulture: 0,
+                    management: 0
+                ),
+                reviewer: "",
+                title: "",
+                advantagePoint: "",
+                disadvantagePoint: "",
+                managementFeedback: "",
+                job: "",
+                employmentPeriod: "",
+                creationDate: .now,
+                likeCount: 0,
+                commentCount: 0,
+                isLiked: false
+            )
         )
     }
 }

@@ -18,13 +18,13 @@ struct Comment: Equatable, Identifiable {
 }
 
 struct CommentDTO: Codable {
-    let id: Int
-    let content: String
-    let commenter: String
-    let createdAt: String
-    let replyCount: Int
-    let isSecret: Bool
-    let isVisible: Bool
+    let id: Int?
+    let content: String?
+    let commenter: String?
+    let createdAt: String?
+    let replyCount: Int?
+    let isSecret: Bool?
+    let isVisible: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -39,16 +39,16 @@ struct CommentDTO: Codable {
 
 extension CommentDTO {
     func toDomain() -> Comment {
-        let creationDate = DateFormatter.serverFormat.date(from: createdAt)
+        let creationDate = DateFormatter.serverFormat.date(from: createdAt ?? "")
         
         return Comment(
-            id: id,
-            content: content,
-            commenter: commenter,
+            id: id ?? -1,
+            content: content ?? "",
+            commenter: commenter ?? "",
             creationDate: creationDate,
-            replyCount: replyCount,
-            isSecret: isSecret,
-            isVisible: isVisible
+            replyCount: replyCount ?? 0,
+            isSecret: isSecret ?? true,
+            isVisible: isVisible ?? false
         )
     }
 }

@@ -91,19 +91,19 @@ extension Review {
 }
 
 struct ReviewDTO: Codable {
-    let id: Int
-    let rating: RatingDTO
-    var reviewer: String
-    let title: String
-    let advantagePoint: String
-    let disadvantagePoint: String
-    let managementFeedback: String
-    let job: String
-    let employmentPeriod: String
-    let createdAt: String
-    let likeCount: Int
-    let commentCount: Int
-    let isLiked: Bool
+    let id: Int?
+    let rating: RatingDTO?
+    var reviewer: String?
+    let title: String?
+    let advantagePoint: String?
+    let disadvantagePoint: String?
+    let managementFeedback: String?
+    let job: String?
+    let employmentPeriod: String?
+    let createdAt: String?
+    let likeCount: Int?
+    let commentCount: Int?
+    let isLiked: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -124,22 +124,22 @@ struct ReviewDTO: Codable {
 
 extension ReviewDTO {
     func toDomain() -> Review {
-        let creationDate = DateFormatter.serverFormat.date(from: createdAt) ?? .now
+        let creationDate = DateFormatter.serverFormat.date(from: createdAt ?? "") ?? .now
         
         return Review(
-            id: id,
-            rating: rating.toDomain(),
-            reviewer: reviewer,
-            title: title,
-            advantagePoint: advantagePoint,
-            disadvantagePoint: disadvantagePoint,
-            managementFeedback: managementFeedback,
-            job: job,
-            employmentPeriod: employmentPeriod,
+            id: id ?? -1,
+            rating: rating?.toDomain() ?? Rating.zero,
+            reviewer: reviewer ?? "",
+            title: title ?? "",
+            advantagePoint: advantagePoint ?? "",
+            disadvantagePoint: disadvantagePoint ?? "",
+            managementFeedback: managementFeedback ?? "",
+            job: job ?? "",
+            employmentPeriod: employmentPeriod ?? "",
             creationDate: creationDate,
-            likeCount: likeCount,
-            commentCount: commentCount,
-            isLiked: isLiked
+            likeCount: likeCount ?? 0,
+            commentCount: commentCount ?? 0,
+            isLiked: isLiked ?? false
         )
     }
 }

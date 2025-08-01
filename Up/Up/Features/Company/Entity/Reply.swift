@@ -17,12 +17,12 @@ struct Reply: Equatable, Identifiable {
 }
 
 struct ReplyDTO: Codable {
-    let id: Int
-    let content: String
-    let replier: String
-    let createdAt: String
-    let isSecret: Bool
-    let isVisible: Bool
+    let id: Int?
+    let content: String?
+    let replier: String?
+    let createdAt: String?
+    let isSecret: Bool?
+    let isVisible: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -36,15 +36,15 @@ struct ReplyDTO: Codable {
 
 extension ReplyDTO {
     func toDomain() -> Reply {
-        let creationDate = DateFormatter.serverFormat.date(from: createdAt)
+        let creationDate = DateFormatter.serverFormat.date(from: createdAt ?? "")
         
         return Reply(
-            id: id,
-            content: content,
-            replier: replier,
+            id: id ?? -1,
+            content: content ?? "",
+            replier: replier ?? "",
             creationDate: creationDate,
-            isSecret: isSecret,
-            isVisible: isVisible
+            isSecret: isSecret ?? true,
+            isVisible: isVisible ?? false
         )
     }
 }

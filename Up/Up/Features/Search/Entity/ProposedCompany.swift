@@ -15,10 +15,10 @@ struct ProposedCompany: Equatable, Identifiable {
 }
 
 struct ProposedCompanyDTO: Codable {
-    let id: Int
-    let name: String
-    let address: String
-    let totalRating: Double
+    let id: Int?
+    let name: String?
+    let address: String?
+    let totalRating: Double?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -31,10 +31,10 @@ struct ProposedCompanyDTO: Codable {
 extension ProposedCompanyDTO {
     func toDomain() -> ProposedCompany {
         ProposedCompany(
-            id: id,
-            name: name,
-            address: address,
-            totalRating: totalRating
+            id: id ?? -1,
+            name: name ?? "",
+            address: address ?? "",
+            totalRating: totalRating ?? 0
         )
     }
 }

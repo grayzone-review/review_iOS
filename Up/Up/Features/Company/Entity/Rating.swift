@@ -16,6 +16,14 @@ struct Rating: Equatable {
 }
 
 extension Rating {
+    static let zero = Rating(
+        workLifeBalance: 0,
+        welfare: 0,
+        salary: 0,
+        companyCulture: 0,
+        management: 0
+    )
+    
     var totalRating: Double {
         let ratings = [
             workLifeBalance,
@@ -34,11 +42,11 @@ extension Rating {
 }
 
 struct RatingDTO: Codable {
-    let workLifeBalance: Double
-    let welfare: Double
-    let salary: Double
-    let companyCulture: Double
-    let management: Double
+    let workLifeBalance: Double?
+    let welfare: Double?
+    let salary: Double?
+    let companyCulture: Double?
+    let management: Double?
     
     enum CodingKeys: String, CodingKey {
         case workLifeBalance
@@ -52,11 +60,11 @@ struct RatingDTO: Codable {
 extension RatingDTO {
     func toDomain() -> Rating {
         return Rating(
-            workLifeBalance: workLifeBalance,
-            welfare: welfare,
-            salary: salary,
-            companyCulture: companyCulture,
-            management: management
+            workLifeBalance: workLifeBalance ?? 0,
+            welfare: welfare ?? 0,
+            salary: salary ?? 0,
+            companyCulture: companyCulture ?? 0,
+            management: management ?? 0
         )
     }
 }
