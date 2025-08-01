@@ -88,6 +88,7 @@ struct CommentsWindowFeature {
     }
     
     @Dependency(\.reviewService) var reviewService
+    @Dependency(\.validator) var validator
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -150,7 +151,8 @@ struct CommentsWindowFeature {
                 if newValue.hasPrefix(state.prefix) == false {
                     state.text = oldValue
                 } else {
-                    state.content = String(newValue.dropFirst(state.prefix.count))
+                    state.content = validator(state.content, String(newValue.dropFirst(state.prefix.count)))
+                    state.text = state.prefix + state.content
                 }
                 return .none
                 
@@ -398,6 +400,7 @@ struct CommentsWindowView: View {
             )
             .padding(10)
         }
+        .disabled(!store.isValidInput)
     }
 }
 
@@ -431,6 +434,7 @@ struct CommentCardView: View {
             commentCard
         } else {
             CommentView.secret
+                .padding(20)
         }
     }
     
@@ -475,7 +479,7 @@ struct CommentCardView: View {
     private var replyList: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(replies) { reply in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: reply.isVisible ? .top : .center, spacing: 8) {
                     hyphen
                     replyContent(reply)
                 }
@@ -495,7 +499,6 @@ struct CommentCardView: View {
             )
         } else {
             CommentView.secret
-                .padding(20)
         }
     }
     

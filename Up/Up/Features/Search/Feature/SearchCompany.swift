@@ -19,12 +19,14 @@ struct SearchCompanyFeature {
         var searchTheme: SearchTheme = .keyword
         var isFocused: Bool = false
         var proposedCompanies: [ProposedCompany] = []
+        var savedCompanies: [SavedCompany] = []
         var isAlertShowing = false
         var error: FailResponse?
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
+        case viewAppear
         case requestCurrentLocation
         case currentLocationFetched(Location)
         case backButtonTapped
@@ -36,6 +38,7 @@ struct SearchCompanyFeature {
         case termChanged
         case fetchProposedCompanies
         case setProposedCompanies([ProposedCompany])
+        case loadSavedCompanies
         case setSearchState(SearchState)
         case handleError(Error)
     }
@@ -64,6 +67,9 @@ struct SearchCompanyFeature {
             case .binding:
                 return .none
                 
+            case .viewAppear:
+                return .send(.loadSavedCompanies)
+                
             case .requestCurrentLocation:
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
@@ -82,14 +88,17 @@ struct SearchCompanyFeature {
                 return .run { _ in await dismiss() }
                 
             case .textFieldFocused:
+                state.proposedCompanies = []
                 state.isFocused = true
-                return .send(.setSearchState(.focused))
+                return .run { send in
+                    await send(.fetchProposedCompanies)
+                    await send(.setSearchState(.focused))
+                }
                 
             case .clearButtonTapped:
                 return .send(.textFieldFocused)
                 
             case .cancelButtonTapped:
-                state.searchTerm = ""
                 state.isFocused = false
                 return .send(.setSearchState(.idle))
                 
@@ -170,6 +179,12 @@ struct SearchCompanyFeature {
                 state.proposedCompanies = companies
                 return .send(.setSearchState(.focused))
                 
+            case .loadSavedCompanies:
+                if let savedCompanies = try? userDefaultsService.fetch(key: "savedCompanies", type: [SavedCompany].self) {
+                    state.savedCompanies = savedCompanies
+                }
+                return .none
+                
             case let .setSearchState(searchState):
                 switch searchState {
                 case .idle:
@@ -180,7 +195,8 @@ struct SearchCompanyFeature {
                     state.search = .focused(
                         SearchFocusedFeature.State(
                             searchTerm: state.searchTerm,
-                            proposedCompanies: state.proposedCompanies
+                            proposedCompanies: state.proposedCompanies,
+                            savedCompanies: state.savedCompanies
                         )
                     )
                 case .submitted:
@@ -239,10 +255,14 @@ struct SearchCompanyView: View {
             }
         }
         .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
+        .onAppear {
+            store.send(.viewAppear)
+        }
     }
     
     private var enterSearchTermArea: some View {
         HStack(spacing: 16) {
+            backButton
             UPTextField(
                 text: $store.searchTerm,
                 isFocused: $store.isFocused,
@@ -267,8 +287,17 @@ struct SearchCompanyView: View {
     }
     
     @ViewBuilder
+    private var backButton: some View {
+        if store.searchState == .submitted {
+            IconButton(icon: .arrowLeft) {
+                store.send(.backButtonTapped)
+            }
+        }
+    }
+    
+    @ViewBuilder
     private var cancelButton: some View {
-        if store.searchState != .idle {
+        if store.searchState == .focused {
             Button {
                 store.send(.cancelButtonTapped)
             } label: {

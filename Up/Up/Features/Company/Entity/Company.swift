@@ -24,7 +24,7 @@ struct Address: Equatable {
 
 extension Address {
     var displayText: String {
-        roadNameAddress.isEmpty ? lotNumberAddress : roadNameAddress
+        lotNumberAddress.isEmpty ? roadNameAddress : lotNumberAddress
     }
 }
 

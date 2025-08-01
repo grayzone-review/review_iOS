@@ -185,6 +185,7 @@ struct TextInputSheetView: View {
         .padding(20)
     }
     
+    @ViewBuilder
     private var controlArea: some View {
         HStack {
             Text(store.textCount)
@@ -196,6 +197,7 @@ struct TextInputSheetView: View {
                     .pretendard(.body1Bold, color: store.isSaveButtonEnabled ? .orange40 : .orange20)
                     .frame(width: 44, height: 44)
             }
+            .disabled(!store.isSaveButtonEnabled)
         }
         .padding(20)
     }

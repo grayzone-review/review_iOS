@@ -234,7 +234,7 @@ struct CompanyDetailView: View {
         AppButton(
             icon: isFollowed ? .followingFill : .followLine,
             style: isFollowed ? .fill : .stroke,
-            text: "팔로우"
+            text: isFollowed ? "팔로잉" : "팔로우"
         ) {
             store.send(.followButtonTapped)
         }
