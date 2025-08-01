@@ -98,12 +98,20 @@ enum HomeAPI: Sendable, URLRequestConvertible {
             
             return request
         case let .myReviews(page, size),
-            let .interactedReviews(page, size),
-            let .followedCompanies(page, size):
+            let .interactedReviews(page, size):
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "size", value: "\(size)"),
                 URLQueryItem(name: "sort", value: "createdAt,desc")
+            ]
+            guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
+            let request = try URLRequest(url: url, method: method)
+            
+            return request
+        case let .followedCompanies(page, size):
+            components.queryItems = [
+                URLQueryItem(name: "page", value: "\(page)"),
+                URLQueryItem(name: "size", value: "\(size)")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
