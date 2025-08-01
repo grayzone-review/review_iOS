@@ -88,7 +88,7 @@ struct CommentsWindowFeature {
     }
     
     @Dependency(\.reviewService) var reviewService
-    @Dependency(\.validator) var validator
+    @Dependency(\.commentInputValidator) var validator
     
     var body: some ReducerOf<Self> {
         BindingReducer()

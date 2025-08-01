@@ -301,6 +301,7 @@ struct SearchAreaView: View {
                 store.send(.needLocationGoToSettingTapped)
             }
         )
+        .loadingIndicator(store.shouldShowIndicator)
     }
     
     

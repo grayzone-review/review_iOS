@@ -10,8 +10,6 @@ import SwiftUI
 
 @Reducer
 struct TextInputSheetFeature {
-    typealias Validator = (_ oldValue: String, _ newValue: String) -> String
-    
     @ObservableState
     struct State: Equatable {
         let title: String
@@ -69,7 +67,7 @@ struct TextInputSheetFeature {
     }
     
     @Dependency(\.dismiss) var dismiss
-    @Dependency(\.validator) var validator
+    @Dependency(\.textInputSheetValidator) var validator
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -97,27 +95,6 @@ struct TextInputSheetFeature {
                 return .none
             }
         }
-    }
-}
-
-private enum TextInputSheetValidatorKey: DependencyKey {
-    static var liveValue: TextInputSheetFeature.Validator = { oldValue, newValue in
-        var result = newValue
-        
-        for (asIs, toBe) in [("   ", "  "), ("\n\n", "\n"), ("\n \n", "\n "), ("\n  \n", "\n  ")] {
-            while result.contains(asIs) {
-                result = result.replacingOccurrences(of: asIs, with: toBe)
-            }
-        }
-        
-        return result.filter { $0.unicodeScalars.contains(where: \.properties.isEmojiPresentation) == false }
-    }
-}
-
-extension DependencyValues {
-    var validator: TextInputSheetFeature.Validator {
-        get { self[TextInputSheetValidatorKey.self] }
-        set { self[TextInputSheetValidatorKey.self] = newValue }
     }
 }
 
