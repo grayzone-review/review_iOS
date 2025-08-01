@@ -66,7 +66,7 @@ struct CommentView: View {
     
     private var secretComment: some View {
         HStack(spacing: 2) {
-            Text("비밀댓글입니다.")
+            Text(originComment == nil ? "비밀댓글입니다." : "비밀답글입니다.")
                 .pretendard(.body2Bold, color: .gray50)
             AppIcon.lockFill.image(
                 width: 14,

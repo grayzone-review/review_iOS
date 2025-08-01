@@ -161,6 +161,7 @@ struct ReviewPointView: View {
                     Text(store.reviewPoints[point] ?? point.placeholder)
                         .pretendard(.body1Regular, color: store.reviewPoints[point] == nil ? .gray50 : .gray90)
                         .multilineTextAlignment(.leading)
+                        .lineLimit(3)
                     Spacer()
                 }
                 .padding(.vertical, 12)

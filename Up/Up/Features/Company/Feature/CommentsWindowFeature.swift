@@ -87,6 +87,7 @@ struct CommentsWindowFeature {
     }
     
     @Dependency(\.reviewService) var reviewService
+    @Dependency(\.validator) var validator
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -149,7 +150,8 @@ struct CommentsWindowFeature {
                 if newValue.hasPrefix(state.prefix) == false {
                     state.text = oldValue
                 } else {
-                    state.content = String(newValue.dropFirst(state.prefix.count))
+                    state.content = validator(state.content, String(newValue.dropFirst(state.prefix.count)))
+                    state.text = state.prefix + state.content
                 }
                 return .none
                 
@@ -384,17 +386,26 @@ struct CommentsWindowView: View {
         }
     }
     
+    @ViewBuilder
     private var enterCommentButton: some View {
-        Button {
-            store.send(.enterCommentButtonTapped)
-        } label: {
-            AppIcon.sendFill.image(
-                width: 28,
-                height: 28,
-                appColor: store.isValidInput ? .orange40 : .gray50
-            )
-            .padding(10)
+        if store.isValidInput {
+            Button {
+                store.send(.enterCommentButtonTapped)
+            } label: {
+                enterButtonIcon
+            }
+        } else {
+            enterButtonIcon
         }
+    }
+    
+    private var enterButtonIcon: some View {
+        AppIcon.sendFill.image(
+            width: 28,
+            height: 28,
+            appColor: store.isValidInput ? .orange40 : .gray50
+        )
+        .padding(10)
     }
 }
 
@@ -428,6 +439,7 @@ struct CommentCardView: View {
             commentCard
         } else {
             CommentView.secret
+                .padding(20)
         }
     }
     
@@ -472,7 +484,7 @@ struct CommentCardView: View {
     private var replyList: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(replies) { reply in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: reply.isVisible ? .top : .center, spacing: 8) {
                     hyphen
                     replyContent(reply)
                 }
@@ -492,7 +504,6 @@ struct CommentCardView: View {
             )
         } else {
             CommentView.secret
-                .padding(20)
         }
     }
     

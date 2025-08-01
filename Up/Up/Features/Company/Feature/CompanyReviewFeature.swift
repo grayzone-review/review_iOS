@@ -111,7 +111,7 @@ struct CompanyReviewFeature {
                 }
                 state.reviews[index].likeCount += state.reviews[index].isLiked ? -1 : 1
                 state.reviews[index].isLiked.toggle()
-                return .send(.like(review))
+                return .send(.like(state.reviews[index]))
                     .debounce(
                         id: CancelID.like,
                         for: 1,

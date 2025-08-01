@@ -14,12 +14,10 @@ struct SearchFocusedFeature {
     struct State: Equatable {
         let searchTerm: String
         let proposedCompanies: [ProposedCompany]
-        var savedCompanies: [SavedCompany] = []
+        var savedCompanies: [SavedCompany]
     }
     
     enum Action {
-        case viewAppear
-        case loadSavedCompanies
         case deleteButtonTapped(SavedCompany)
     }
     
@@ -28,15 +26,6 @@ struct SearchFocusedFeature {
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .viewAppear:
-                return .send(.loadSavedCompanies)
-                
-            case .loadSavedCompanies:
-                if let savedCompanies = try? userDefaultsService.fetch(key: "savedCompanies", type: [SavedCompany].self) {
-                    state.savedCompanies = savedCompanies
-                }
-                return .none
-                
             case let .deleteButtonTapped(company):
                 if let index = state.savedCompanies.firstIndex(of: company) {
                     state.savedCompanies.remove(at: index)
@@ -54,14 +43,6 @@ struct SearchFocusedView: View {
     let store: StoreOf<SearchFocusedFeature>
     
     var body: some View {
-        searchFocused
-            .onAppear {
-                store.send(.viewAppear)
-            }
-    }
-    
-    @ViewBuilder
-    private var searchFocused: some View {
         if store.searchTerm.isEmpty {
             recentSearchedCompany
         } else {
@@ -188,7 +169,7 @@ struct SearchFocusedView: View {
                 )
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .top, spacing: 4) {
-                        Text(company.name)
+                        Text(company.name.withZeroWidthSpaces)
                             .pretendard(.body1Bold, color: .gray90)
                         AppIcon.starFill.image(
                             width: 20,

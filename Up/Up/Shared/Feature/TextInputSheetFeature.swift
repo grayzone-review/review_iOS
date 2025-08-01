@@ -185,19 +185,28 @@ struct TextInputSheetView: View {
         .padding(20)
     }
     
+    @ViewBuilder
     private var controlArea: some View {
         HStack {
             Text(store.textCount)
             Spacer()
-            Button {
-                store.send(.saveButtonTapped)
-            } label: {
-                Text("저장")
-                    .pretendard(.body1Bold, color: store.isSaveButtonEnabled ? .orange40 : .orange20)
-                    .frame(width: 44, height: 44)
+            if store.isSaveButtonEnabled {
+                Button {
+                    store.send(.saveButtonTapped)
+                } label: {
+                    saveButtonUI
+                }
+            } else {
+                saveButtonUI
             }
         }
         .padding(20)
+    }
+    
+    private var saveButtonUI: some View {
+        Text("저장")
+            .pretendard(.body1Bold, color: store.isSaveButtonEnabled ? .orange40 : .orange20)
+            .frame(width: 44, height: 44)
     }
 }
 

@@ -323,7 +323,7 @@ struct SearchSubmittedView: View {
         VStack(spacing: 40) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(company.name)
+                    Text(company.name.withZeroWidthSpaces)
                         .multilineTextAlignment(.leading)
                         .pretendard(.body1Bold, color: .black)
                     Text(company.address)
