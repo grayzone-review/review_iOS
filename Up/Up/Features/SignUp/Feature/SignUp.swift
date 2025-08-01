@@ -139,6 +139,7 @@ struct SignUpFeature {
                 return .none
             case let .deletePreferredAreaTapped(district):
                 state.preferredAreaList.removeAll { $0 == district }
+                state.isPreferredFull = state.preferredAreaList.count >= 3
                 
                 return .none
                 

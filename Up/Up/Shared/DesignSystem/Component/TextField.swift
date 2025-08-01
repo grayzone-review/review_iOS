@@ -27,14 +27,6 @@ struct DupCheckTextField: View {
         case invalid
         case valid
         
-        var textColor: AppColor {
-            if self == .invalid {
-                return .red
-            } else {
-                return .gray90
-            }
-        }
-        
         var strokeColor: AppColor {
             switch self {
             case .default, .valid:
@@ -146,7 +138,7 @@ struct DupCheckTextField: View {
         )
         .focused(isFocused)
         .lineLimit(1)
-        .pretendard(.body1Regular, color: state.textColor)
+        .pretendard(.body1Regular, color: .gray90)
     }
     
     var verifyButton: some View {
