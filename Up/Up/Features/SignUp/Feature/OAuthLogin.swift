@@ -21,7 +21,7 @@ struct OAuthLoginFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
-        var isFirst: Bool = false
+        var isFirst: Bool = true
         var shouldShowErrorAlert: Bool = false
         var shouldShowNeedLoaction: Bool = false
         var errorMessage: String = ""
@@ -65,7 +65,6 @@ struct OAuthLoginFeature {
                 
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
-                    
                     
                     await send(.saveLoacation(location.toDomain()))
                 } catch: { error, send in
@@ -222,6 +221,9 @@ struct OAuthLoginView: View {
                 store.send(.needLocationGoToSettingTapped)
             }
         )
+        .onAppear {
+            store.send(.viewInit)
+        }
     }
     
     var appleSignUpButton: some View {

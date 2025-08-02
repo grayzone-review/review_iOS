@@ -13,6 +13,7 @@ struct HomeFeature {
     @ObservableState
     struct State: Equatable {
         @Shared(.user) var user
+        var isFirst: Bool = true
         var currentLocation: Location = .default
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
@@ -36,6 +37,7 @@ struct HomeFeature {
         case fetchInterestedRegionReviews
         case interestedRegionReviewsFetched([HomeReview])
         case delegate(Delegate)
+        case handleLocationError(Error)
         
         enum Delegate {
             case alert(Error)
@@ -68,10 +70,8 @@ struct HomeFeature {
                     let current = location.toDomain()
                     await send(.currentLocationFetched(current))
                 } catch: { error, send in
-                    await send(.fetchDefaultLocation)
-                    await send(.delegate(.alert(error)))
+                    await send(.handleLocationError(error))
                 }
-                
             case let .currentLocationFetched(location):
                 try? userDefaultsService.save(key: .latitude, value: location.lat)
                 try? userDefaultsService.save(key: .longitude, value: location.lng)
@@ -86,6 +86,15 @@ struct HomeFeature {
                 }
                 
                 return .none
+                
+            case let .handleLocationError(error):
+                    if state.isFirst {
+                        state.isFirst = false
+                        return .send(.delegate(.alert(error)))
+                    } else {
+                        return .send(.fetchDefaultLocation)
+                    }
+                
             case .fetchPopularReviews:
                 guard state.popularReviews.isEmpty else {
                     return .none
