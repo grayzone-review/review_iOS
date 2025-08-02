@@ -87,6 +87,7 @@ struct SearchAreaFeature {
     @Dependency(\.signUpService) var signUpService
     @Dependency(\.kakaoAPIService) var kakaoAPIService
     @Dependency(\.legalDistrictService) var legalDistrictService
+    @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
         BindingReducer()

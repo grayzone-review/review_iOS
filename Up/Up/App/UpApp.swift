@@ -138,7 +138,7 @@ struct UpFeature {
                 return .none
                 
             case .onboarding(.delegate(.startButtonTapped)):
-                try? userDefaultsService.save(key: "hasLaunchedBefore", value: true)
+                try? userDefaultsService.save(key: .hasLaunchedBefore, value: true)
                 state.isFirstLaunch = false
                 
                 return .none

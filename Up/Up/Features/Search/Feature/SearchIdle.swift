@@ -49,7 +49,7 @@ struct SearchIdleFeature {
                     state.recentSearchTerms.remove(at: index)
                 }
                 
-                try? userDefaultsService.save(key: "recentSearchTerms", value: state.recentSearchTerms)
+                try? userDefaultsService.save(key: .recentSearchTerms, value: state.recentSearchTerms)
                 
                 return .none
                 

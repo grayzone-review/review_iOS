@@ -98,7 +98,7 @@ struct CompanyDetailFeature {
                 }
                 
                 savedCompanies.insert(savedCompany, at: 0)
-                try? userDefaultsService.save(key: "savedCompanies", value: savedCompanies)
+                try? userDefaultsService.save(key: .savedCompanies, value: savedCompanies)
                 
                 return .none
                 

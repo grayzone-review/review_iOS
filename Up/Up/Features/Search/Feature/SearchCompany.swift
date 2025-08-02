@@ -119,7 +119,7 @@ struct SearchCompanyFeature {
                 }
                 
                 searchTerms.insert(searchTerm, at: 0)
-                try? userDefaultsService.save(key: "recentSearchTerms", value: searchTerms)
+                try? userDefaultsService.save(key: .recentSearchTerms, value: searchTerms)
                 
                 state.searchTheme = .keyword
                 return .send(.setSearchState(.submitted))

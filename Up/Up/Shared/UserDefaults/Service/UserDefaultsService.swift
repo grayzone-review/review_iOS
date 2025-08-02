@@ -9,9 +9,9 @@ import Foundation
 import Dependencies
 
 protocol UserDefaultsService {
-    func fetch<T>(key: String, type: T.Type) throws -> T? where T: Decodable
-    func save<T>(key: String, value: T) throws where T: Encodable
-    func remove(key: String)
+    func fetch<T>(key: UserDefaultsKey, type: T.Type) throws -> T? where T: Decodable
+    func save<T>(key: UserDefaultsKey, value: T) throws where T: Encodable
+    func remove(key: UserDefaultsKey)
     func reset()
 }
 
@@ -53,31 +53,31 @@ struct DefaultUserDefaultsService: UserDefaultsService {
         self.encoder = encoder
     }
     
-    func fetch<T>(key: String, type: T.Type) throws -> T? where T : Decodable {
-        guard let data = userDefaults.data(forKey: key) else {
+    func fetch<T>(key: UserDefaultsKey, type: T.Type) throws -> T? where T : Decodable {
+        guard let data = userDefaults.data(forKey: key.rawValue) else {
             return nil
         }
         
         return try decoder.decode(type, from: data)
     }
     
-    func save<T>(key: String, value: T) throws where T : Encodable {
+    func save<T>(key: UserDefaultsKey, value: T) throws where T : Encodable {
         let data = try encoder.encode(value)
         
-        userDefaults.set(data, forKey: key)
+        userDefaults.set(data, forKey: key.rawValue)
     }
     
-    func remove(key: String) {
-        userDefaults.removeObject(forKey: key)
+    func remove(key: UserDefaultsKey) {
+        userDefaults.removeObject(forKey: key.rawValue)
     }
     
     func reset() {
-        let hasLaunchedBefore = try? fetch(key: "hasLaunchedBefore", type: Bool.self) // 남겨둬야 할 값
+        let hasLaunchedBefore = try? fetch(key: .hasLaunchedBefore, type: Bool.self) // 남겨둬야 할 값
         
         if let appDomain = Bundle.main.bundleIdentifier {
             userDefaults.removePersistentDomain(forName: appDomain) // 일괄 삭제
         }
         
-        try? save(key: "hasLaunchedBefore", value: hasLaunchedBefore) // 남겨둬야 할 값 재저장
+        try? save(key: .hasLaunchedBefore, value: hasLaunchedBefore) // 남겨둬야 할 값 재저장
     }
 }
