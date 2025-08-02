@@ -251,7 +251,7 @@ struct EditMyInfoView: View {
                 .pretendard(.h3Bold, color: .gray90)
             
             NavigationLink(state: UpFeature.MainPath.State.searchArea(SearchAreaFeature.State(context: .myArea))) {
-                Text(store.myArea?.name ?? "동 검색하기")
+                Text(store.myArea?.buttonName ?? "동 검색하기")
                     .pretendard(.body1Regular, color: store.myArea == nil ? .gray50 : .gray90)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 14)
