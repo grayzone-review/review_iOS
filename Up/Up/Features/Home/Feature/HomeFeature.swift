@@ -30,6 +30,7 @@ struct HomeFeature {
         case requestCurrentLocation
         case fetchDefaultLocation
         case currentLocationFetched(Location)
+        case handleLocationError(Error)
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
         case fetchMainRegionReviews
@@ -37,7 +38,6 @@ struct HomeFeature {
         case fetchInterestedRegionReviews
         case interestedRegionReviewsFetched([HomeReview])
         case delegate(Delegate)
-        case handleLocationError(Error)
         
         enum Delegate {
             case alert(Error)

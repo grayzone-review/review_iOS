@@ -21,14 +21,21 @@ struct SearchCompanyFeature {
         var proposedCompanies: [ProposedCompany] = []
         var savedCompanies: [SavedCompany] = []
         var isAlertShowing = false
+        var shouldShowNeedLoaction: Bool = false
         var error: FailResponse?
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
         case viewAppear
+        
         case requestCurrentLocation
+        case fetchDefaultLocation
         case currentLocationFetched(Location)
+        case handleLocationError(Error)
+        case needLocationCancelTapped
+        case needLocationGoToSettingTapped
+        
         case backButtonTapped
         case textFieldFocused
         case clearButtonTapped
@@ -68,8 +75,10 @@ struct SearchCompanyFeature {
                 return .none
                 
             case .viewAppear:
-                return .send(.loadSavedCompanies)
-                
+                return .run { send in
+                    await send(.requestCurrentLocation)
+                    await send(.loadSavedCompanies)
+                }
             case .requestCurrentLocation:
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
@@ -77,13 +86,44 @@ struct SearchCompanyFeature {
                     let current = location.toDomain()
                     await send(.currentLocationFetched(current))
                 } catch: { error, send in
-                    print("error: \(error)")
+                    await send(.handleLocationError(error))
                 }
                 
             case let .currentLocationFetched(location):
+                try? userDefaultsService.save(key: .latitude, value: location.lat)
+                try? userDefaultsService.save(key: .longitude, value: location.lng)
+                
                 state.currentLocation = location
                 
                 return .none
+                
+            case .fetchDefaultLocation:
+                if let lat = try? userDefaultsService.fetch(key: .latitude, type: Double.self),
+                   let lng = try? userDefaultsService.fetch(key: .longitude, type: Double.self) {
+                    state.currentLocation = Location(lat: lat, lng: lng)
+                }
+                
+                return .none
+                
+            case let .handleLocationError(error):
+                if let locationError = error as? LocationError, locationError == .authorizationDenied {
+                    state.shouldShowNeedLoaction = true
+                }
+                return .send(.fetchDefaultLocation)
+            case .needLocationCancelTapped:
+                state.shouldShowNeedLoaction = false
+                
+                return .none
+                
+            case .needLocationGoToSettingTapped:
+                return .run { send in
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    
+                    await UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    
+                    await send(.needLocationCancelTapped)
+                }
+                
             case .backButtonTapped:
                 return .run { _ in await dismiss() }
                 
@@ -255,6 +295,19 @@ struct SearchCompanyView: View {
             }
         }
         .appAlert($store.isAlertShowing, isSuccess: false, message: store.error?.message ?? "")
+        .actionAlert(
+            $store.shouldShowNeedLoaction,
+            image: .mappinFill,
+            title: "위치 권한 필요",
+            message: "기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.",
+            cancel: {
+                store.send(.needLocationCancelTapped)
+            },
+            preferredText: "설정으로 이동",
+            preferred: {
+                store.send(.needLocationGoToSettingTapped)
+            }
+        )
         .onAppear {
             store.send(.viewAppear)
         }
