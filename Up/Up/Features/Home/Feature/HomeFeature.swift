@@ -27,6 +27,7 @@ struct HomeFeature {
         case binding(BindingAction<State>)
         case viewAppear
         case requestCurrentLocation
+        case fetchDefaultLocation
         case currentLocationFetched(Location)
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
@@ -42,6 +43,7 @@ struct HomeFeature {
     }
     
     @Dependency(\.homeService) var homeService
+    @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -53,6 +55,7 @@ struct HomeFeature {
                 
             case .viewAppear:
                 return .run { send in
+                    await send(.requestCurrentLocation)
                     await send(.fetchPopularReviews)
                     await send(.fetchMainRegionReviews)
                     await send(.fetchInterestedRegionReviews)
@@ -65,11 +68,22 @@ struct HomeFeature {
                     let current = location.toDomain()
                     await send(.currentLocationFetched(current))
                 } catch: { error, send in
-                    print("error: \(error)")
+                    await send(.fetchDefaultLocation)
+                    await send(.delegate(.alert(error)))
                 }
                 
             case let .currentLocationFetched(location):
+                try? userDefaultsService.save(key: .latitude, value: location.lat)
+                try? userDefaultsService.save(key: .longitude, value: location.lng)
+                
                 state.currentLocation = location
+                
+                return .none
+            case .fetchDefaultLocation:
+                if let lat = try? userDefaultsService.fetch(key: .latitude, type: Double.self),
+                   let lng = try? userDefaultsService.fetch(key: .longitude, type: Double.self) {
+                    state.currentLocation = Location(lat: lat, lng: lng)
+                }
                 
                 return .none
             case .fetchPopularReviews:
