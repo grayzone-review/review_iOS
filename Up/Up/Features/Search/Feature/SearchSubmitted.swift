@@ -27,6 +27,7 @@ struct SearchSubmittedFeature {
         case binding(BindingAction<State>)
         case viewAppear
         case loadNext
+        case fetchCompanies
         case setIsLoading(Bool)
         case setHasNext(Bool)
         case setTotalCount(Int)
@@ -46,6 +47,7 @@ struct SearchSubmittedFeature {
     
     enum CancelID: Hashable {
         case follow(id: Int)
+        case search
     }
     
     @Dependency(\.mainQueue) var mainQueue
@@ -73,6 +75,9 @@ struct SearchSubmittedFeature {
                 }
                 
                 state.isLoading = true
+                return .send(.fetchCompanies)
+                
+            case .fetchCompanies:
                 return .run {
                     [
                         searchTheme = state.searchTheme,
@@ -87,16 +92,13 @@ struct SearchSubmittedFeature {
                         return
                     }
                     
-                    let data = switch searchTheme {
-                    default:
-                        try await searchService.fetchSearchedCompanies(
-                            theme: searchTheme,
-                            keyword: searchTerm,
-                            latitude: currentLocation.lat,
-                            longitude: currentLocation.lng,
-                            page: currentPage
-                        )
-                    }
+                    let data = try await searchService.fetchSearchedCompanies(
+                        theme: searchTheme,
+                        keyword: searchTerm,
+                        latitude: currentLocation.lat,
+                        longitude: currentLocation.lng,
+                        page: currentPage
+                    )
                     
                     let companies = data.companies.map { $0.toDomain() }
                     await send(.setHasNext(data.hasNext))
@@ -106,6 +108,7 @@ struct SearchSubmittedFeature {
                 } catch: { error, send in
                     await send(.delegate(.alert(error)))
                 }
+                    .cancellable(id: CancelID.search, cancelInFlight:true)
                 
             case let .setIsLoading(isLoading):
                 state.isLoading = isLoading
@@ -139,8 +142,6 @@ struct SearchSubmittedFeature {
                 return .none
                 
             case let .themeButtonTapped(searchTheme):
-                state.searchedCompanies = []
-                state.hasNext = true
                 return .run { send in
                     await send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
                     await send(.loadNext)

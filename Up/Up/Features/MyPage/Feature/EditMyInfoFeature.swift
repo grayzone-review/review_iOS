@@ -41,6 +41,13 @@ struct EditMyInfoFeature {
         var shouldShowErrorPopup: Bool = false
         var errorMessage: String = ""
         
+        var isLoadingIndicatorShowing = false
+        var isSuccessAlertShowing = false
+        
+        var message: String {
+            "내 정보가 성공적으로 수정되었습니다."
+        }
+        
         init(initialUserData: User?) {
             self.initialUserData = initialUserData
             self.nickname = initialUserData?.nickname ?? ""
@@ -59,6 +66,8 @@ struct EditMyInfoFeature {
         case deletePreferredAreaTapped(District)
         case editTapped
         case updateUserData(User)
+        case turnIsLoadingIndicatorShowing(Bool)
+        case alertDoneButtonTapped
         case handleError(Error)
     }
     
@@ -129,14 +138,17 @@ struct EditMyInfoFeature {
                 )
                 
                 return .run { send in
+                    await send(.turnIsLoadingIndicatorShowing(true))
                     try await myPageService.editUser(
                         name: nickname,
                         mainRegionID: mainRegion.id,
                         interestedRegionIDs: interestedRegionIds
                     )
                     
+                    await send(.turnIsLoadingIndicatorShowing(false))
                     await send(.updateUserData(newUserData))
                 } catch: { error, send in
+                    await send(.turnIsLoadingIndicatorShowing(false))
                     return await send(.handleError(error))
                 }
                 
@@ -144,8 +156,17 @@ struct EditMyInfoFeature {
                 state.$user.withLock {
                     $0 = user
                 }
+                state.isSuccessAlertShowing = true
                 
+                return .none
+                
+            case let .turnIsLoadingIndicatorShowing(isShowing):
+                state.isLoadingIndicatorShowing = isShowing
+                return .none
+                
+            case .alertDoneButtonTapped:
                 return .run { _ in await dismiss() }
+                
             case let .handleError(error):
                 if let fail = error as? FailResponse {
                     state.shouldShowErrorPopup = true
@@ -203,6 +224,14 @@ struct EditMyInfoView: View {
                 Text("내 정보 수정")
                     .pretendard(.h2, color: .gray90)
             }
+        }
+        .loadingIndicator(store.isLoadingIndicatorShowing)
+        .appAlert(
+            $store.isSuccessAlertShowing,
+            isSuccess: true,
+            message: store.message
+        ) {
+            store.send(.alertDoneButtonTapped)
         }
         .appAlert($store.shouldShowErrorPopup, isSuccess: false, message: store.errorMessage)
         .onChange(of: store.dupCheckFieldState) { old, new in
