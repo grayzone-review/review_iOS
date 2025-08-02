@@ -33,7 +33,7 @@ struct SearchIdleFeature {
         Reduce { state, action in
             switch action {
             case .viewAppear:
-                if let recentSearchTerms = try? userDefaultsService.fetch(key: "recentSearchTerms", type: [RecentSearchTerm].self) {
+                if let recentSearchTerms = try? userDefaultsService.fetch(key: .recentSearchTerms, type: [RecentSearchTerm].self) {
                     state.recentSearchTerms = recentSearchTerms
                 }
                 return .none

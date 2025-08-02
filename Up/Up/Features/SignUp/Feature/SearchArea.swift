@@ -132,9 +132,17 @@ struct SearchAreaFeature {
                 return .none
             // MARK: - Location
             case .needLocationCancelTapped:
+                let location: Location
+                if let lat = try? userDefaultsService.fetch(key: .latitude, type: Double.self),
+                   let lng = try? userDefaultsService.fetch(key: .longitude, type: Double.self) {
+                    location = Location(lat: lat, lng: lng)
+                } else {
+                    location = .default
+                }
+                
                 state.shouldShowNeedLoaction = false
                 
-                return .none
+                return .send(.getMyAreaDistrict(lat: location.lat, lng: location.lng))
                 
             case .needLocationGoToSettingTapped:
                 return .run { send in
@@ -150,6 +158,9 @@ struct SearchAreaFeature {
                 
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
+                    
+                    try? userDefaultsService.save(key: .latitude, value: location.latitude)
+                    try? userDefaultsService.save(key: .longitude, value: location.longitude)
                     
                     await send(.getMyAreaDistrict(lat: location.latitude, lng: location.longitude))
                 } catch: { error, send in

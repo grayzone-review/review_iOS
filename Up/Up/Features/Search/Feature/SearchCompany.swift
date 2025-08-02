@@ -106,7 +106,7 @@ struct SearchCompanyFeature {
                 let searchTerm = RecentSearchTerm(searchTerm: state.searchTerm)
                 var searchTerms = [RecentSearchTerm]()
                 
-                if let recentSearchTerms = try? userDefaultsService.fetch(key: "recentSearchTerms", type: [RecentSearchTerm].self) {
+                if let recentSearchTerms = try? userDefaultsService.fetch(key: .recentSearchTerms, type: [RecentSearchTerm].self) {
                     searchTerms = recentSearchTerms
                 }
                 
@@ -180,7 +180,7 @@ struct SearchCompanyFeature {
                 return .send(.setSearchState(.focused))
                 
             case .loadSavedCompanies:
-                if let savedCompanies = try? userDefaultsService.fetch(key: "savedCompanies", type: [SavedCompany].self) {
+                if let savedCompanies = try? userDefaultsService.fetch(key: .savedCompanies, type: [SavedCompany].self) {
                     state.savedCompanies = savedCompanies
                 }
                 return .none

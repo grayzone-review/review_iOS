@@ -21,12 +21,18 @@ struct OAuthLoginFeature {
     @ObservableState
     struct State: Equatable {
         @Presents var destination: Destination.State?
+        var isFirst: Bool = false
         var shouldShowErrorAlert: Bool = false
+        var shouldShowNeedLoaction: Bool = false
         var errorMessage: String = ""
     }
     
     enum Action: BindableAction {
         case binding(BindingAction<State>)
+        case viewInit
+        case saveLoacation(Location)
+        case needLocationCancelTapped
+        case needLocationGoToSettingTapped
         case appleButtonTapped
         case kakaoButtonTapped
         case goToSignUp(OAuthResult)
@@ -41,6 +47,7 @@ struct OAuthLoginFeature {
     }
     
     @Dependency(\.signUpService) var signUpService
+    @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -51,6 +58,40 @@ struct OAuthLoginFeature {
             switch action {
             case .binding(_):
                 return .none
+            case .viewInit:
+                guard state.isFirst else { return .none }
+                
+                state.isFirst = false
+                
+                return .run { send in
+                    let location = try await LocationService.shared.requestCurrentLocation()
+                    
+                    
+                    await send(.saveLoacation(location.toDomain()))
+                } catch: { error, send in
+                    await send(.handleError(error))
+                }
+                
+            case let .saveLoacation(location):
+                try? userDefaultsService.save(key: .latitude, value: location.lat)
+                try? userDefaultsService.save(key: .longitude, value: location.lng)
+                
+                return .none
+                
+            case .needLocationCancelTapped:
+                state.shouldShowNeedLoaction = false
+                
+                return .none
+                
+            case .needLocationGoToSettingTapped:
+                return .run { send in
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    
+                    await UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    
+                    await send(.needLocationCancelTapped)
+                }
+                
             case .appleButtonTapped:
                 return .run { send in
                     let result = try await AppleSignInManager.shared.signIn()
@@ -108,10 +149,13 @@ struct OAuthLoginFeature {
             case let .handleError(error):
                 if let fail = error as? FailResponse {
                     state.errorMessage = fail.message
+                    state.shouldShowErrorAlert = true
+                } else if let locationError = error as? LocationError, locationError == .authorizationDenied {
+                    state.shouldShowNeedLoaction = true
                 } else {
                     state.errorMessage = "알수없는 문제가 발생했습니다.\n문제가 반복된다면 고객센터에 문의해주세요."
+                    state.shouldShowErrorAlert = true
                 }
-                state.shouldShowErrorAlert = true
                 
                 return .none
             case .destination(.presented(.signUp(.delegate(.signUpSucceded)))):
@@ -165,6 +209,19 @@ struct OAuthLoginView: View {
         .padding(.vertical, 20)
         .background(AppColor.orange40.color)
         .appAlert($store.shouldShowErrorAlert, isSuccess: false, message: store.errorMessage)
+        .actionAlert(
+            $store.shouldShowNeedLoaction,
+            image: .mappinFill,
+            title: "위치 권한 필요",
+            message: "기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.",
+            cancel: {
+                store.send(.needLocationCancelTapped)
+            },
+            preferredText: "설정으로 이동",
+            preferred: {
+                store.send(.needLocationGoToSettingTapped)
+            }
+        )
     }
     
     var appleSignUpButton: some View {

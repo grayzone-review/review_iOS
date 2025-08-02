@@ -95,7 +95,7 @@ struct UpFeature {
                 return .none
                 
             case .setIsFirstLaunch:
-                let hasLaunchedBefore = try? userDefaultsService.fetch(key: "hasLaunchedBefore", type: Bool.self)
+                let hasLaunchedBefore = try? userDefaultsService.fetch(key: .hasLaunchedBefore, type: Bool.self)
                 state.isFirstLaunch = hasLaunchedBefore != true
                 
                 // 앱 설치 후 첫 실행이면 키체인을 초기화합니다.

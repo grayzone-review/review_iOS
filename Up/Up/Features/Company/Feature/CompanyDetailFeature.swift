@@ -89,7 +89,7 @@ struct CompanyDetailFeature {
                 )
                 var savedCompanies = [SavedCompany]()
                 
-                if let recentSavedCompanies = try? userDefaultsService.fetch(key: "savedCompanies", type: [SavedCompany].self) {
+                if let recentSavedCompanies = try? userDefaultsService.fetch(key: .savedCompanies, type: [SavedCompany].self) {
                     savedCompanies = recentSavedCompanies
                 }
                 
