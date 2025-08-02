@@ -78,7 +78,6 @@ struct HomeFeature {
                 }
                 let location = state.currentLocation
                 return .run { send in
-                    
                     let data = try await homeService.fetchPopularReviews(
                         latitude: location.lat,
                         longitude: location.lng,
@@ -88,7 +87,7 @@ struct HomeFeature {
                     
                     await send(.popularReviewsFetched(reviews))
                 } catch: { error, send in
-                    await send(.delegate(.alert(error)))
+                    await send(.popularReviewsFetched([]))
                 }
                 
             case let .popularReviewsFetched(reviews):
@@ -111,7 +110,7 @@ struct HomeFeature {
                     
                     await send(.mainRegionReviewsFetched(reviews))
                 } catch: { error, send in
-                    await send(.delegate(.alert(error)))
+                    await send(.mainRegionReviewsFetched([]))
                 }
                 
             case let .mainRegionReviewsFetched(reviews):
@@ -134,7 +133,7 @@ struct HomeFeature {
                     
                     await send(.interestedRegionReviewsFetched(reviews))
                 } catch: { error, send in
-                    await send(.delegate(.alert(error)))
+                    await send(.interestedRegionReviewsFetched([]))
                 }
                 
             case let .interestedRegionReviewsFetched(reviews):
