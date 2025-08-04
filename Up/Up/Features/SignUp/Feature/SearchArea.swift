@@ -145,14 +145,13 @@ struct SearchAreaFeature {
                 return .send(.getMyAreaDistrict(lat: location.lat, lng: location.lng))
                 
             case .needLocationGoToSettingTapped:
+                state.shouldShowNeedLoaction = false
+                
                 return .run { send in
                     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
                     
                     await UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                    
-                    await send(.needLocationCancelTapped)
                 }
-                
             case .searchMyAreaTapped:
                 state.shouldShowIndicator = true
                 
