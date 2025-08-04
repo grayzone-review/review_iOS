@@ -1,0 +1,365 @@
+//
+//  EditMyInfoFeature.swift
+//  Up
+//
+//  Created by Wonbi on 7/26/25.
+//
+
+import SwiftUI
+
+import ComposableArchitecture
+
+@Reducer
+struct EditMyInfoFeature {
+    @ObservableState
+    struct State: Equatable {
+        let initialUserData: User?
+        @Shared(.user) var user
+        
+        /// 사용자에게 입력받은 nickname
+        var nickname: String = ""
+        /// 사용자가 닉네임 중복체크를 했는지 확인하기 위한 상태값
+        var dupCheckFieldState: DupCheckTextField.FieldState = .default
+        /// 사용자가 설정한 우리동네
+        var myArea: District?
+        /// 사용자가 설정한 관심동네 리스트
+        var preferredAreaList: [District] = []
+        /// 사용자가 관심동네를 3개 설정했는지 나타내는 값
+        var isPreferredFull: Bool = false
+        /// 중복 검사 결과를 보여주는 값
+        var notice: String = "2~12자 이내로 입력가능하며, 한글, 영문, 숫자 사용이 가능합니다."
+        /// 비동기 로직이 수행중인지 아닌지 나타내는 값
+        var isLoading: Bool = false
+        /// 사용자의 정보가 수정 가능한 상태인지 나타내는 값
+        var isChanged: Bool {
+            (initialUserData?.nickname != nickname && dupCheckFieldState == .valid) ||
+            initialUserData?.mainRegion.id != myArea?.id ||
+            Set(initialUserData?.interestedRegions.map(\.id) ?? []) != Set(preferredAreaList.map(\.id))
+        }
+        
+        /// 에러 핸들링
+        var shouldShowErrorPopup: Bool = false
+        var errorMessage: String = ""
+        
+        var isLoadingIndicatorShowing = false
+        var isSuccessAlertShowing = false
+        
+        var message: String {
+            "내 정보가 성공적으로 수정되었습니다."
+        }
+        
+        init(initialUserData: User?) {
+            self.initialUserData = initialUserData
+            self.nickname = initialUserData?.nickname ?? ""
+            self.myArea = initialUserData?.mainRegion.toDomain() ?? .init()
+            self.preferredAreaList = initialUserData?.interestedRegions.map { $0.toDomain() } ?? []
+        }
+    }
+    
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+        case selectedArea(SearchAreaContext, District)
+        case viewAppear
+        case xButtonTapped
+        case checkNicknameTapped
+        case updateNotice(isSuccess: Bool, message: String)
+        case deletePreferredAreaTapped(District)
+        case editTapped
+        case updateUserData(User)
+        case turnIsLoadingIndicatorShowing(Bool)
+        case alertDoneButtonTapped
+        case handleError(Error)
+    }
+    
+    @Dependency(\.dismiss) var dismiss
+    @Dependency(\.myPageService) var myPageService
+    @Dependency(\.signUpService) var signUpService
+    
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+        
+        Reduce {
+            state,
+            action in
+            switch action {
+            case .binding:
+                return .none
+                
+            case let .selectedArea(context, district):
+                switch context {
+                case .myArea:
+                    state.myArea = district
+                case .preferedArea:
+                    guard !state.isPreferredFull,
+                          !state.preferredAreaList.contains(district) else { return .none }
+                    
+                    state.preferredAreaList.append(district)
+                    state.isPreferredFull = state.preferredAreaList.count >= 3
+                }
+                
+                return .none
+            case .viewAppear:
+                return .none
+                
+            case .xButtonTapped:
+                return .run { _ in
+                    await dismiss()
+                }
+            case .checkNicknameTapped:
+                let text = state.nickname
+                
+                return .run { send in
+                    let result = try await signUpService.verifyNickname(text)
+                    
+                    await send(.updateNotice(isSuccess: result.isSuccess, message: result.message))
+                } catch: { error, send in
+                    await send(.handleError(error))
+                }
+            case let .updateNotice(isSuccess, message):
+                state.dupCheckFieldState = isSuccess ? .valid : .invalid
+                state.notice = message
+                
+                return .none
+            case let .deletePreferredAreaTapped(district):
+                state.preferredAreaList.removeAll { $0 == district }
+                state.isPreferredFull = state.preferredAreaList.count >= 3
+                
+                return .none
+                
+            case .editTapped:
+                guard let mainRegion = state.myArea else { return .none }
+                let interestedRegionIds = state.preferredAreaList.map { $0.id }
+                let nickname = state.nickname
+                
+                let newUserData = User(
+                    nickname: nickname,
+                    mainRegion: Region(id: mainRegion.id, address: mainRegion.name),
+                    interestedRegions: state.preferredAreaList.map { Region(id: $0.id, address: $0.name) }
+                )
+                
+                return .run { send in
+                    await send(.turnIsLoadingIndicatorShowing(true))
+                    try await myPageService.editUser(
+                        name: nickname,
+                        mainRegionID: mainRegion.id,
+                        interestedRegionIDs: interestedRegionIds
+                    )
+                    
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    await send(.updateUserData(newUserData))
+                } catch: { error, send in
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    return await send(.handleError(error))
+                }
+                
+            case let .updateUserData(user):
+                state.$user.withLock {
+                    $0 = user
+                }
+                state.isSuccessAlertShowing = true
+                
+                return .none
+                
+            case let .turnIsLoadingIndicatorShowing(isShowing):
+                state.isLoadingIndicatorShowing = isShowing
+                return .none
+                
+            case .alertDoneButtonTapped:
+                return .run { _ in await dismiss() }
+                
+            case let .handleError(error):
+                if let fail = error as? FailResponse {
+                    state.shouldShowErrorPopup = true
+                    state.errorMessage = fail.message
+                } else {
+                    state.shouldShowErrorPopup = true
+                    state.errorMessage = "알수없는 문제가 발생했습니다.\n문제가 반복된다면 고객센터에 문의해주세요."
+                }
+                return .none
+            }
+        }
+    }
+}
+
+struct EditMyInfoView: View {
+    @FocusState var isFocused: Bool
+    
+    @Bindable var store: StoreOf<EditMyInfoFeature>
+    
+    var body: some View {
+        VStack {
+            mainView
+            
+            Spacer()
+        }
+        .background {
+            Color.white.onTapGesture {
+                isFocused = false
+            }
+        }
+        .overlay(alignment: .bottom) {
+            AppButton(
+                style: .fill,
+                size: .large,
+                text: "수정하기",
+                isEnabled: store.isChanged
+            ) {
+                store.send(.editTapped)
+            }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 20)
+            .background {
+                AppColor.white.color.ignoresSafeArea()
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                IconButton(icon: .arrowLeft) {
+                    store.send(.xButtonTapped)
+                }
+            }
+            ToolbarItem(placement: .principal) {
+                Text("내 정보 수정")
+                    .pretendard(.h2, color: .gray90)
+            }
+        }
+        .loadingIndicator(store.isLoadingIndicatorShowing)
+        .appAlert(
+            $store.isSuccessAlertShowing,
+            isSuccess: true,
+            message: store.message
+        ) {
+            store.send(.alertDoneButtonTapped)
+        }
+        .appAlert($store.shouldShowErrorPopup, isSuccess: false, message: store.errorMessage)
+        .onChange(of: store.dupCheckFieldState) { old, new in
+            if old != new, new == .valid {
+                isFocused = false
+            }
+        }
+        .onAppear {
+            store.send(.viewAppear)
+        }
+    }
+    
+    var mainView: some View {
+        VStack(spacing: 0) {
+            inputNicknameView
+            
+            setMyAreaView
+            
+            setPreferredAreaView
+        }
+    }
+    
+    var inputNicknameView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("닉네임")
+                .pretendard(.h3Bold, color: .gray90)
+            
+            DupCheckTextField(
+                text: $store.nickname,
+                state: $store.dupCheckFieldState,
+                isFocused: $isFocused,
+                noti: $store.notice,
+                initialText: store.initialUserData?.nickname ?? "",
+                placeholder: "닉네임"
+            ) {
+                store.send(.checkNicknameTapped)
+            }
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 20)
+    }
+    
+    var setMyAreaView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("우리 동네 설정")
+                .pretendard(.h3Bold, color: .gray90)
+            
+            NavigationLink(state: UpFeature.MainPath.State.searchArea(SearchAreaFeature.State(context: .myArea))) {
+                Text(store.myArea?.buttonName ?? "동 검색하기")
+                    .pretendard(.body1Regular, color: store.myArea == nil ? .gray50 : .gray90)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 16)
+                    .background {
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(AppColor.gray20.color, lineWidth: 1)
+                    }
+                    .contentShape(Rectangle())
+            }
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 20)
+    }
+    
+    var setPreferredAreaView: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("관심 동네 설정 (선택)")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .pretendard(.h3Bold, color: .gray90)
+                .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal) {
+                HStack(spacing: 10) {
+                    Spacer(minLength: 10)
+                    
+                    ForEach(Array(store.preferredAreaList)) { district in
+                        makePreferredAreaButton(district)
+                    }
+                    if !store.isPreferredFull {
+                        NavigationLink(
+                            state: UpFeature.MainPath.State.searchArea(SearchAreaFeature.State(context: .preferedArea, selectedList: store.preferredAreaList))
+                        ) {
+                            AppButton(
+                                style: .fill,
+                                size: .regular,
+                                mode: .intrinsic,
+                                text: "추가하기",
+                                isLabel: true
+                            )
+                            .padding(.top, 8)
+                        }
+                    }
+                    Spacer(minLength: 10)
+                }
+            }
+            .scrollIndicators(.never)
+        }
+        .padding(.vertical, 20)
+    }
+    
+    func makePreferredAreaButton(_ district: District) -> some View {
+        AppButton(
+            style: .strokeFill,
+            size: .regular,
+            mode: .intrinsic,
+            text: district.buttonName,
+            isEnabled: false
+        )
+        .overlay(alignment: .topTrailing) {
+            AppIcon.closeCircleLineRed24.image(width: 24, height: 24)
+                .offset(x: 6, y: -5)
+                .onTapGesture {
+                    store.send(.deletePreferredAreaTapped(district))
+                }
+        }
+        .padding(.top, 8)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SignUpView(
+            store: Store(
+                initialState: SignUpFeature.State(oAuthData: OAuthResult(token: "", provider: "")),
+                reducer: {
+                    SignUpFeature()
+                }
+            )
+        )
+    }
+}

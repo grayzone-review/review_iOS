@@ -1,0 +1,443 @@
+//
+//  SearchSubmitted.swift
+//  Up
+//
+//  Created by Jun Young Lee on 6/8/25.
+//
+
+import ComposableArchitecture
+import SwiftUI
+
+@Reducer
+struct SearchSubmittedFeature {
+    @ObservableState
+    struct State: Equatable {
+        let searchTerm: String
+        let searchTheme: SearchTheme
+        let currentLocation: Location
+
+        var searchedCompanies: [SearchedCompany] = []
+        var isLoading: Bool = false
+        var hasNext: Bool = true
+        var totalCount: Int?
+        var currentPage: Int = 0
+    }
+    
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+        case viewAppear
+        case loadNext
+        case fetchCompanies
+        case setIsLoading(Bool)
+        case setHasNext(Bool)
+        case setTotalCount(Int)
+        case setCurrentPage
+        case setSearchedCompanies([SearchedCompany])
+        case delegate(Delegate)
+        case themeButtonTapped(SearchTheme)
+        case followButtonTapped(SearchedCompany)
+        case follow(id: Int, isFollowed: Bool)
+        case checkNeedToLoadNext(id: Int)
+        
+        enum Delegate {
+            case search(String, SearchTheme)
+            case alert(Error)
+        }
+    }
+    
+    enum CancelID: Hashable {
+        case follow(id: Int)
+        case search
+    }
+    
+    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.companyService) var companyService
+    @Dependency(\.searchService) var searchService
+    
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+        
+        Reduce { state, action in
+            switch action {
+            case .binding:
+                return .none
+                
+            case .viewAppear:
+                guard state.searchedCompanies.isEmpty else {
+                    return .none
+                }
+                
+                return .send(.loadNext)
+                
+            case .loadNext:
+                guard state.isLoading == false else {
+                    return .none
+                }
+                
+                state.isLoading = true
+                return .send(.fetchCompanies)
+                
+            case .fetchCompanies:
+                return .run {
+                    [
+                        searchTheme = state.searchTheme,
+                        searchTerm = state.searchTerm,
+                        hasNext = state.hasNext,
+                        currentPage = state.currentPage,
+                        currentLocation = state.currentLocation
+                    ]
+                    send in
+                    guard hasNext else {
+                        await send(.setIsLoading(false))
+                        return
+                    }
+                    
+                    let data = try await searchService.fetchSearchedCompanies(
+                        theme: searchTheme,
+                        keyword: searchTerm,
+                        latitude: currentLocation.lat,
+                        longitude: currentLocation.lng,
+                        page: currentPage
+                    )
+                    
+                    let companies = data.companies.map { $0.toDomain() }
+                    await send(.setHasNext(data.hasNext))
+                    await send(.setTotalCount(data.totalCount))
+                    await send(.setSearchedCompanies(companies))
+                    await send(.setIsLoading(false))
+                } catch: { error, send in
+                    await send(.delegate(.alert(error)))
+                }
+                    .cancellable(id: CancelID.search, cancelInFlight:true)
+                
+            case let .setIsLoading(isLoading):
+                state.isLoading = isLoading
+                
+                return .none
+                
+            case let .setHasNext(hasNext):
+                state.hasNext = hasNext
+                
+                return .send(.setCurrentPage)
+                
+            case let .setTotalCount(count):
+                guard state.totalCount == nil else {
+                    return .none
+                }
+                state.totalCount = count
+                return .none
+                
+            case .setCurrentPage:
+                if state.hasNext {
+                    state.currentPage += 1
+                }
+                
+                return .none
+                
+            case let .setSearchedCompanies(companies):
+                state.searchedCompanies.append(contentsOf: companies)
+                return .none
+                
+            case .delegate:
+                return .none
+                
+            case let .themeButtonTapped(searchTheme):
+                return .run { send in
+                    await send(.delegate(.search("#\(searchTheme.text)", searchTheme)))
+                    await send(.loadNext)
+                }
+                
+            case let .followButtonTapped(company):
+                guard let index = state.searchedCompanies.firstIndex(where: { $0.id == company.id }) else {
+                    return .none
+                }
+                
+                state.searchedCompanies[index].isFollowed.toggle()
+                return .send(.follow(id: company.id, isFollowed: state.searchedCompanies[index].isFollowed))
+                    .debounce(
+                        id: CancelID.follow(id: company.id),
+                        for: 1,
+                        scheduler: mainQueue
+                    )
+                
+            case let .follow(id, isFollowed):
+                return .run { send in
+                    if isFollowed {
+                        try await companyService.createCompanyFollowing(of: id)
+                    } else {
+                        try await companyService.deleteCompanyFollowing(of: id)
+                    }
+                } catch: { error, send in
+                    await send(.delegate(.alert(error)))
+                }
+                
+            case let .checkNeedToLoadNext(id):
+                guard let index = state.searchedCompanies.firstIndex(where: { $0.id == id }) else { return .none }
+                
+                if index == state.searchedCompanies.count - 2 {
+                    return .send(.loadNext)
+                } else {
+                    return .none
+                }
+            }
+        }
+    }
+}
+
+struct SearchSubmittedView: View {
+    @Bindable var store: StoreOf<SearchSubmittedFeature>
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            searchTheme
+            resultCount
+            searchResult
+        }
+        .onAppear {
+            store.send(.viewAppear)
+        }
+    }
+    
+    @ViewBuilder
+    private var searchTheme: some View {
+        if store.searchTheme != .keyword {
+            VStack(spacing: 0) {
+                Divider()
+                ScrollView(.horizontal) {
+                    HStack(spacing: 12) {
+                        Text("모아보기")
+                            .pretendard(.body2Bold, color: .gray90)
+                        themeButton(.near)
+                        themeButton(.neighborhood)
+                        themeButton(.interest)
+                    }
+                    .padding(
+                        EdgeInsets(
+                            top: 10,
+                            leading: 20,
+                            bottom: 10,
+                            trailing: 20
+                        )
+                    )
+                }
+                .scrollIndicators(.hidden)
+                Divider()
+            }
+            .background(AppColor.gray10.color)
+        }
+    }
+    
+    @ViewBuilder
+    private func themeButton(_ searchTheme: SearchTheme) -> some View {
+        Button {
+            store.send(.themeButtonTapped(searchTheme))
+        } label: {
+            HStack(spacing: 6) {
+                switch searchTheme {
+                case .near:
+                    (searchTheme == store.searchTheme ? AppImage.mymapFill.image : AppImage.mymapLine.image)
+                        .frame(width: 18, height: 18)
+                case .neighborhood:
+                    (searchTheme == store.searchTheme ? AppImage.myplaceFill.image : AppImage.myplaceLine.image)
+                        .frame(width: 18, height: 18)
+                case .interest:
+                    (searchTheme == store.searchTheme ? AppImage.intersetFill.image : AppImage.intersetLine.image)
+                        .frame(width: 18, height: 18)
+                default:
+                    EmptyView()
+                }
+                Text(searchTheme.text)
+                    .pretendard(.captionSemiBold, color: searchTheme == store.searchTheme ? .white : .gray70)
+            }
+            .frame(width: 120, height: 40)
+            .background(searchTheme == store.searchTheme ? AppColor.orange40.color : AppColor.white.color)
+            .clipShape(RoundedRectangle(cornerRadius: 100))
+            .overlay {
+                RoundedRectangle(cornerRadius: 100)
+                    .stroke(searchTheme == store.searchTheme ? AppColor.orange40.color : AppColor.gray20.color)
+            }
+        }
+    }
+    
+    private var resultCount: some View {
+        HStack(spacing: 8) {
+            Text("검색 결과")
+                .pretendard(.h3Bold, color: .gray90)
+            Text("\(store.totalCount ?? 0)")
+                .pretendard(.h3Bold, color: .gray50)
+            Spacer()
+        }
+        .padding(
+            EdgeInsets(
+                top: 16,
+                leading: 20,
+                bottom: 16,
+                trailing: 20
+            )
+        )
+    }
+    
+    @ViewBuilder
+    private var searchResult: some View {
+        if store.searchedCompanies.isEmpty {
+            if store.isLoading {
+                loadingIndicator
+            } else {
+                empty
+            }
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 20) {
+                    ForEach(store.searchedCompanies) { company in
+                        NavigationLink(
+                            state: UpFeature.MainPath.State.detail(
+                                CompanyDetailFeature.State(
+                                    companyID: company.id
+                                )
+                            )
+                        ) {
+                            searchedCompany(company)
+                        }
+#if DEBUG               // 디버깅 모드에서만 보이는 해당 카드의 ID값을 보여줍니다.
+                        .overlay(alignment: .bottomTrailing) {
+                            Text("\(company.id)")
+                                .pretendard(.h2, color: .red)
+                                .padding()
+                        }
+#endif
+                        .onAppear {
+                            store.send(.checkNeedToLoadNext(id: company.id))
+                        }
+                    }
+                    if store.isLoading {
+                        Rectangle()
+                            .foregroundStyle(.clear)
+                            .frame(height: 75)
+                            .loadingIndicator(store.isLoading, isAccentColor: false, isBlocking: false)
+                    }
+                }
+                .padding([.horizontal, .bottom], 20)
+            }
+        }
+    }
+    
+    private var empty: some View {
+        VStack(spacing: 12) {
+            Spacer()
+            AppIcon.searchLine.image(
+                width: 48,
+                height: 48,
+                appColor: .gray30
+            )
+            Text("검색 결과를 찾을 수 없습니다.")
+                .pretendard(.body1Regular, color: .gray50)
+            Spacer()
+        }
+    }
+    
+    private var loadingIndicator: some View {
+        Rectangle()
+            .foregroundStyle(.clear)
+            .loadingIndicator(store.isLoading, isBlocking: false)
+    }
+    
+    private func searchedCompany(_ company: SearchedCompany) -> some View {
+        VStack(spacing: 40) {
+            HStack(alignment: .top, spacing: 0) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(company.name.withZeroWidthSpaces)
+                        .multilineTextAlignment(.leading)
+                        .pretendard(.body1Bold, color: .black)
+                    Text(company.address)
+                        .multilineTextAlignment(.leading)
+                        .pretendard(.captionRegular, color: .gray50)
+                    HStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            AppIcon.starFill.image(
+                                width: 16,
+                                height: 16,
+                                appColor: .seYellow40
+                            )
+                            Text(String(company.totalRating.rounded(to: 1)))
+                                .pretendard(.captionBold, color: .gray90)
+                        }
+                        Text(company.location)
+                            .pretendard(.captionRegular, color: .gray50)
+                    }
+                }
+                Spacer()
+                followButton(company)
+            }
+            
+            HStack(alignment: .top, spacing: 8) {
+                Text("한줄평")
+                    .pretendard(.captionBold, color: .gray50)
+                    .padding(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+                    .background(AppColor.gray10.color)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                if let title = company.reviewTitle {
+                    Text(title)
+                        .pretendard(.captionRegular, color: .gray70)
+                        .padding(.top, 4)
+                }
+                Spacer()
+            }
+        }
+        .padding(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.gray20.color)
+        )
+    }
+    
+    @ViewBuilder
+    private func followButton(_ company: SearchedCompany) -> some View {
+        Button {
+            store.send(.followButtonTapped(company))
+        } label: {
+            if company.isFollowed {
+                following
+            } else {
+                follow
+            }
+        }
+    }
+    
+    private var following: some View {
+        AppIcon.followingFill.image(
+            width: 24,
+            height: 24,
+            appColor: .white
+        )
+        .padding(4)
+        .background(AppColor.orange40.color)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+    
+    private var follow: some View {
+        AppIcon.followLine.image(
+            width: 24,
+            height: 24,
+            appColor: .orange40
+        )
+        .padding(4)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColor.orange40.color)
+        }
+    }
+}
+
+#Preview {
+    SearchSubmittedView(
+        store: Store(
+            initialState: SearchSubmittedFeature.State(
+                searchTerm: "스타",
+                searchTheme: .near,
+                currentLocation: .default
+            )
+        ) {
+            SearchSubmittedFeature()
+        }
+    )
+}
