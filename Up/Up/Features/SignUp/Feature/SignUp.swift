@@ -50,6 +50,13 @@ struct SignUpFeature {
         /// 에러 핸들링
         var shouldShowErrorPopup: Bool = false
         var errorMessage: String = ""
+        
+        var isLoadingIndicatorShowing = false
+        var isSuccessAlertShowing = false
+        
+        var message: String {
+            "회원가입이 완료되었습니다."
+        }
     }
     
     enum Action: BindableAction {
@@ -64,6 +71,9 @@ struct SignUpFeature {
         case agreeAllTermsTapped
         case agreeTermTapped(code: String)
         case signUpTapped
+        case turnIsLoadingIndicatorShowing(Bool)
+        case showSuccessAlert
+        case alertDoneButtonTapped
         case delegate(Delegate)
         case handleError(Error)
         
@@ -167,6 +177,7 @@ struct SignUpFeature {
                 let agreements = state.termList.compactMap { $0.isAgree ? $0.code : nil }
                 
                 return .run { send in
+                    await send(.turnIsLoadingIndicatorShowing(true))
                     try await signUpService.signUp(
                         oauthData: oauthData,
                         mainRegionId: mainRegionId,
@@ -183,14 +194,30 @@ struct SignUpFeature {
                     
                     await SecureTokenManager.shared.setAccessToken(token.accessToken)
                     await SecureTokenManager.shared.setRefreshToken(token.refreshToken)
-                    // TODO: - 메인으로 넘어가기
-                    await send(.delegate(.signUpSucceded))
-                    await dismiss()
+                    await send(.turnIsLoadingIndicatorShowing(false))
+                    await send(.showSuccessAlert)
                 } catch: { error, send in
+                    await send(.turnIsLoadingIndicatorShowing(false))
                     return await send(.handleError(error))
                 }
+                
+            case let .turnIsLoadingIndicatorShowing(isShowing):
+                state.isLoadingIndicatorShowing = isShowing
+                return .none
+                
+            case .showSuccessAlert:
+                state.isSuccessAlertShowing = true
+                return .none
+                
+            case .alertDoneButtonTapped:
+                return .run { send in
+                    await send(.delegate(.signUpSucceded))
+                    await dismiss()
+                }
+                
             case .delegate:
                 return .none
+                
             case let .handleError(error):
                 if let fail = error as? FailResponse {
                     state.shouldShowErrorPopup = true
@@ -254,6 +281,14 @@ struct SignUpView: View {
                     Text("회원 가입")
                         .pretendard(.h2, color: .gray90)
                 }
+            }
+            .loadingIndicator(store.isLoadingIndicatorShowing)
+            .appAlert(
+                $store.isSuccessAlertShowing,
+                isSuccess: true,
+                message: store.message
+            ) {
+                store.send(.alertDoneButtonTapped)
             }
             .appAlert($store.shouldShowErrorPopup, isSuccess: false, message: store.errorMessage)
             .onChange(of: store.dupCheckFieldState) { old, new in

@@ -19,7 +19,13 @@ struct SearchedCompany: Equatable, Identifiable {
     var location: String {
         var location: String = String(self.address.prefix(2))
         if let distance = self.distance {
-            let distanceString = String(distance.rounded(to: 1)) + "km"
+            let meter = Int(distance * 1000)
+            let distanceString = if meter >= 100 {
+                String(distance.rounded(to: 1)) + "km"
+            } else {
+                String(meter) + "m"
+            }
+            
             
             if location.isEmpty {
                 location += "\(distanceString)"
