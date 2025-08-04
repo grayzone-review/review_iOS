@@ -13,6 +13,7 @@ struct HomeFeature {
     @ObservableState
     struct State: Equatable {
         @Shared(.user) var user
+        var isFirst: Bool = true
         var currentLocation: Location = .default
         var popularReviews = [HomeReview]()
         var mainRegionReviews = [HomeReview]()
@@ -27,7 +28,9 @@ struct HomeFeature {
         case binding(BindingAction<State>)
         case viewAppear
         case requestCurrentLocation
+        case fetchDefaultLocation
         case currentLocationFetched(Location)
+        case handleLocationError(Error)
         case fetchPopularReviews
         case popularReviewsFetched([HomeReview])
         case fetchMainRegionReviews
@@ -42,6 +45,7 @@ struct HomeFeature {
     }
     
     @Dependency(\.homeService) var homeService
+    @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -53,6 +57,7 @@ struct HomeFeature {
                 
             case .viewAppear:
                 return .run { send in
+                    await send(.requestCurrentLocation)
                     await send(.fetchPopularReviews)
                     await send(.fetchMainRegionReviews)
                     await send(.fetchInterestedRegionReviews)
@@ -65,13 +70,31 @@ struct HomeFeature {
                     let current = location.toDomain()
                     await send(.currentLocationFetched(current))
                 } catch: { error, send in
-                    print("error: \(error)")
+                    await send(.handleLocationError(error))
                 }
-                
             case let .currentLocationFetched(location):
+                try? userDefaultsService.save(key: .latitude, value: location.lat)
+                try? userDefaultsService.save(key: .longitude, value: location.lng)
+                
                 state.currentLocation = location
                 
                 return .none
+            case .fetchDefaultLocation:
+                if let lat = try? userDefaultsService.fetch(key: .latitude, type: Double.self),
+                   let lng = try? userDefaultsService.fetch(key: .longitude, type: Double.self) {
+                    state.currentLocation = Location(lat: lat, lng: lng)
+                }
+                
+                return .none
+                
+            case let .handleLocationError(error):
+                    if state.isFirst {
+                        state.isFirst = false
+                        return .send(.delegate(.alert(error)))
+                    } else {
+                        return .send(.fetchDefaultLocation)
+                    }
+                
             case .fetchPopularReviews:
                 guard state.popularReviews.isEmpty else {
                     return .none

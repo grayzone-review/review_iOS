@@ -22,6 +22,7 @@ struct MainFeature {
         var isResignAlertShowing = false
         var isSignOutAlertShowing = false
         var isFirstAppear = true
+        var shouldShowNeedLoaction: Bool = false
     }
     
     enum Action: BindableAction {
@@ -35,6 +36,8 @@ struct MainFeature {
         case home(HomeFeature.Action)
         case myPage(MyPageFeature.Action)
         case handleError(Error)
+        case needLocationCancelTapped
+        case needLocationGoToSettingTapped
         case resign
         case signOut
     }
@@ -128,10 +131,25 @@ struct MainFeature {
                 if let failResponse = error as? FailResponse {
                     state.error = failResponse
                     state.isAlertShowing = true
-                    return .none
+                } else if let locationError = error as? LocationError, locationError == .authorizationDenied {
+                    state.shouldShowNeedLoaction = true
                 } else {
                     print("❌ error: \(error)")
-                    return .none
+                }
+                
+                return .none
+            case .needLocationCancelTapped:
+                state.shouldShowNeedLoaction = false
+                
+                return .none
+                
+            case .needLocationGoToSettingTapped:
+                return .run { send in
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    
+                    await UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    
+                    await send(.needLocationCancelTapped)
                 }
                 
             case .resign:
@@ -196,6 +214,19 @@ struct MainView: View {
         ) {
             store.send(.signOut)
         }
+        .actionAlert(
+            $store.shouldShowNeedLoaction,
+            image: .mappinFill,
+            title: "위치 권한 필요",
+            message: "기능을 사용하려면 위치 권한이 필요합니다.\n설정 > 권한에서 위치를 허용해주세요.",
+            cancel: {
+                store.send(.needLocationCancelTapped)
+            },
+            preferredText: "설정으로 이동",
+            preferred: {
+                store.send(.needLocationGoToSettingTapped)
+            }
+        )
     }
     
     private var home: some View {

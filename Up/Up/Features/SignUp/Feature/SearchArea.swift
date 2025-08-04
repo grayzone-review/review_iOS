@@ -87,6 +87,7 @@ struct SearchAreaFeature {
     @Dependency(\.signUpService) var signUpService
     @Dependency(\.kakaoAPIService) var kakaoAPIService
     @Dependency(\.legalDistrictService) var legalDistrictService
+    @Dependency(\.userDefaultsService) var userDefaultsService
     
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -131,24 +132,34 @@ struct SearchAreaFeature {
                 return .none
             // MARK: - Location
             case .needLocationCancelTapped:
+                let location: Location
+                if let lat = try? userDefaultsService.fetch(key: .latitude, type: Double.self),
+                   let lng = try? userDefaultsService.fetch(key: .longitude, type: Double.self) {
+                    location = Location(lat: lat, lng: lng)
+                } else {
+                    location = .default
+                }
+                
                 state.shouldShowNeedLoaction = false
                 
-                return .none
+                return .send(.getMyAreaDistrict(lat: location.lat, lng: location.lng))
                 
             case .needLocationGoToSettingTapped:
+                state.shouldShowNeedLoaction = false
+                
                 return .run { send in
                     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
                     
                     await UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                    
-                    await send(.needLocationCancelTapped)
                 }
-                
             case .searchMyAreaTapped:
                 state.shouldShowIndicator = true
                 
                 return .run { send in
                     let location = try await LocationService.shared.requestCurrentLocation()
+                    
+                    try? userDefaultsService.save(key: .latitude, value: location.latitude)
+                    try? userDefaultsService.save(key: .longitude, value: location.longitude)
                     
                     await send(.getMyAreaDistrict(lat: location.latitude, lng: location.longitude))
                 } catch: { error, send in

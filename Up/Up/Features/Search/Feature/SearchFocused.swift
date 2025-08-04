@@ -31,7 +31,7 @@ struct SearchFocusedFeature {
                     state.savedCompanies.remove(at: index)
                 }
                 
-                try? userDefaultsService.save(key: "savedCompanies", value: state.savedCompanies)
+                try? userDefaultsService.save(key: .savedCompanies, value: state.savedCompanies)
                 
                 return .none
             }

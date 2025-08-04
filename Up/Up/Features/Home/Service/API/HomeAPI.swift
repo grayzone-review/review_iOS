@@ -91,7 +91,6 @@ enum HomeAPI: Sendable, URLRequestConvertible {
                 URLQueryItem(name: "longitude", value: "\(longitude)"),
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "size", value: "\(size)"),
-                URLQueryItem(name: "sort", value: "createdAt,desc")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
@@ -102,7 +101,6 @@ enum HomeAPI: Sendable, URLRequestConvertible {
             components.queryItems = [
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "size", value: "\(size)"),
-                URLQueryItem(name: "sort", value: "createdAt,desc")
             ]
             guard let url = components.url else { throw NSError(domain: "Invalid URL", code: -1) }
             let request = try URLRequest(url: url, method: method)
