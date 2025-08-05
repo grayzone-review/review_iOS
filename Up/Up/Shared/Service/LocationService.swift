@@ -106,13 +106,18 @@ extension LocationService: CLLocationManagerDelegate {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
             cont.resume(returning: ())
+            authContinuation = nil
         case .denied:
             cont.resume(throwing: LocationError.authorizationDenied)
+            authContinuation = nil
         case .restricted:
             cont.resume(throwing: LocationError.authorizationRestricted)
+            authContinuation = nil
+        case .notDetermined:
+            break
         default:
             cont.resume(throwing: LocationError.cancelled)
+            authContinuation = nil
         }
-        authContinuation = nil
     }
 }
