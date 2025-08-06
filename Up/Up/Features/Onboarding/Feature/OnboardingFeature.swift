@@ -86,7 +86,7 @@ struct OnboardingView: View {
                     content(3)
                         .tag(3)
                 }
-                .tabViewStyle(.page)
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
             .background(.white)
             
@@ -131,17 +131,19 @@ struct OnboardingView: View {
         switch page {
         case 1:
             AppImage.onboarding1.image
-                .frame(width: 260, height: 516)
+                .aspectRatio(260/516, contentMode: .fit)
+                .padding(.top, 98)
         case 2:
             VStack {
                 Spacer()
                 AppImage.onboarding2.image
-                    .frame(width: 320, height: 318)
+                    .aspectRatio(320/318, contentMode: .fit)
                 Spacer()
             }
         case 3:
             AppImage.onboarding3.image
-                .frame(width: 290, height: 494)
+                .aspectRatio(290/494, contentMode: .fit)
+                .padding(.top, 98)
         default :
             EmptyView()
         }
