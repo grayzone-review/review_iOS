@@ -9,6 +9,7 @@ import SwiftUI
 import AuthenticationServices
 
 import ComposableArchitecture
+import KakaoSDKCommon
 import KakaoSDKUser
 
 @Reducer
@@ -114,7 +115,9 @@ struct OAuthLoginFeature {
                     
                     await send(.login(data))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    if (error as NSError).code != 1001 {
+                        await send(.handleError(error))
+                    }
                 }
             case .kakaoButtonTapped:
                 return .run { send in
@@ -124,7 +127,11 @@ struct OAuthLoginFeature {
                     
                     await send(.login(data))
                 } catch: { error, send in
-                    await send(.handleError(error))
+                    if let error = error as? SdkError,
+                       case let .ClientFailed(reason, _) = error,
+                       reason != .Cancelled {
+                        await send(.handleError(error))
+                    }
                 }
             case let .goToSignUp(data):
                 state.destination = .signUp(SignUpFeature.State(oAuthData: data))
