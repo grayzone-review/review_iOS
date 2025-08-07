@@ -26,6 +26,7 @@ struct OAuthLoginFeature {
         var shouldShowErrorAlert: Bool = false
         var shouldShowNeedLoaction: Bool = false
         var errorMessage: String = ""
+        var isLoginButtonEnabled = true
     }
     
     enum Action: BindableAction {
@@ -41,6 +42,7 @@ struct OAuthLoginFeature {
         case handleError(Error)
         case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
+        case setIsLoginButtonEnabled(Bool)
         
         enum Delegate: Equatable {
             case loginFinished
@@ -94,6 +96,7 @@ struct OAuthLoginFeature {
                 
             case .appleButtonTapped:
                 return .run { send in
+                    await send(.setIsLoginButtonEnabled(false))
                     let result = try await AppleSignInManager.shared.signIn()
                     
                     guard let tokenData = result.credential.identityToken,
@@ -114,24 +117,39 @@ struct OAuthLoginFeature {
                     )
                     
                     await send(.login(data))
+                    await send(.setIsLoginButtonEnabled(true))
                 } catch: { error, send in
-                    if (error as NSError).code != 1001 {
+                    if let authError = error as? ASAuthorizationError {
+                        switch authError.code {
+                        case .unknown:
+                            print("알 수 없는 오류 발생 – 애플 계정 미로그인 상태일 수 있음")
+                        case .canceled:
+                            print("사용자가 인증을 취소했습니다")
+                        default:
+                            print("기타 ASAuthorizationError: \(authError.code.rawValue)")
+                        }
+                    } else if (error as NSError).code != 1001 {
+                        print("기타 오류: \(error.localizedDescription)")
                         await send(.handleError(error))
                     }
+                    await send(.setIsLoginButtonEnabled(true))
                 }
             case .kakaoButtonTapped:
                 return .run { send in
+                    await send(.setIsLoginButtonEnabled(false))
                     let result = try await KaKaoSignInManager.shared.signIn()
                     
                     let data = OAuthResult(token: result, provider: "kakao")
                     
                     await send(.login(data))
+                    await send(.setIsLoginButtonEnabled(true))
                 } catch: { error, send in
                     if let error = error as? SdkError,
                        case let .ClientFailed(reason, _) = error,
                        reason != .Cancelled {
                         await send(.handleError(error))
                     }
+                    await send(.setIsLoginButtonEnabled(true))
                 }
             case let .goToSignUp(data):
                 state.destination = .signUp(SignUpFeature.State(oAuthData: data))
@@ -171,6 +189,10 @@ struct OAuthLoginFeature {
                 return .none
                 
             case .delegate:
+                return .none
+                
+            case let .setIsLoginButtonEnabled(isEnabled):
+                state.isLoginButtonEnabled = isEnabled
                 return .none
             }
         }
@@ -253,6 +275,7 @@ struct OAuthLoginView: View {
                     .fill(AppColor.gray90.color)
             }
         }
+        .disabled(!store.isLoginButtonEnabled)
     }
     
     var kakaoSignUpButton: some View {
@@ -275,6 +298,7 @@ struct OAuthLoginView: View {
                     .fill(Color.hex("#FEE500"))
             }
         }
+        .disabled(!store.isLoginButtonEnabled)
     }
 }
 
